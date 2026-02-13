@@ -1,0 +1,95 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
+
+enum DossierStatus {
+  PENDING
+  VALIDATED
+  REJECTED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+}
+
+model User {
+  id            Int       @id @default(autoincrement())
+  firstName     String
+  lastName      String
+  email         String    @unique
+  password      String
+  passport      String?
+  studyType     String?
+  university    String?
+  role          Role      @default(USER)
+  createdAt     DateTime  @default(now())
+
+  appointments  Appointment[]
+  dossiers      Dossier[]
+  payments      Payment[]
+  messages      Message[]
+  notifications Notification[]
+}
+
+model Appointment {
+  id        Int                @id @default(autoincrement())
+  type      String
+  date      DateTime
+  status    AppointmentStatus  @default(PENDING)
+  user      User               @relation(fields: [userId], references: [id])
+  userId    Int
+  createdAt DateTime           @default(now())
+}
+
+model Dossier {
+  id        Int           @id @default(autoincrement())
+  title     String
+  status    DossierStatus @default(PENDING)
+  user      User          @relation(fields: [userId], references: [id])
+  userId    Int
+  createdAt DateTime      @default(now())
+}
+
+model Payment {
+  id        Int           @id @default(autoincrement())
+  amount    Float
+  status    PaymentStatus @default(PENDING)
+  user      User          @relation(fields: [userId], references: [id])
+  userId    Int
+  createdAt DateTime      @default(now())
+}
+
+model Message {
+  id        Int      @id @default(autoincrement())
+  content   String
+  sender    String   // USER or ADMIN
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id        Int      @id @default(autoincrement())
+  content   String
+  isRead    Boolean  @default(false)
+  user      User     @relation(fields: [userId], references: [id])
+  userId    Int
+  createdAt DateTime @default(now())
+}
