@@ -1,54 +1,24 @@
-import { useNavigate } from "react-router-dom";
+import { GlobalStyle } from "../globalStyles";
+import { lazy, Suspense } from "react";
 
-export default function Accueil() {
-  const navigate = useNavigate();
+const Home = lazy(() => import("./Home"));
+const Header = lazy(() => import("../components/header/index"));
+const Footer = lazy(() => import("../components/footer/index"));
+const ScrollToTop = lazy(() => import("../components/scrollTotop/index"));
 
+function Accueil() {
   return (
-    <div
-      style={{
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        flexDirection: "column",
-        height: "100vh",
-        backgroundColor: "white",
-      }}
-    >
-      <h1 style={{ marginBottom: "40px", fontSize: "32px", color: "#333" }}>
-        Bienvenue sur ViaItalia
-      </h1>
-
-      <div style={{ display: "flex", gap: "20px" }}>
-        <button
-          onClick={() => navigate("/register")}
-          style={{
-            padding: "15px 30px",
-            fontSize: "18px",
-            cursor: "pointer",
-            borderRadius: "8px",
-            border: "none",
-            backgroundColor: "#4CAF50",
-            color: "white",
-          }}
-        >
-          Inscription
-        </button>
-
-        <button
-          onClick={() => navigate("/login")}
-          style={{
-            padding: "15px 30px",
-            fontSize: "18px",
-            cursor: "pointer",
-            borderRadius: "8px",
-            border: "none",
-            backgroundColor: "#2196F3",
-            color: "white",
-          }}
-        >
-          Login
-        </button>
-      </div>
-    </div>
+    <>
+   <Suspense fallback={null}>
+        <GlobalStyle />
+        {/* Hi There! */}
+        <Header />
+        <Home />
+        <Footer />
+        <ScrollToTop />
+      </Suspense>
+    </>
   );
 }
+
+export default Accueil;

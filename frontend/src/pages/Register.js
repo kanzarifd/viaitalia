@@ -24,18 +24,27 @@ const Register = () => {
     setMessage("");
 
     try {
-      await axiosInstance.post("/auth/register", {
-        name: `${formData.firstName} ${formData.lastName}`,
+      const response = await axiosInstance.post("/auth/register", {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
         email: formData.email,
         password: formData.password,
         role: "USER",
       });
 
-      alert("User registered successfully! Please login.");
-      navigate("/login");
+      if (response.data && response.data.userId) {
+        alert("User registered successfully! Please login.");
+        navigate("/login");
+      } else {
+        setMessage(response.data?.message || "Registration failed");
+      }
     } catch (err) {
-      console.error(err.response?.data);
-      setMessage(err.response?.data?.message || "Registration failed");
+      console.error("Registration error:", err);
+      if (err.response?.data?.message) {
+        setMessage(err.response.data.message);
+      } else {
+        setMessage("Registration failed. Please try again.");
+      }
     } finally {
       setIsSubmitting(false);
     }

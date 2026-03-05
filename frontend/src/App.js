@@ -1,7 +1,6 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { useContext } from "react";
 import { AuthContext } from "./context/AuthContext";
-
 import Accueil from "./pages/Accueil"; // 🔥 ADD THIS
 import Login from "./pages/Login";
 import UserDashboard from "./pages/UserDashboard";
@@ -20,6 +19,13 @@ function App() {
   }
 
   return (
+    <main>
+      
+      
+        
+
+ <div>
+        
     <Router> {/* 🔥 IMPORTANT */}
       <Routes>
 
@@ -50,6 +56,8 @@ function App() {
 
       </Routes>
     </Router>
+    </div>
+    </main>
   );
 }
 

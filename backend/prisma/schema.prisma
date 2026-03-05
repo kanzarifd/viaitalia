@@ -18,6 +18,11 @@ enum AppointmentStatus {
   CANCELLED
 }
 
+enum AppointmentEtat {
+  PRESENTIEL
+  EN_LIGNE
+}
+
 enum DossierStatus {
   PENDING
   VALIDATED
@@ -27,6 +32,17 @@ enum DossierStatus {
 enum PaymentStatus {
   PENDING
   PAID
+}
+
+model UniversityInfo {
+  id          Int      @id @default(autoincrement())
+  university  String
+  specialty    String
+  level        String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      Int
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model User {
@@ -46,6 +62,7 @@ model User {
   payments      Payment[]
   messages      Message[]
   notifications Notification[]
+  universityInfo UniversityInfo[]
 }
 
 model Appointment {
@@ -53,7 +70,8 @@ model Appointment {
   type      String
   date      DateTime
   status    AppointmentStatus  @default(PENDING)
-  user      User               @relation(fields: [userId], references: [id])
+  etat      AppointmentEtat    @default(PRESENTIEL)
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    Int
   createdAt DateTime           @default(now())
 }
@@ -62,7 +80,7 @@ model Dossier {
   id        Int           @id @default(autoincrement())
   title     String
   status    DossierStatus @default(PENDING)
-  user      User          @relation(fields: [userId], references: [id])
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    Int
   createdAt DateTime      @default(now())
 }
@@ -71,7 +89,7 @@ model Payment {
   id        Int           @id @default(autoincrement())
   amount    Float
   status    PaymentStatus @default(PENDING)
-  user      User          @relation(fields: [userId], references: [id])
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    Int
   createdAt DateTime      @default(now())
 }
@@ -80,16 +98,16 @@ model Message {
   id        Int      @id @default(autoincrement())
   content   String
   sender    String   // USER or ADMIN
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    Int
   createdAt DateTime @default(now())
 }
 
 model Notification {
   id        Int      @id @default(autoincrement())
-  content   String
+  content   String   
   isRead    Boolean  @default(false)
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    Int
   createdAt DateTime @default(now())
 }

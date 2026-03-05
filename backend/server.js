@@ -3,7 +3,10 @@ const express = require("express");
 const cors = require("cors");
 const prisma = require("./config/prisma"); // Import Prisma
 const authRoutes = require("./routes/authRoutes");
-const authMiddleware = require("./middlewares/authMiddleware");
+const appointmentRoutes = require("./routes/appointmentRoutes");
+const universityInfoRoutes = require("./routes/universityInfoRoutes");
+const messageRoutes = require("./routes/messageRoutes");
+const emailRoutes = require("./routes/emailRoutes");
 
 const app = express();
 
@@ -19,15 +22,20 @@ app.get("/", async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 });
+
 app.use("/api/auth", authRoutes);
-// User-only route
-app.get("/api/user/dashboard", authMiddleware(["USER"]), (req, res) => {
-  res.json({ message: `Welcome USER ${req.user.userId}!` });
+app.use("/api/appointments", appointmentRoutes);
+app.use("/api/university-info", universityInfoRoutes);
+app.use("/api/messages", messageRoutes);
+app.use("/api/email", emailRoutes);
+
+// Simple dashboard routes (no auth for testing)
+app.get("/api/user/dashboard", (req, res) => {
+  res.json({ message: "Welcome USER!" });
 });
 
-// Admin-only route
-app.get("/api/admin/dashboard", authMiddleware(["ADMIN"]), (req, res) => {
-  res.json({ message: `Welcome ADMIN ${req.user.userId}!` });
+app.get("/api/admin/dashboard", (req, res) => {
+  res.json({ message: "Welcome ADMIN!" });
 });
 
 const PORT = 5000;

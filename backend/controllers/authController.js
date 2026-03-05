@@ -19,7 +19,24 @@ const register = async (req, res) => {
       data: { firstName, lastName, email, password: hashedPassword, role },
     });
 
-    res.status(201).json({ message: "User created successfully", userId: user.id });
+    // Return user data without password
+    const userData = {
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      role: user.role,
+      passport: user.passport,
+      studyType: user.studyType,
+      university: user.university,
+      createdAt: user.createdAt
+    };
+
+    res.status(201).json({ 
+      message: "User created successfully", 
+      user: userData,
+      userId: user.id 
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -43,10 +60,110 @@ const login = async (req, res) => {
       { expiresIn: "1d" }
     );
 
-    res.json({ token, userId: user.id, role: user.role });
+    // Return user data without password
+    const userData = {
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      role: user.role,
+      passport: user.passport,
+      studyType: user.studyType,
+      university: user.university,
+      createdAt: user.createdAt
+    };
+
+    res.json({ 
+      token, 
+      user: userData,
+      userId: user.id, 
+      role: user.role 
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
 
-module.exports = { register, login };
+// Get all users
+const getAllUsers = async (req, res) => {
+  try {
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        role: true,
+        createdAt: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      data: users
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération des utilisateurs',
+      error: error.message
+    });
+  }
+};
+
+// Delete user
+const deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Check if user exists
+    const user = await prisma.user.findUnique({
+      where: { id: parseInt(id) },
+      include: {
+        appointments: true,
+        dossiers: true,
+        payments: true,
+        messages: true,
+        notifications: true
+      }
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: 'Utilisateur non trouvé'
+      });
+    }
+
+    // Log what will be deleted
+    console.log(`Deleting user ${user.id} and related records:`, {
+      appointments: user.appointments.length,
+      dossiers: user.dossiers.length,
+      payments: user.payments.length,
+      messages: user.messages.length,
+      notifications: user.notifications.length
+    });
+
+    // Delete user (cascade will handle related records)
+    await prisma.user.delete({
+      where: { id: parseInt(id) }
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Utilisateur et toutes ses données supprimés avec succès'
+    });
+  } catch (error) {
+    console.error('Error deleting user:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la suppression de l\'utilisateur',
+      error: error.message
+    });
+  }
+};
+
+module.exports = { register, login, getAllUsers, deleteUser };
