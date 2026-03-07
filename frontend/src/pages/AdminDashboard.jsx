@@ -5,6 +5,7 @@ import { gsap } from "gsap";
 import styled from "styled-components";
 import axios from "axios";
 import messageService from "../api/messageService";
+import contractService from "../api/contractService";
 
 // Register GSAP
 gsap.registerPlugin();
@@ -201,6 +202,10 @@ export default function AdminDashboard() {
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [allUsers, setAllUsers] = useState([]);
 
+  // Contract state
+  const [contracts, setContracts] = useState([]);
+  const [selectedContract, setSelectedContract] = useState(null);
+
   const sidebarRef = useRef(null);
   const headerRef = useRef(null);
   const contentRef = useRef(null);
@@ -210,6 +215,7 @@ export default function AdminDashboard() {
     fetchUsers();
     fetchAllUsers();
     fetchMessages(); // Fetch all messages
+    fetchContracts(); // Fetch contracts
   }, []);
 
   const fetchUsers = async () => {
@@ -332,6 +338,121 @@ export default function AdminDashboard() {
     }
   };
 
+  // Contract functions
+  const fetchContracts = async () => {
+    try {
+      const response = await contractService.getAllContracts();
+      if (response.success && response.data) {
+        setContracts(response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching contracts:', error);
+    }
+  };
+
+  const updateContractStatus = async (contractId, status) => {
+    try {
+      const response = await contractService.updateContractStatus(contractId, status);
+      if (response.success) {
+        // Update contracts list
+        setContracts(contracts.map(contract => 
+          contract.id === contractId 
+            ? { ...contract, status }
+            : contract
+        ));
+        
+        // Show success notification
+        const successText = status === 'CONFIRMED' ? 'Contrat confirmé!' : 'Contrat rejeté!';
+        
+        const successDiv = document.createElement('div');
+        successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center';
+        successDiv.innerHTML = `
+          <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2m0 0l2-2m-2 2l-2-2" />
+          </svg>
+          <span>${successText}</span>
+        `;
+        document.body.appendChild(successDiv);
+        
+        gsap.fromTo(successDiv, {
+          scale: 0, opacity: 0, rotation: -180, x: -100
+        }, {
+          scale: 1, opacity: 1, rotation: 0, x: 0, duration: 0.6, ease: "back.out(1.7)",
+          onComplete: () => {
+            gsap.to(successDiv, {
+              scale: 0, opacity: 0, x: -100, duration: 0.3, delay: 2, ease: "power2.in"
+            });
+            setTimeout(() => {
+              document.body.removeChild(successDiv);
+            }, 2300);
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error updating contract status:', error);
+      alert('Erreur lors de la mise à jour du statut');
+    }
+  };
+
+  const downloadContract = async (contractId, fileName) => {
+    try {
+      const response = await contractService.downloadContract(contractId);
+      
+      // Create download link
+      const url = window.URL.createObjectURL(new Blob([response]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading contract:', error);
+      alert('Erreur lors du téléchargement');
+    }
+  };
+
+  const deleteContract = async (contractId) => {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce contrat?')) return;
+    
+    try {
+      const response = await contractService.deleteContract(contractId);
+      if (response.success) {
+        // Remove contract from list
+        setContracts(contracts.filter(contract => contract.id !== contractId));
+        
+        // Show success notification
+        const successDiv = document.createElement('div');
+        successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center';
+        successDiv.innerHTML = `
+          <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          <span>Contrat supprimé!</span>
+        `;
+        document.body.appendChild(successDiv);
+        
+        gsap.fromTo(successDiv, {
+          scale: 0, opacity: 0, rotation: -180, x: -100
+        }, {
+          scale: 1, opacity: 1, rotation: 0, x: 0, duration: 0.6, ease: "back.out(1.7)",
+          onComplete: () => {
+            gsap.to(successDiv, {
+              scale: 0, opacity: 0, x: -100, duration: 0.3, delay: 2, ease: "power2.in"
+            });
+            setTimeout(() => {
+              document.body.removeChild(successDiv);
+            }, 2300);
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting contract:', error);
+      alert('Erreur lors de la suppression');
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
@@ -342,6 +463,7 @@ export default function AdminDashboard() {
     { id: 'messagerie', icon: '💬', text: 'Messagerie' },
     { id: 'users', icon: '👥', text: 'Utilisateurs' },
     { id: 'appointments', icon: '📅', text: 'Rendez-vous' },
+    { id: 'contracts', icon: '📄', text: 'Contrats' },
     { id: 'university', icon: '🎓', text: 'Université' }
   ];
 
@@ -468,7 +590,7 @@ export default function AdminDashboard() {
                               </svg>
                             ) : (
                               <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9 2zm0 0v-8" />
                               </svg>
                             )}
                           </button>
@@ -539,6 +661,158 @@ export default function AdminDashboard() {
               <p className="text-gray-400 text-lg">
                 📅 Gestion des rendez-vous coming soon
               </p>
+            </div>
+          </ContentCard>
+        );
+      
+      case 'contracts':
+        return (
+          <ContentCard className="content-card">
+            <h2 className="text-2xl font-bold text-white mb-6">
+              📄 Gestion des Contrats
+            </h2>
+            
+            {contracts.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-400 text-lg">
+                  📄 Aucun contrat trouvé
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-white">
+                  <thead>
+                    <tr className="border-b border-white/20">
+                      <th className="text-left p-4">Étudiant</th>
+                      <th className="text-left p-4">Fichier</th>
+                      <th className="text-left p-4">Statut</th>
+                      <th className="text-left p-4">Date</th>
+                      <th className="text-left p-4">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {contracts.map((contract) => (
+                      <tr key={contract.id} className="border-b border-white/10 hover:bg-white/5">
+                        <td className="p-4">
+                          <div>
+                            <p className="font-medium">
+                              {contract.user?.firstName} {contract.user?.lastName}
+                            </p>
+                            <p className="text-sm text-gray-400">
+                              {contract.user?.email}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <div className="flex items-center">
+                            <span className="text-2xl mr-2">📄</span>
+                            <div>
+                              <p className="font-medium">{contract.fileName}</p>
+                              <p className="text-sm text-gray-400">
+                                {(contract.fileSize / 1024 / 1024).toFixed(2)} MB
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                            contract.status === 'CONFIRMED' ? 'bg-green-500/20 text-green-400 border border-green-500/30' :
+                            contract.status === 'UPLOADED' ? 'bg-blue-500/20 text-blue-400 border border-blue-500/30' :
+                            contract.status === 'REJECTED' ? 'bg-red-500/20 text-red-400 border border-red-500/30' :
+                            'bg-gray-500/20 text-gray-400 border border-gray-500/30'
+                          }`}>
+                            {contract.status === 'CONFIRMED' ? '✅ Confirmé' :
+                             contract.status === 'UPLOADED' ? '📤 Téléversé' :
+                             contract.status === 'REJECTED' ? '❌ Rejeté' : '⏳ En attente'}
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          <p className="text-sm">
+                            {new Date(contract.createdAt).toLocaleDateString('fr-FR')}
+                          </p>
+                          <p className="text-xs text-gray-400">
+                            {new Date(contract.createdAt).toLocaleTimeString('fr-FR', {
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        </td>
+                        <td className="p-4">
+                          <div className="flex space-x-2">
+                            {/* Download button */}
+                            <button
+                              onClick={() => downloadContract(contract.id, contract.fileName)}
+                              className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded text-sm transition-colors"
+                              title="Télécharger"
+                            >
+                              📥
+                            </button>
+                            
+                            {/* Status update buttons */}
+                            {contract.status === 'UPLOADED' && (
+                              <>
+                                <button
+                                  onClick={() => updateContractStatus(contract.id, 'CONFIRMED')}
+                                  className="px-3 py-1 bg-green-500 hover:bg-green-600 text-white rounded text-sm transition-colors"
+                                  title="Confirmer"
+                                >
+                                  ✅
+                                </button>
+                                <button
+                                  onClick={() => updateContractStatus(contract.id, 'REJECTED')}
+                                  className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-sm transition-colors"
+                                  title="Rejeter"
+                                >
+                                  ❌
+                                </button>
+                              </>
+                            )}
+                            
+                            {/* Delete button */}
+                            <button
+                              onClick={() => deleteContract(contract.id)}
+                              className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white rounded text-sm transition-colors"
+                              title="Supprimer"
+                            >
+                              🗑️
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            
+            {/* Contract Statistics */}
+            <div className="mt-8 grid grid-cols-4 gap-4">
+              <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4 text-center">
+                <div className="text-2xl mb-2">📊</div>
+                <div className="text-2xl font-bold text-white">{contracts.length}</div>
+                <div className="text-sm text-gray-400">Total</div>
+              </div>
+              <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 text-center">
+                <div className="text-2xl mb-2">📤</div>
+                <div className="text-2xl font-bold text-blue-400">
+                  {contracts.filter(c => c.status === 'UPLOADED').length}
+                </div>
+                <div className="text-sm text-gray-400">Téléversés</div>
+              </div>
+              <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4 text-center">
+                <div className="text-2xl mb-2">✅</div>
+                <div className="text-2xl font-bold text-green-400">
+                  {contracts.filter(c => c.status === 'CONFIRMED').length}
+                </div>
+                <div className="text-sm text-gray-400">Confirmés</div>
+              </div>
+              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 text-center">
+                <div className="text-2xl mb-2">❌</div>
+                <div className="text-2xl font-bold text-red-400">
+                  {contracts.filter(c => c.status === 'REJECTED').length}
+                </div>
+                <div className="text-sm text-gray-400">Rejetés</div>
+              </div>
             </div>
           </ContentCard>
         );
@@ -696,4 +970,3 @@ export default function AdminDashboard() {
     </DashboardContainer>
   );
 } 
-

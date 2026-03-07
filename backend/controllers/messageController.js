@@ -11,51 +11,31 @@ const createMessage = async (req, res) => {
     
     // Validate required fields
     if (!content || !sender || !userId) {
-      console.log('Missing required fields:', { content, sender, userId });
       return res.status(400).json({
         success: false,
-        message: 'Champs requis manquants: content, sender, userId',
-        error: 'Validation failed'
+        message: 'Champs requis manquants',
+        error: 'Content, sender, and userId are required'
       });
     }
 
-    // Validate sender is either USER or ADMIN
-    if (!['USER', 'ADMIN'].includes(sender)) {
-      console.log('Invalid sender:', sender);
+    // Validate sender
+    if (sender !== 'USER' && sender !== 'ADMIN') {
       return res.status(400).json({
         success: false,
-        message: 'Sender doit être USER ou ADMIN',
-        error: 'Invalid sender'
+        message: 'Expéditeur invalide',
+        error: 'Sender must be USER or ADMIN'
       });
     }
 
-    // Validate userId is a number
+    // Parse and validate userId
     const parsedUserId = parseInt(userId);
     if (isNaN(parsedUserId)) {
-      console.log('Invalid userId format:', userId);
       return res.status(400).json({
         success: false,
         message: 'ID utilisateur invalide',
-        error: 'Invalid userId format'
+        error: 'UserId must be a valid integer'
       });
     }
-
-    // Check if user exists
-    const existingUser = await prisma.user.findUnique({
-      where: { id: parsedUserId },
-      select: { id: true, firstName: true, lastName: true, email: true }
-    });
-
-    if (!existingUser) {
-      console.log('User not found with ID:', parsedUserId);
-      return res.status(404).json({
-        success: false,
-        message: 'Utilisateur non trouvé',
-        error: 'User does not exist'
-      });
-    }
-
-    console.log('Found user:', existingUser);
 
     const messageData = {
       content,
@@ -63,8 +43,9 @@ const createMessage = async (req, res) => {
       userId: parsedUserId
     };
     
-    console.log('Message data to create:', messageData);
+    console.log('Creating message with data:', messageData);
 
+    // Create message directly - let database handle user existence check
     const message = await prisma.message.create({
       data: messageData,
       include: {

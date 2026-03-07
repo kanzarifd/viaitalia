@@ -7,6 +7,7 @@ const appointmentRoutes = require("./routes/appointmentRoutes");
 const universityInfoRoutes = require("./routes/universityInfoRoutes");
 const messageRoutes = require("./routes/messageRoutes");
 const emailRoutes = require("./routes/emailRoutes");
+const contractRoutes = require("./routes/contractRoutes");
 
 const app = express();
 
@@ -28,6 +29,7 @@ app.use("/api/appointments", appointmentRoutes);
 app.use("/api/university-info", universityInfoRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/email", emailRoutes);
+app.use("/api/contracts", contractRoutes);
 
 // Simple dashboard routes (no auth for testing)
 app.get("/api/user/dashboard", (req, res) => {
