@@ -206,6 +206,32 @@ const updateContractStatus = async (req, res) => {
       // Continue with response even if email fails
     }
 
+    // Create notification for user
+    try {
+      const statusText = status === 'CONFIRMED' ? 'approuvé' : status === 'REJECTED' ? 'rejeté' : 'mis à jour';
+      const notificationContent = `📄 Votre contrat "${existingContract.fileName}" a été ${statusText}`;
+      
+      // Get user ID for notification
+      const userContract = await prisma.contract.findUnique({
+        where: { id: parseInt(id) },
+        select: { userId: true }
+      });
+      
+      if (userContract) {
+        await prisma.notification.create({
+          data: {
+            userId: userContract.userId,
+            content: notificationContent
+          }
+        });
+        
+        console.log(`✅ Contract status notification created for user: ${userContract.userId}`);
+      }
+    } catch (notificationError) {
+      console.error('❌ Error creating contract status notification:', notificationError);
+      // Continue with response even if notification fails
+    }
+
     res.status(200).json({
       success: true,
       data: contract,

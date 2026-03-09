@@ -271,6 +271,24 @@ const updateAppointment = async (req, res) => {
         console.error('❌ Error sending appointment status update email:', emailError);
         // Don't fail the update if email fails
       }
+
+      // Create notification for user
+      try {
+        const statusText = status === 'CONFIRMED' ? 'confirmé' : status === 'CANCELLED' ? 'annulé' : 'mis à jour';
+        const notificationContent = `📅 Votre rendez-vous "${appointment.type}" a été ${statusText}`;
+        
+        await prisma.notification.create({
+          data: {
+            userId: appointment.user.id,
+            content: notificationContent
+          }
+        });
+        
+        console.log('✅ Appointment status notification created for user:', appointment.user.id);
+      } catch (notificationError) {
+        console.error('❌ Error creating appointment status notification:', notificationError);
+        // Don't fail the update if notification fails
+      }
     }
 
     res.status(200).json({

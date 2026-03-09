@@ -465,7 +465,7 @@ const Login = () => {
           {state === "login" ? (
             <>
               Pas encore de compte?{" "}
-              <span onClick={() => setState("register")}>
+              <span onClick={() => navigate("/register")}>
                 S'inscrire
               </span>
             </>

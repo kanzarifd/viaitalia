@@ -495,22 +495,40 @@ const emailService = {
     }
   },
 
-  // Send announcement notification to all users
-  sendAnnouncementNotification: async (announcementTitle, announcementContent, announcementType, announcementLink) => {
+  // Send announcement notification to selected users
+  sendAnnouncementNotification: async (announcementTitle, announcementContent, announcementType, announcementLink, selectedUserIds = []) => {
     try {
       console.log('=== SENDING ANNOUNCEMENT EMAIL NOTIFICATION ===');
+      console.log('=== SELECTED USER IDS ===', selectedUserIds);
       
-      // Get users directly from database (USER role only)
-      const users = await prisma.user.findMany({
-        where: {
-          email: {
-            not: ''
-          },
-          role: 'USER'
-        }
-      });
-      
-      console.log('=== FOUND USERS FOR ANNOUNCEMENT ===', users.length);
+      // Get specific users from database based on selected IDs
+      let users;
+      if (selectedUserIds.length > 0) {
+        // Get only selected users
+        users = await prisma.user.findMany({
+          where: {
+            id: {
+              in: selectedUserIds
+            },
+            email: {
+              not: ''
+            },
+            role: 'USER'
+          }
+        });
+        console.log('=== FOUND SELECTED USERS FOR ANNOUNCEMENT ===', users.length);
+      } else {
+        // If no users selected, get all users (fallback behavior)
+        users = await prisma.user.findMany({
+          where: {
+            email: {
+              not: ''
+            },
+            role: 'USER'
+          }
+        });
+        console.log('=== NO USERS SELECTED, SENDING TO ALL USERS ===', users.length);
+      }
       
       // Prepare email content for announcement
       const emailContent = `

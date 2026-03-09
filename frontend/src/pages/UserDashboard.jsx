@@ -7,6 +7,9 @@ import appointmentService from "../api/appointmentService";
 import universityInfoService from "../api/universityInfoService";
 import messageService from "../api/messageService";
 import contractService from "../api/contractService";
+import announcementService from "../api/announcementService";
+import notificationService from "../api/notificationService";
+import AnnouncementCard from "../components/AnnouncementCard";
 import styled from "styled-components";
 
 // Register GSAP
@@ -340,17 +343,104 @@ const ContentArea = styled.div`
 `;
 
 const ContentCard = styled.div`
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
+  background: linear-gradient(135deg, 
+    rgba(255, 255, 255, 0.08) 0%, 
+    rgba(239, 68, 68, 0.12) 50%,
+    rgba(0, 255, 51, 0.05) 100%
+  );
+  backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 20px;
-  padding: 2rem;
+  border-radius: 24px;
+  padding: 2.5rem;
   margin-bottom: 2rem;
   opacity: 0;
-  transform: translateY(30px);
+  transform: translateY(40px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &:hover {
+    transform: translateY(0) scale(1.02);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    border-color: rgba(0, 255, 51, 0.2);
+  }
+
+  @media (max-width: 768px) {
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+
+  @media (max-width: 48em) {
+    width: 100%;
+    padding: 1rem;
+  }
 `;
 
 const UserDashboard = () => {
+  // Helper functions for announcement cards
+  const getTypeColor = (type) => {
+    switch(type) {
+      case 'INFO':
+        return 'bg-gradient-to-r from-blue-500 to-blue-600';
+      case 'SUCCESS':
+        return 'bg-gradient-to-r from-green-500 to-green-600';
+      case 'WARNING':
+        return 'bg-gradient-to-r from-yellow-500 to-yellow-600';
+      case 'URGENT':
+        return 'bg-gradient-to-r from-red-500 to-red-600';
+      default:
+        return 'bg-gradient-to-r from-gray-500 to-gray-600';
+    }
+  };
+
+  const getTypeTextColor = (type) => {
+    switch(type) {
+      case 'INFO':
+        return 'text-blue-600';
+      case 'SUCCESS':
+        return 'text-green-600';
+      case 'WARNING':
+        return 'text-yellow-600';
+      case 'URGENT':
+        return 'text-red-600';
+      default:
+        return 'text-gray-600';
+    }
+  };
+
+  const getTypeIcon = (type) => {
+    switch(type) {
+      case 'INFO':
+        return '📢';
+      case 'SUCCESS':
+        return '✅';
+      case 'WARNING':
+        return '⚠️';
+      case 'URGENT':
+        return '🔴';
+      default:
+        return '📢';
+    }
+  };
+
+  const formatRelativeTime = (dateString) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffTime = Math.abs(now - date);
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const diffHours = Math.floor((diffTime % (1000 * 60 * 24)) / (1000 * 60));
+    const diffMinutes = Math.floor((diffTime % (1000 * 60)) / 1000);
+
+    if (diffDays > 0) {
+      return `Il y a ${diffDays} jour${diffDays > 1 ? 's' : ''}`;
+    } else if (diffHours > 0) {
+      return `Il y a ${diffHours} heure${diffHours > 1 ? 's' : ''}`;
+    } else if (diffMinutes > 0) {
+      return `Il y a ${diffMinutes} minute${diffMinutes > 1 ? 's' : ''}`;
+    } else {
+      return 'À l\'instant';
+    }
+  };
+
   useEffect(() => {
   if (window.innerWidth < 768) {
     const sidebar = document.querySelector(".MuiDrawer-root, .sidebar, .sider");
@@ -407,13 +497,112 @@ const addToRefs = (el) => {
   const [notificationMessage, setNotificationMessage] = useState('');
   const [notificationType, setNotificationType] = useState('success'); // success, error, info
 
+  // Notifications state
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showNotificationDropdown, setShowNotificationDropdown] = useState(false);
+  const notificationDropdownRef = useRef(null);
+
+  // Announcements state
+  const [announcements, setAnnouncements] = useState([]);
+  const [loadingAnnouncements, setLoadingAnnouncements] = useState(false);
+
   const sidebarRef = useRef(null);
   const headerRef = useRef(null);
   const contentRef = useRef(null);
 
   // Load appointments from backend on component mount
   useEffect(() => {
+    console.log('=== NOTIFICATION DEBUG ===');
+    console.log('User from context:', user);
+    console.log('User ID:', user?.id);
+    console.log('Token from localStorage:', localStorage.getItem('token'));
+    
     fetchAppointments();
+    fetchAnnouncements();
+    fetchNotifications();
+    fetchUnreadCount();
+  }, []);
+
+  // Periodic notification refresh (every 30 seconds)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchUnreadCount();
+    }, 30000); // Refresh every 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Notification functions
+  const fetchNotifications = async () => {
+    try {
+      console.log('Fetching notifications...');
+      const response = await notificationService.getAllNotifications();
+      console.log('Notifications response:', response);
+      if (response.success) {
+        setNotifications(response.data || []);
+        console.log('Notifications set:', response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+    }
+  };
+
+  const fetchUnreadCount = async () => {
+    try {
+      console.log('Fetching unread count...');
+      const response = await notificationService.getUnreadCount();
+      console.log('Unread count response:', response);
+      if (response.success) {
+        setUnreadCount(response.data || 0);
+        console.log('Unread count set:', response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching unread count:', error);
+      setUnreadCount(0);
+    }
+  };
+
+  const markAllAsRead = async () => {
+    try {
+      await notificationService.markAllAsRead();
+      console.log('Marking all notifications as read...');
+      setUnreadCount(0);
+      fetchNotifications(); // Refresh notifications list
+    } catch (error) {
+      console.error('Error marking all as read:', error);
+    }
+  };
+
+  // Notification dropdown handlers
+  const toggleNotificationDropdown = () => {
+    setShowNotificationDropdown(!showNotificationDropdown);
+    
+    if (!showNotificationDropdown) {
+      // Animate dropdown opening
+      gsap.fromTo(notificationDropdownRef.current, {
+        opacity: 0,
+        scale: 0.8,
+        transformOrigin: "top right"
+      }, {
+        opacity: 1,
+        scale: 1,
+        duration: 0.3,
+        ease: "back.out(1.7)"
+      });
+    }
+  };
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (notificationDropdownRef.current && !notificationDropdownRef.current.contains(event.target)) {
+        setShowNotificationDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const fetchAppointments = async () => {
@@ -429,6 +618,20 @@ const addToRefs = (el) => {
     } catch (error) {
       console.error('Error fetching appointments:', error);
       setAppointments([]);
+    }
+  };
+
+  // Fetch announcements from backend
+  const fetchAnnouncements = async () => {
+    try {
+      setLoadingAnnouncements(true);
+      const response = await announcementService.getActiveAnnouncements();
+      setAnnouncements(response.data || []);
+    } catch (error) {
+      console.error('Error fetching announcements:', error);
+      setAnnouncements([]);
+    } finally {
+      setLoadingAnnouncements(false);
     }
   };
 
@@ -1153,17 +1356,18 @@ const handleSaveUniversityInfo = async () => {
   };
 
   const menuItems = [
-    { id: 'rendezvous', icon: '📅', text: 'Rendez-vous' },
+       { id: 'rendezvous', icon: '📅', text: 'Rendez-vous' },
     { id: 'universite', icon: '🏫', text: 'Université' },
     { id: 'messagerie', icon: '💬', text: 'Messagerie' },
     { id: 'parcours', icon: '📄', text: 'Contrat' },
     { id: 'dossier', icon: '📁', text: 'Dossier' },
-    { id: 'annonce', icon: '📢', text: 'Annonce' }
+
   ];
 
   const renderContent = () => {
     switch(activeMenu) {
       case 'rendezvous':
+        // ... (rest of the code remains the same)
         return (
           <ContentCard className="content-card">
             <h2 className="text-2xl font-bold text-white mb-6">
@@ -1272,6 +1476,7 @@ const handleSaveUniversityInfo = async () => {
                       value={newAppointment.notes}
                       onChange={handleInputChange}
                       rows="3"
+                      cols="30"
                       className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-white"
                       placeholder="Ajoutez des notes supplémentaires..."
                     />
@@ -1302,7 +1507,6 @@ const handleSaveUniversityInfo = async () => {
                 </form>
               </>
             )}
-
             <div className="space-y-4">
               <h3 className="text-lg font-semibold text-white mb-4">
                 Mes Rendez-vous
@@ -1749,20 +1953,71 @@ const handleSaveUniversityInfo = async () => {
       case 'annonce':
         return (
           <ContentCard className="content-card">
-            <h2 className="text-2xl font-bold text-white mb-6">
-              Annonces
-            </h2>
-            <div className="text-center py-12">
-              <p className="text-gray-400 text-lg">
-                📢 Aucune annonce pour le moment
-              </p>
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold bg-gradient-to-r from-yellow-400 via-yellow-500 to-yellow-600 bg-clip-text text-transparent drop-shadow-lg mb-2">
+                📢 Annonces
+              </h2>
+              <p className="text-yellow-200 text-sm font-medium">Découvrez les dernières nouvelles de Via Italia</p>
             </div>
+            
+            {loadingAnnouncements ? (
+              <div className="flex justify-center items-center py-16">
+                <div className="relative">
+                  <div className="animate-spin rounded-full h-12 w-12 border-4 border-yellow-400 border-t-transparent"></div>
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <span className="text-yellow-400 text-2xl">📢</span>
+                  </div>
+                </div>
+              </div>
+            ) : announcements.length === 0 ? (
+              <div className="text-center py-16">
+                <div className="inline-flex items-center gap-3 bg-gradient-to-r from-gray-100 to-gray-200 rounded-2xl p-8 shadow-inner">
+                  <div className="flex flex-wrap gap-4 justify-center">
+                    <div className="col-span-full md:col-span-2 lg:col-span-3 text-center py-12">
+                      <div className="inline-flex items-center gap-3 mb-4">
+                        <span className="text-6xl text-gray-400 mb-3">📢</span>
+                        <span className="text-xl font-medium text-gray-600">Aucune annonce pour le moment</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="flex flex-wrap gap-4 justify-center">
+                {announcements.map((announcement, index) => (
+                  <div 
+                    key={announcement.id}
+                    className="announcement-wrapper flex-shrink-0"
+                    ref={el => addToRefs(el)}
+                  >
+                    <AnnouncementCard
+                      announcement={announcement}
+                      onLike={() => {
+                        console.log('Liked announcement:', announcement.id);
+                        // Add like functionality here
+                      }}
+                      onComment={() => {
+                        console.log('Commented on announcement:', announcement.id);
+                        // Add comment functionality here
+                      }}
+                      onShare={() => {
+                        console.log('Shared announcement:', announcement.id);
+                        // Add share functionality here
+                      }}
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </ContentCard>
         );
       
       case 'universite':
         return (
           <ContentCard className="content-card">
+            <h2 className="text-2xl font-bold text-white mb-6">
+              Informations Universitaires
+            </h2>
             <h2 className="text-2xl font-bold text-white mb-6"> Informations Universitaires </h2>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
               <div className="university-card">
@@ -2049,27 +2304,25 @@ const handleSaveUniversityInfo = async () => {
 
   return (
     <DashboardContainer>
-    
-      
-     
-      {/* Desktop Sidebar */}
-      <Sidebar ref={sidebarRef} isOpen={sidebarOpen}>
-        <div className="px-4 mb-8">
-          <h3 className="text-white font-bold text-lg mb-2">
-            Via Italia
-          </h3>
-          <p className="text-gray-400 text-sm">
-            Espace Étudiant
-          </p>
-        </div>
-        
-        {menuItems.map((item) => (
+      <Sidebar>
+        {menuItems.map((item, index) => (
           <SidebarItem
             key={item.id}
-            className={activeMenu === item.id ? 'active' : ''}
-            onClick={() => {
+            ref={addToRefs}
+            className={activeMenu === item.id ? "active" : ""}
+            onClick={(e) => {
               setActiveMenu(item.id);
-              setSidebarOpen(false);
+
+              // Haptic-like tap animation
+              gsap.fromTo(
+                e.currentTarget,
+                { scale: 0.9 },
+                {
+                  scale: 1,
+                  duration: 0.3,
+                  ease: "power3.out"
+                }
+              );
             }}
           >
             <span className="icon">{item.icon}</span>
@@ -2080,58 +2333,198 @@ const handleSaveUniversityInfo = async () => {
 
       <MainContent>
         <Header ref={headerRef}>
-  <HeaderLeft>
-    <NotificationButton>
-      🔔
-      <span className="badge">3</span>
-    </NotificationButton>
-  </HeaderLeft>
-  
-  <HeaderCenter>
-    <Logo>
-      <img src={logoSvg} alt="Via Italia" />
-    </Logo>
-  </HeaderCenter>
-  
-  <HeaderRight>
-    <LogoutButton onClick={handleLogout}>
-      Déconnexion
-    </LogoutButton>
-  </HeaderRight>
-</Header>
+          <HeaderLeft>
+            <NotificationButton onClick={toggleNotificationDropdown}>
+              🔔
+              {unreadCount > 0 && (
+                <span className="badge">{unreadCount > 99 ? '99+' : unreadCount}</span>
+              )}
+            </NotificationButton>
+            
+            {/* Notification Dropdown */}
+            {showNotificationDropdown && (
+              <div 
+                ref={notificationDropdownRef}
+                style={{
+                  position: 'absolute',
+                  top: '60px',
+                  right: '0',
+                  background: 'linear-gradient(135deg, rgba(17, 24, 39, 0.95), rgba(31, 41, 55, 0.95))',
+                  backdropFilter: 'blur(20px)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '16px',
+                  boxShadow: '0 20px 40px rgba(0, 0, 0, 0.3)',
+                  minWidth: '320px',
+                  maxHeight: '400px',
+                  overflowY: 'auto',
+                  zIndex: 1000,
+                  padding: '16px'
+                }}
+              >
+                <h3 style={{ color: 'white', fontSize: '16px', fontWeight: '600', marginBottom: '12px' }}>
+                  🔔 Notifications ({unreadCount})
+                </h3>
+                
+                {unreadCount > 0 && (
+                  <button
+                    onClick={markAllAsRead}
+                    style={{
+                      width: '100%',
+                      padding: '8px',
+                      background: 'linear-gradient(135deg, #3b82f6, #2563eb)',
+                      color: 'white',
+                      border: 'none',
+                      borderRadius: '8px',
+                      fontSize: '12px',
+                      cursor: 'pointer',
+                      marginBottom: '12px'
+                    }}
+                  >
+                    Tout marquer comme lu
+                  </button>
+                )}
+                
+                {notifications.length === 0 ? (
+                  <div style={{ textAlign: 'center', padding: '24px' }}>
+                    <div style={{ fontSize: '32px', marginBottom: '8px' }}>🔔</div>
+                    <p style={{ color: '#9ca3af', margin: 0, fontSize: '14px' }}>
+                      Aucune notification
+                    </p>
+                  </div>
+                ) : (
+                  notifications.map((notification) => (
+                    <div
+                      key={notification.id}
+                      style={{
+                        background: 'rgba(255, 255, 255, 0.05)',
+                        border: '1px solid rgba(255, 255, 255, 0.1)',
+                        borderRadius: '12px',
+                        padding: '12px',
+                        marginBottom: '8px'
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+                        {!notification.isRead && (
+                          <span style={{
+                            width: '8px',
+                            height: '8px',
+                            background: '#3b82f6',
+                            borderRadius: '50%',
+                            marginTop: '6px',
+                            flexShrink: 0
+                          }} />
+                        )}
+                        <div style={{ flex: 1 }}>
+                          <p style={{ 
+                            color: 'white', 
+                            margin: '0 0 4px 0', 
+                            fontSize: '14px'
+                          }}>
+                            {notification.content}
+                          </p>
+                          <p style={{ 
+                            color: '#9ca3af', 
+                            margin: 0, 
+                            fontSize: '12px' 
+                          }}>
+                            {formatRelativeTime(notification.createdAt)}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => {
+                            notificationService.deleteNotification(notification.id);
+                            setNotifications(notifications.filter(n => n.id !== notification.id));
+                            if (!notification.isRead) {
+                              setUnreadCount(Math.max(0, unreadCount - 1));
+                            }
+                          }}
+                          style={{
+                            background: 'transparent',
+                            border: 'none',
+                            color: '#9ca3af',
+                            cursor: 'pointer',
+                            fontSize: '16px'
+                          }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+          </HeaderLeft>
+          
+          <HeaderCenter>
+            <Logo>
+              <img src={logoSvg} alt="Via Italia" />
+            </Logo>
+          </HeaderCenter>
+          
+          <HeaderRight>
+            <LogoutButton onClick={handleLogout}>
+              Déconnexion
+            </LogoutButton>
+          </HeaderRight>
+        </Header>
 
         <ContentArea ref={contentRef}>
           {renderContent()}
         </ContentArea>
       </MainContent>
+      
       <BottomNav>
-  {menuItems.map((item, index) => (
-    <BottomNavItem
-      key={item.id}
-      ref={addToRefs}
-      className={activeMenu === item.id ? "active" : ""}
-      onClick={(e) => {
-        setActiveMenu(item.id);
+        {menuItems.map((item, index) => (
+          <BottomNavItem
+            key={item.id}
+            ref={addToRefs}
+            className={activeMenu === item.id ? "active" : ""}
+            onClick={(e) => {
+              setActiveMenu(item.id);
 
-        // Haptic-like tap animation
-        gsap.fromTo(
-          e.currentTarget,
-          { scale: 0.9 },
-          {
-            scale: 1,
-            duration: 0.3,
-            ease: "power3.out"
-          }
-        );
-      }}
-    >
-      <span className="icon">{item.icon}</span>
-      <span>{item.text}</span>
-    </BottomNavItem>
-  ))}
-</BottomNav>
+              // Haptic-like tap animation
+              gsap.fromTo(
+                e.currentTarget,
+                { scale: 0.9 },
+                {
+                  scale: 1,
+                  duration: 0.3,
+                  ease: "power3.out"
+                }
+              );
+            }}
+          >
+            <span className="icon">{item.icon}</span>
+            <span>{item.text}</span>
+          </BottomNavItem>
+        ))}
+      </BottomNav>
     </DashboardContainer>
   );
 };
 
-export default UserDashboard;
+const announcementCardStyles = `
+  .announcement-card {
+    transition: all 0.3s ease;
+    cursor: pointer;
+    
+    &:hover {
+      transform: scale(1.05);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+    }
+  }
+  
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+  
+  .animate-spin {
+    animation: spin 1s linear infinite;
+    border-bottom: 2px solid;
+    border-bottom-color: rgb(59 130 246 / 0.3);
+  }
+`;
+
+export default UserDashboard; 

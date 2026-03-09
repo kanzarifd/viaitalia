@@ -8,6 +8,7 @@ import messageService from "../api/messageService";
 import contractService from "../api/contractService";
 import announcementService from "../api/announcementService";
 import appointmentService from "../api/appointmentService";
+import universityInfoService from '../api/universityInfoService';
 
 // Register GSAP
 gsap.registerPlugin();
@@ -214,13 +215,59 @@ export default function AdminDashboard() {
     title: '',
     content: '',
     type: 'INFO',
-    link: ''
+    link: '',
+    selectedUsers: [] // Add selected users array
   });
   const [editingAnnouncement, setEditingAnnouncement] = useState(null);
   const [isCreatingAnnouncement, setIsCreatingAnnouncement] = useState(false);
 
   // Appointment state
   const [appointments, setAppointments] = useState([]);
+
+  // Message templates state
+  const [messageTemplates, setMessageTemplates] = useState([
+    {
+      id: 1,
+      title: '👋 Bienvenue',
+      content: 'Bonjour et bienvenue sur Via Italia ! Nous sommes ravis de vous accompagner dans votre projet d\'études en Italie. Comment puis-je vous aider ?'
+    },
+    {
+      id: 2,
+      title: '📋 Demande de documents',
+      content: 'Pour continuer votre dossier, merci de nous fournir les documents suivants : passeport, relevés de notes, diplômes, et un justificatif de domicile. Puis-je vous aider pour autre chose ?'
+    },
+    {
+      id: 3,
+      title: '🎓 Information universitaire',
+      content: 'J\'ai bien reçu votre demande concernant les universités italiennes. Je vais préparer une liste d\'établissements correspondant à votre profil. Je reviens vers vous rapidement !'
+    },
+    {
+      id: 4,
+      title: '📅 Rendez-vous',
+      content: 'Votre rendez-vous est confirmé ! N\'oubliez pas d\'apporter vos documents originaux. À très bientôt !'
+    },
+    {
+      id: 5,
+      title: '💰 Paiement',
+      content: 'Concernant le paiement de nos services, vous pouvez régler par virement bancaire ou carte bancaire. Voici nos coordonnées bancaires si besoin : [IBAN]. Avez-vous d\'autres questions ?'
+    },
+    {
+      id: 6,
+      title: '✅ Suivi dossier',
+      content: 'Votre dossier est en cours de traitement. Tout se déroule bien et nous vous tiendrons informé de chaque avancée. Merci pour votre confiance !'
+    },
+    {
+      id: 7,
+      title: '🔔 Rappel',
+      content: 'Petit rappel : n\'oubliez pas votre rendez-vous prévu pour [date]. Pensez à préparer tous les documents nécessaires. Belle journée !'
+    },
+    {
+      id: 8,
+      title: '📞 Appel',
+      content: 'Je vous appelle dans la journée pour discuter de votre projet. Préparez vos questions si vous en avez ! À tout à l\'heure.'
+    }
+  ]);
+  const [showTemplates, setShowTemplates] = useState(false);
 
   const sidebarRef = useRef(null);
   const headerRef = useRef(null);
@@ -293,7 +340,8 @@ export default function AdminDashboard() {
         title: '',
         content: '',
         type: 'INFO',
-        link: ''
+        link: '',
+        selectedUsers: []
       });
       
       // Refresh announcements list
@@ -520,6 +568,15 @@ export default function AdminDashboard() {
     } finally {
       setIsSendingMessage(false);
     }
+  };
+
+  // Template functions
+  const toggleTemplates = () => {
+    setShowTemplates(!showTemplates);
+  };
+
+  const useTemplate = (template) => {
+    setNewMessage(template);
   };
 
   // Contract functions
@@ -851,6 +908,48 @@ export default function AdminDashboard() {
                       
                       {/* Message Input */}
                       <div className="border-t border-gray-700/50 p-4">
+                        {/* Template Selector */}
+                        <div className="mb-3">
+                          <button
+                            onClick={toggleTemplates}
+                            className="px-3 py-1 bg-purple-500/20 hover:bg-purple-500/30 text-purple-400 rounded-lg text-sm font-medium transition-colors flex items-center gap-2"
+                          >
+                            📝 Messages prédéfinis
+                            <svg 
+                              className={`w-4 h-4 transition-transform ${showTemplates ? 'rotate-180' : ''}`} 
+                              fill="none" 
+                              stroke="currentColor" 
+                              viewBox="0 0 24 24"
+                            >
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                            </svg>
+                          </button>
+                          
+                          {showTemplates && (
+                            <div className="mt-2 bg-gray-800/50 border border-gray-700/50 rounded-lg p-3 max-h-48 overflow-y-auto">
+                              <div className="grid grid-cols-1 gap-2">
+                                {messageTemplates.map((template) => (
+                                  <button
+                                    key={template.id}
+                                    onClick={() => {
+                                      setNewMessage(template.content);
+                                      setShowTemplates(false);
+                                    }}
+                                    className="text-left px-3 py-2 bg-gray-700/50 hover:bg-gray-700 rounded-lg transition-colors group"
+                                  >
+                                    <div className="font-medium text-white text-sm group-hover:text-purple-400">
+                                      {template.title}
+                                    </div>
+                                    <div className="text-xs text-gray-400 mt-1 line-clamp-2">
+                                      {template.content}
+                                    </div>
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                        
                         <div className="flex gap-2">
                           <input
                             type="text"
@@ -892,7 +991,6 @@ export default function AdminDashboard() {
             </div>
           </>
         );
-      
       case 'annonces':
         return (
           <ContentCard className="content-card">
@@ -948,6 +1046,53 @@ export default function AdminDashboard() {
                       <option value="WARNING">⚠️ Avertissement</option>
                       <option value="URGENT">🚨 Urgent</option>
                     </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Destinataires (utilisateurs)
+                    </label>
+                    <div className="space-y-2">
+                      <div className="max-h-32 overflow-y-auto border border-gray-600/50 rounded-lg bg-gray-700/50 p-2">
+                        {allUsers.filter(u => u.role === 'USER').map((user) => (
+                          <label key={user.id} className="flex items-center space-x-2 text-white hover:bg-gray-600/50 p-2 rounded cursor-pointer">
+                            <input
+                              type="checkbox"
+                              checked={newAnnouncement.selectedUsers.includes(user.id)}
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  setNewAnnouncement({
+                                    ...newAnnouncement,
+                                    selectedUsers: [...newAnnouncement.selectedUsers, user.id]
+                                  });
+                                } else {
+                                  setNewAnnouncement({
+                                    ...newAnnouncement,
+                                    selectedUsers: newAnnouncement.selectedUsers.filter(id => id !== user.id)
+                                  });
+                                }
+                              }}
+                              className="w-4 h-4 text-purple-500 rounded focus:ring-purple-500 focus:ring-2"
+                            />
+                            <span className="flex-1">{user.firstName} {user.lastName}</span>
+                            <span className="text-xs text-gray-400">{user.email}</span>
+                          </label>
+                        ))}
+                      </div>
+                      <div className="flex items-center justify-between text-sm text-gray-400">
+                        <span>{newAnnouncement.selectedUsers.length} utilisateur(s) sélectionné(s)</span>
+                        <button
+                          type="button"
+                          onClick={() => setNewAnnouncement({
+                            ...newAnnouncement,
+                            selectedUsers: allUsers.filter(u => u.role === 'USER').map(u => u.id)
+                          })}
+                          className="text-purple-400 hover:text-purple-300 text-xs underline"
+                        >
+                          Tout sélectionner
+                        </button>
+                      </div>
+                    </div>
                   </div>
                   
                   <div>

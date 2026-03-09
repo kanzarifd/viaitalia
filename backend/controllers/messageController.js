@@ -83,6 +83,23 @@ const createMessage = async (req, res) => {
         console.error('Email notification error:', emailError);
         // Don't fail the message creation if email fails
       }
+
+      // Create notification for user
+      try {
+        const notificationContent = `💬 Nouveau message de l'administrateur: "${content.substring(0, 50)}${content.length > 50 ? '...' : ''}"`;
+        
+        await prisma.notification.create({
+          data: {
+            userId: message.user.id,
+            content: notificationContent
+          }
+        });
+        
+        console.log('✅ Message notification created for user:', message.user.id);
+      } catch (notificationError) {
+        console.error('❌ Error creating message notification:', notificationError);
+        // Don't fail the message creation if notification fails
+      }
     }
 
     res.status(201).json({
