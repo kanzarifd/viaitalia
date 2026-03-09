@@ -1,4 +1,7 @@
 const nodemailer = require('nodemailer');
+const axios = require('axios');
+const { PrismaClient } = require('@prisma/client');
+const prisma = new PrismaClient();
 
 // Create email transporter
 const transporter = nodemailer.createTransport({
@@ -47,7 +50,7 @@ const emailService = {
                 box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
               }
               .header {
-                background: linear-gradient(135deg, #00ff33 0%, #ef4444 100%);
+                background: linear-gradient(135deg, #e74c3c 0%, #27ae60 100%);
                 padding: 30px;
                 text-align: center;
                 color: white;
@@ -81,7 +84,7 @@ const emailService = {
               }
               .cta-button {
                 display: inline-block;
-                background: linear-gradient(135deg, #00ff33 0%, #00cc29 100%);
+                background: linear-gradient(135deg, #e74c3c 0%, #27ae60 100%);
                 color: white;
                 padding: 15px 30px;
                 text-decoration: none;
@@ -231,10 +234,10 @@ const emailService = {
 
       const getStatusColor = (status) => {
         switch (status) {
-          case 'PENDING': return '#ffc107';
-          case 'UPLOADED': return '#17a2b8';
-          case 'CONFIRMED': return '#28a745';
-          case 'REJECTED': return '#dc3545';
+          case 'PENDING': return '#d68910';
+          case 'UPLOADED': return '#1d8348';
+          case 'CONFIRMED': return '#229954';
+          case 'REJECTED': return '#c0392b';
           default: return '#6c757d';
         }
       };
@@ -243,28 +246,28 @@ const emailService = {
         switch (status) {
           case 'CONFIRMED':
             return `
-              <div style="background-color: #d4edda; border-left: 4px solid #28a745; padding: 20px; margin: 25px 0; border-radius: 8px;">
+              <div style="background-color: #d4edda; border-left: 4px solid #229954; padding: 20px; margin: 25px 0; border-radius: 8px;">
                 <h3 style="color: #155724; margin: 0 0 10px 0;">🎉 Félicitations!</h3>
                 <p style="margin: 0; color: #155724;">Votre contrat a été confirmé avec succès. Vous pouvez maintenant procéder aux étapes suivantes de votre inscription.</p>
               </div>
             `;
           case 'REJECTED':
             return `
-              <div style="background-color: #f8d7da; border-left: 4px solid #dc3545; padding: 20px; margin: 25px 0; border-radius: 8px;">
+              <div style="background-color: #f8d7da; border-left: 4px solid #c0392b; padding: 20px; margin: 25px 0; border-radius: 8px;">
                 <h3 style="color: #721c24; margin: 0 0 10px 0;">⚠️ Action requise</h3>
                 <p style="margin: 0; color: #721c24;">Votre contrat a été rejeté. Veuillez vérifier les informations fournies et soumettre un nouveau contrat si nécessaire.</p>
               </div>
             `;
           case 'PENDING':
             return `
-              <div style="background-color: #fff3cd; border-left: 4px solid #ffc107; padding: 20px; margin: 25px 0; border-radius: 8px;">
+              <div style="background-color: #fff3cd; border-left: 4px solid #d68910; padding: 20px; margin: 25px 0; border-radius: 8px;">
                 <h3 style="color: #856404; margin: 0 0 10px 0;">⏳ En cours de traitement</h3>
                 <p style="margin: 0; color: #856404;">Votre contrat est en attente de validation par notre équipe administrative.</p>
               </div>
             `;
           case 'UPLOADED':
             return `
-              <div style="background-color: #d1ecf1; border-left: 4px solid #17a2b8; padding: 20px; margin: 25px 0; border-radius: 8px;">
+              <div style="background-color: #d1ecf1; border-left: 4px solid #1d8348; padding: 20px; margin: 25px 0; border-radius: 8px;">
                 <h3 style="color: #0c5460; margin: 0 0 10px 0;">📤 Document reçu</h3>
                 <p style="margin: 0; color: #0c5460;">Votre contrat a bien été reçu et est en cours d'examen.</p>
               </div>
@@ -302,7 +305,7 @@ const emailService = {
                 box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
               }
               .header {
-                background: linear-gradient(135deg, #00ff33 0%, #ef4444 100%);
+                background: linear-gradient(135deg, #e74c3c 0%, #27ae60 100%);
                 padding: 30px;
                 text-align: center;
                 color: white;
@@ -339,11 +342,11 @@ const emailService = {
                 padding: 20px;
                 border-radius: 8px;
                 margin: 20px 0;
-                border-left: 4px solid #007bff;
+                border-left: 4px solid #e74c3c;
               }
               .info-box h3 {
                 margin: 0 0 15px 0;
-                color: #007bff;
+                color: #e74c3c;
                 font-size: 18px;
               }
               .info-box ul {
@@ -356,7 +359,7 @@ const emailService = {
               }
               .cta-button {
                 display: inline-block;
-                background: linear-gradient(135deg, #00ff33 0%, #00cc29 100%);
+                background: linear-gradient(135deg, #e74c3c 0%, #27ae60 100%);
                 color: white;
                 padding: 15px 30px;
                 text-decoration: none;
@@ -488,6 +491,462 @@ const emailService = {
       return { success: true };
     } catch (error) {
       console.error('Email service configuration error:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  // Send announcement notification to all users
+  sendAnnouncementNotification: async (announcementTitle, announcementContent, announcementType, announcementLink) => {
+    try {
+      console.log('=== SENDING ANNOUNCEMENT EMAIL NOTIFICATION ===');
+      
+      // Get users directly from database (USER role only)
+      const users = await prisma.user.findMany({
+        where: {
+          email: {
+            not: ''
+          },
+          role: 'USER'
+        }
+      });
+      
+      console.log('=== FOUND USERS FOR ANNOUNCEMENT ===', users.length);
+      
+      // Prepare email content for announcement
+      const emailContent = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <title>Nouvelle Annonce - Via Italia</title>
+        </head>
+        <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8f9fa; line-height: 1.6;">
+          
+          <div style="max-width: 600px; margin: 20px auto; background: linear-gradient(135deg, #e74c3c 0%, #27ae60 100%); border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+            
+            <!-- Header -->
+            <div style="background: rgba(255,255,255,0.1); padding: 30px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.2);">
+              <h1 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                📢 Via Italia
+              </h1>
+              <p style="margin: 10px 0 0 0; color: rgba(255,255,255,0.9); font-size: 16px; font-weight: 300;">
+                Communication Officielle
+              </p>
+            </div>
+            
+            <!-- Content -->
+            <div style="background: #ffffff; padding: 40px 30px;">
+              
+              <!-- Announcement Title -->
+              <div style="text-align: center; margin-bottom: 30px;">
+                <h2 style="margin: 0; color: #2c3e50; font-size: 24px; font-weight: 600; padding-bottom: 15px; border-bottom: 3px solid #e74c3c; display: inline-block;">
+                  ${announcementTitle}
+                </h2>
+              </div>
+              
+              <!-- Announcement Content -->
+              <div style="background: #f8f9fa; padding: 25px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #e74c3c;">
+                <p style="margin: 0; color: #34495e; font-size: 16px; line-height: 1.7;">
+                  ${announcementContent}
+                </p>
+              </div>
+              
+              <!-- Announcement Type Badge -->
+              <div style="text-align: center; margin: 25px 0;">
+                <span style="
+                  display: inline-block;
+                  padding: 8px 20px;
+                  background: ${announcementType === 'URGENT' ? '#c0392b' : announcementType === 'WARNING' ? '#d68910' : announcementType === 'SUCCESS' ? '#229954' : '#1d8348'};
+                  color: white;
+                  border-radius: 25px;
+                  font-size: 14px;
+                  font-weight: 600;
+                  text-transform: uppercase;
+                  letter-spacing: 1px;
+                  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                ">
+                  ${announcementType}
+                </span>
+              </div>
+              
+              <!-- Announcement Link -->
+              ${announcementLink ? `
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${announcementLink}" style="
+                  display: inline-block;
+                  padding: 15px 35px;
+                  background: linear-gradient(135deg, #e74c3c 0%, #27ae60 100%);
+                  color: white;
+                  text-decoration: none;
+                  border-radius: 8px;
+                  font-weight: 600;
+                  font-size: 16px;
+                  box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+                  transition: all 0.3s ease;
+                ">
+                  📋 Voir l'annonce complète
+                </a>
+              </div>
+              ` : ''}
+              
+            </div>
+            
+            <!-- Footer -->
+            <div style="background: #2c3e50; padding: 30px; text-align: center;">
+              <div style="margin-bottom: 20px;">
+                <h3 style="margin: 0 0 10px 0; color: #ecf0f1; font-size: 18px; font-weight: 600;">
+                  L'Équipe Via Italia
+                </h3>
+                <p style="margin: 5px 0; color: #bdc3c7; font-size: 14px;">
+                  Service d'information et de communication
+                </p>
+              </div>
+              
+              <div style="border-top: 1px solid #34495e; padding-top: 20px; margin-top: 20px;">
+                <p style="margin: 0; color: #95a5a6; font-size: 12px;">
+                  © ${new Date().getFullYear()} Via Italia. Tous droits réservés.
+                </p>
+                <p style="margin: 5px 0 0 0; color: #95a5a6; font-size: 12px;">
+                  Cet email a été envoyé automatiquement. Merci de ne pas répondre.
+                </p>
+              </div>
+            </div>
+            
+          </div>
+          
+        </body>
+        </html>
+      `;
+      
+      // Send email to each user
+      const emailPromises = users.map(async (user) => {
+        try {
+          console.log('=== SENDING ANNOUNCEMENT EMAIL TO USER ===', user.email);
+          
+          const mailOptions = {
+            from: process.env.EMAIL_USER || '"Via Italia" <noreply@viaitalia.fr>',
+            to: user.email,
+            subject: '📢 Nouvelle Annonce: ' + announcementTitle,
+            html: emailContent
+          };
+          
+          await transporter.sendMail(mailOptions);
+          
+          console.log('=== EMAIL SENT TO USER ===', user.email);
+          return {
+            success: true,
+            message: `Email sent to ${user.email}`,
+            userId: user.id
+          };
+        } catch (error) {
+          console.error('=== ERROR SENDING EMAIL TO USER ===', user.email, error);
+          return {
+            success: false,
+            error: error.message,
+            userId: user.id
+          };
+        }
+      });
+      
+      // Wait for all emails to be sent
+      const results = await Promise.all(emailPromises);
+      const successfulEmails = results.filter(r => r.success);
+      const failedEmails = results.filter(r => !r.success);
+      
+      console.log('=== ANNOUNCEMENT EMAIL RESULTS ===', {
+        total: users.length,
+        successful: successfulEmails.length,
+        failed: failedEmails.length
+      });
+      
+      return {
+        success: true,
+        message: `Announcement notification sent to ${successfulEmails.length} users`,
+        results: results
+      };
+      
+    } catch (error) {
+      console.error('=== ANNOUNCEMENT EMAIL NOTIFICATION ERROR ===', error);
+      throw error;
+    }
+  },
+
+  // Send appointment status update email
+  sendAppointmentStatusUpdateEmail: async (userEmail, userName, appointmentType, appointmentDate, newStatus, newEtat, adminName) => {
+    try {
+      console.log('=== SENDING APPOINTMENT STATUS UPDATE EMAIL ===');
+      console.log('To:', userEmail);
+      console.log('User:', userName);
+      console.log('Appointment Type:', appointmentType);
+      console.log('Appointment Date:', appointmentDate);
+      console.log('New Status:', newStatus);
+      console.log('New Etat:', newEtat);
+      console.log('Admin:', adminName);
+      
+      const getStatusText = (status) => {
+        switch(status) {
+          case 'CONFIRMED':
+            return '✅ Confirmé';
+          case 'CANCELLED':
+            return '❌ Annulé';
+          case 'PENDING':
+            return '⏳ En Attente';
+          default:
+            return '⏳ En Attente';
+        }
+      };
+
+      const getEtatText = (etat) => {
+        switch(etat) {
+          case 'PRESENTIEL':
+            return '🏢 Présentiel';
+          case 'EN_LIGNE':
+            return '💻 En Ligne';
+          default:
+            return '🏢 Présentiel';
+        }
+      };
+
+      const getActionMessage = (status) => {
+        switch(status) {
+          case 'CONFIRMED':
+            return `
+              <div class="info-box">
+                <h3>🎉 Votre rendez-vous est confirmé!</h3>
+                <p>Nous sommes ravis de vous confirmer votre rendez-vous. Veuillez vous présenter à l'heure et au lieu prévus.</p>
+              </div>
+            `;
+          case 'CANCELLED':
+            return `
+              <div class="info-box">
+                <h3>📝 Votre rendez-vous a été annulé</h3>
+                <p>Nous vous informons que votre rendez-vous a été annulé. Si vous avez des questions, n'hésitez pas à nous contacter.</p>
+              </div>
+            `;
+          default:
+            return `
+              <div class="info-box">
+                <h3>📋 Votre rendez-vous est en attente</h3>
+                <p>Votre rendez-vous est en attente de confirmation. Nous vous tiendrons informé dès que possible.</p>
+              </div>
+            `;
+        }
+      };
+
+      const mailOptions = {
+        from: process.env.EMAIL_USER,
+        to: userEmail,
+        subject: `📅 Mise à jour de votre rendez-vous - Via Italia`,
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Mise à jour de Rendez-vous - Via Italia</title>
+          </head>
+          <body style="margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8f9fa; line-height: 1.6;">
+            
+            <div style="max-width: 600px; margin: 20px auto; background: linear-gradient(135deg, #e74c3c 0%, #27ae60 100%); border-radius: 12px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.1);">
+              
+              <!-- Header -->
+              <div style="background: rgba(255,255,255,0.1); padding: 30px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.2);">
+                <h1 style="margin: 0; color: #ffffff; font-size: 32px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.3);">
+                  📅 Via Italia
+                </h1>
+                <p style="margin: 10px 0 0 0; color: rgba(255,255,255,0.9); font-size: 16px; font-weight: 300;">
+                  Service de Rendez-vous
+                </p>
+              </div>
+              
+              <!-- Content -->
+              <div style="background: #ffffff; padding: 40px 30px;">
+                
+                <!-- Greeting -->
+                <p style="margin: 0 0 20px 0; color: #2c3e50; font-size: 16px;">
+                  Bonjour <strong>${userName}</strong>,
+                </p>
+                
+                <!-- Main Message -->
+                <p style="margin: 0 0 20px 0; color: #34495e; font-size: 16px;">
+                  Nous vous informons que le statut de votre rendez-vous <strong>${appointmentType}</strong> a été mis à jour par notre équipe administrative.
+                </p>
+                
+                <!-- Status Badge -->
+                <div style="text-align: center; margin: 25px 0;">
+                  <div style="
+                    display: inline-block;
+                    padding: 12px 24px;
+                    background: ${newStatus === 'CONFIRMED' ? '#27ae60' : newStatus === 'CANCELLED' ? '#e74c3c' : '#f39c12'};
+                    color: white;
+                    border-radius: 25px;
+                    font-size: 16px;
+                    font-weight: 600;
+                    text-transform: uppercase;
+                    letter-spacing: 1px;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+                  ">
+                    ${getStatusText(newStatus)}
+                  </div>
+                </div>
+                
+                <!-- Etat Badge -->
+                <div style="text-align: center; margin: 20px 0;">
+                  <div style="
+                    display: inline-block;
+                    padding: 10px 20px;
+                    background: ${newEtat === 'PRESENTIEL' ? '#27ae60' : '#3498db'};
+                    color: white;
+                    border-radius: 20px;
+                    font-size: 14px;
+                    font-weight: 500;
+                    box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+                  ">
+                    ${getEtatText(newEtat)}
+                  </div>
+                </div>
+                
+                <!-- Appointment Details -->
+                <div style="background: #f8f9fa; padding: 25px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #e74c3c;">
+                  <h3 style="margin: 0 0 15px 0; color: #2c3e50; font-size: 18px;">📋 Détails du rendez-vous:</h3>
+                  <ul style="margin: 0; padding: 0; list-style: none; color: #34495e;">
+                    <li style="margin-bottom: 10px;"><strong>Type:</strong> ${appointmentType}</li>
+                    <li style="margin-bottom: 10px;"><strong>Date:</strong> ${new Date(appointmentDate).toLocaleDateString('fr-FR', { 
+                      weekday: 'long', 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric'
+                    })}</li>
+                    <li style="margin-bottom: 10px;"><strong>Heure:</strong> ${new Date(appointmentDate).toLocaleTimeString('fr-FR', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })}</li>
+                    <li style="margin-bottom: 10px;"><strong>Statut:</strong> ${getStatusText(newStatus)}</li>
+                    <li style="margin-bottom: 10px;"><strong>Mode:</strong> ${getEtatText(newEtat)}</li>
+                    <li style="margin-bottom: 10px;"><strong>Mis à jour par:</strong> ${adminName}</li>
+                    <li style="margin-bottom: 0;"><strong>Date de mise à jour:</strong> ${new Date().toLocaleDateString('fr-FR', { 
+                      weekday: 'long', 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}</li>
+                  </ul>
+                </div>
+                
+                ${getActionMessage(newStatus)}
+                
+                <!-- CTA Button -->
+                <div style="text-align: center; margin: 30px 0;">
+                  <a href="https://viaitalia.fr/login" style="
+                    display: inline-block;
+                    padding: 15px 35px;
+                    background: linear-gradient(135deg, #e74c3c 0%, #27ae60 100%);
+                    color: white;
+                    text-decoration: none;
+                    border-radius: 8px;
+                    font-weight: 600;
+                    font-size: 16px;
+                    box-shadow: 0 4px 15px rgba(231, 76, 60, 0.4);
+                    transition: all 0.3s ease;
+                  ">
+                    🚀 Accéder à mon tableau de bord
+                  </a>
+                </div>
+                
+                <!-- Footer Message -->
+                <p style="margin: 30px 0 0 0; color: #34495e; font-size: 16px;">
+                  Nous sommes là pour vous accompagner dans votre projet d'études en Italie!
+                </p>
+                
+                <!-- Signature -->
+                <p style="margin: 20px 0 0 0; color: #7f8c8d; font-size: 14px;">
+                  Cordialement,<br>
+                  L'Équipe Via Italia<br>
+                  Service d'Orientation Universitaire
+                </p>
+              </div>
+              
+              <!-- Footer -->
+              <div style="background: #2c3e50; padding: 30px; text-align: center;">
+                <div style="border-top: 1px solid #34495e; padding-top: 20px; margin-top: 20px;">
+                  <p style="margin: 0; color: #95a5a6; font-size: 12px;">
+                    © ${new Date().getFullYear()} Via Italia. Tous droits réservés.
+                  </p>
+                  <p style="margin: 5px 0 0 0; color: #95a5a6; font-size: 12px;">
+                    Cet email a été envoyé automatiquement. Merci de ne pas répondre.
+                  </p>
+                </div>
+              </div>
+              
+            </div>
+            
+          </body>
+          </html>
+        `
+      };
+
+      await transporter.sendMail(mailOptions);
+      console.log('✅ Appointment status update email sent successfully to:', userEmail);
+      return { success: true };
+    } catch (error) {
+      console.error('❌ Error sending appointment status update email:', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  // Test email sending function
+  testAnnouncementEmail: async () => {
+    console.log('=== TESTING EMAIL SERVICE ===');
+    
+    try {
+      // Test the email service directly
+      const testResult = await emailService.sendAnnouncementNotification(
+        'Test Announcement',
+        'This is a test announcement content',
+        'INFO',
+        'https://example.com'
+      );
+      
+      console.log('=== TEST EMAIL SERVICE RESULT ===', testResult);
+      
+      return testResult;
+      
+    } catch (error) {
+      console.error('=== TEST EMAIL SERVICE ERROR ===', error);
+      return { success: false, error: error.message };
+    }
+  },
+
+  // Test nodemailer directly
+  testNodemailer: async () => {
+    console.log('=== TESTING NODEMAILER ===');
+    
+    try {
+      // Create test email content
+      const testEmailContent = `
+        <h2>Test Email from Nodemailer</h2>
+        <p>This is a test email to verify nodemailer is working correctly.</p>
+      `;
+      
+      // Create test mail options
+      const testMailOptions = {
+        from: process.env.EMAIL_USER || '"Via Italia" <noreply@viaitalia.fr>',
+        to: 'fedy22ka@gmail.com',
+        subject: '📧 Test Email from Via Italia',
+        html: testEmailContent
+      };
+      
+      // Send test email
+      const info = await transporter.sendMail(testMailOptions);
+      console.log('=== NODEMAILER TEST RESULT ===', info);
+      
+      return info;
+      
+    } catch (error) {
+      console.error('=== NODEMAILER TEST ERROR ===', error);
       return { success: false, error: error.message };
     }
   }

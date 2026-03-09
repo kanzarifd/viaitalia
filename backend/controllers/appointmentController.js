@@ -206,6 +206,31 @@ const updateAppointment = async (req, res) => {
     const { id } = req.params;
     const { type, date, status, etat } = req.body;
 
+    // Get the current appointment before updating
+    const currentAppointment = await prisma.appointment.findUnique({
+      where: {
+        id: parseInt(id)
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true
+          }
+        }
+      }
+    });
+
+    if (!currentAppointment) {
+      return res.status(404).json({
+        success: false,
+        message: 'Rendez-vous non trouvé'
+      });
+    }
+
+    // Update the appointment
     const appointment = await prisma.appointment.update({
       where: {
         id: parseInt(id)
@@ -227,6 +252,26 @@ const updateAppointment = async (req, res) => {
         }
       }
     });
+
+    // Send email notification if status or etat changed
+    if (status && currentAppointment.status !== status) {
+      const emailService = require('../services/emailService');
+      try {
+        await emailService.sendAppointmentStatusUpdateEmail(
+          appointment.user.email,
+          `${appointment.user.firstName} ${appointment.user.lastName}`,
+          appointment.type,
+          appointment.date,
+          status,
+          appointment.etat,
+          'Administrateur Via Italia'
+        );
+        console.log('✅ Appointment status update email sent to:', appointment.user.email);
+      } catch (emailError) {
+        console.error('❌ Error sending appointment status update email:', emailError);
+        // Don't fail the update if email fails
+      }
+    }
 
     res.status(200).json({
       success: true,

@@ -6,6 +6,8 @@ import styled from "styled-components";
 import axios from "axios";
 import messageService from "../api/messageService";
 import contractService from "../api/contractService";
+import announcementService from "../api/announcementService";
+import appointmentService from "../api/appointmentService";
 
 // Register GSAP
 gsap.registerPlugin();
@@ -202,20 +204,187 @@ export default function AdminDashboard() {
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [allUsers, setAllUsers] = useState([]);
 
-  // Contract state
+  // Announcement management state
   const [contracts, setContracts] = useState([]);
   const [selectedContract, setSelectedContract] = useState(null);
+
+  // Announcement state
+  const [announcements, setAnnouncements] = useState([]);
+  const [newAnnouncement, setNewAnnouncement] = useState({
+    title: '',
+    content: '',
+    type: 'INFO',
+    link: ''
+  });
+  const [editingAnnouncement, setEditingAnnouncement] = useState(null);
+  const [isCreatingAnnouncement, setIsCreatingAnnouncement] = useState(false);
+
+  // Appointment state
+  const [appointments, setAppointments] = useState([]);
 
   const sidebarRef = useRef(null);
   const headerRef = useRef(null);
   const contentRef = useRef(null);
 
-  // Load users and messages on component mount
+  // Announcement management functions
+  const fetchAnnouncements = async () => {
+    try {
+      const response = await announcementService.getAllAnnouncements();
+      if (response.success) {
+        setAnnouncements(response.data || []);
+        console.log('Announcements loaded:', response.data);
+      } else {
+        console.error('Error fetching announcements:', response.error);
+      }
+    } catch (error) {
+      console.error('Error fetching announcements:', error);
+      setAnnouncements([]);
+    }
+  };
+
+  const createAnnouncement = async () => {
+    console.log('=== CREATE ANNOUNCEMENT FUNCTION CALLED ===');
+    
+    if (!newAnnouncement.title || !newAnnouncement.content) {
+      alert('Veuillez remplir le titre et le contenu de l\'annonce');
+      return;
+    }
+
+    try {
+      console.log('=== SETTING LOADING STATE ===');
+      setIsCreatingAnnouncement(true);
+      
+      console.log('=== ABOUT TO CREATE ANNOUNCEMENT ===');
+      // Create the announcement
+      const response = await announcementService.createAnnouncement(newAnnouncement);
+      console.log('=== CREATE ANNOUNCEMENT RESPONSE ===', response);
+      
+      // Simple test to verify code execution reaches email section
+      console.log('=== CODE REACHES EMAIL SECTION ===');
+      
+      // Send email notification to all users
+      console.log('=== ABOUT TO SEND EMAIL NOTIFICATION ===');
+      try {
+        const announcementId = response.data?.id || response.data?.data?.id || response.id;
+        console.log('=== ANNOUNCEMENT ID FOR EMAIL ===', announcementId);
+        
+        if (announcementId) {
+          console.log('=== CALLING EMAIL NOTIFICATION ===');
+          try {
+            await announcementService.sendAnnouncementNotification(announcementId);
+            console.log('Email notification sent to all users');
+          } catch (emailError) {
+            console.error('=== EMAIL NOTIFICATION ERROR ===', emailError);
+            console.error('Error sending email notification:', emailError);
+            // Don't fail the announcement creation if email fails
+          }
+        } else {
+          console.error('No announcement ID found in response:', response);
+        }
+      } catch (error) {
+        console.error('Error sending email notification:', error);
+      }
+      
+      console.log('=== EMAIL NOTIFICATION SECTION COMPLETED ===');
+      
+      // Reset form
+      console.log('=== RESETTING FORM ===');
+      setNewAnnouncement({
+        title: '',
+        content: '',
+        type: 'INFO',
+        link: ''
+      });
+      
+      // Refresh announcements list
+      console.log('=== ABOUT TO REFRESH ANNOUNCEMENTS ===');
+      await fetchAnnouncements();
+      console.log('=== ANNOUNCEMENTS REFRESHED ===');
+      
+    } catch (error) {
+      console.error('=== CREATE ANNOUNCEMENT ERROR ===', error);
+      console.error('Error creating announcement:', error);
+    } finally {
+      console.log('=== RESETTING LOADING STATE ===');
+      setIsCreatingAnnouncement(false);
+    }
+    
+    console.log('=== CREATE ANNOUNCEMENT FUNCTION END ===');
+  };
+
+  const updateAnnouncement = async (announcement) => {
+    setEditingAnnouncement(announcement);
+  };
+
+  const saveAnnouncement = async () => {
+    if (!editingAnnouncement) return;
+    
+    try {
+      const response = await announcementService.updateAnnouncement(editingAnnouncement.id, {
+        title: editingAnnouncement.title,
+        content: editingAnnouncement.content,
+        type: editingAnnouncement.type,
+        link: editingAnnouncement.link
+      });
+      
+      if (response.success) {
+        setAnnouncements(announcements.map(ann => 
+          ann.id === editingAnnouncement.id ? response.data : ann
+        ));
+        setEditingAnnouncement(null);
+        console.log('Announcement updated:', response.data);
+      } else {
+        console.error('Error updating announcement:', response.error);
+      }
+    } catch (error) {
+      console.error('Error updating announcement:', error);
+    }
+  };
+
+  const deleteAnnouncement = async (announcementId) => {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer cette annonce ?')) return;
+    
+    try {
+      const response = await announcementService.deleteAnnouncement(announcementId);
+      if (response.success) {
+        setAnnouncements(announcements.filter(ann => ann.id !== announcementId));
+        console.log('Announcement deleted:', announcementId);
+      } else {
+        console.error('Error deleting announcement:', response.error);
+      }
+    } catch (error) {
+      console.error('Error deleting announcement:', error);
+    }
+  };
+
+  const toggleAnnouncementStatus = async (announcementId) => {
+    try {
+      const announcement = announcements.find(ann => ann.id === announcementId);
+      if (!announcement) return;
+      
+      const response = await announcementService.updateAnnouncement(announcementId, {
+        isActive: !announcement.isActive
+      });
+      
+      if (response.success) {
+        setAnnouncements(announcements.map(ann => 
+          ann.id === announcementId ? response.data : ann
+        ));
+        console.log('Announcement status toggled:', announcementId);
+      } else {
+        console.error('Error toggling announcement status:', response.error);
+      }
+    } catch (error) {
+      console.error('Error toggling announcement status:', error);
+    }
+  };
   useEffect(() => {
     fetchUsers();
     fetchAllUsers();
     fetchMessages(); // Fetch all messages
     fetchContracts(); // Fetch contracts
+    fetchAnnouncements(); // Fetch announcements
+    fetchAppointments(); // Fetch appointments
   }, []);
 
   const fetchUsers = async () => {
@@ -267,6 +436,21 @@ export default function AdminDashboard() {
     } catch (error) {
       console.error('Error fetching all users:', error);
       setAllUsers([]);
+    }
+  };
+
+  const addToRefs = (el) => {
+    if (el) {
+      el.style.opacity = '0';
+      el.style.transform = 'translateY(40px)';
+      setTimeout(() => {
+        gsap.to(el, {
+          opacity: 1,
+          y: 0,
+          duration: 0.6,
+          ease: "power3.out"
+        });
+      }, 100);
     }
   };
 
@@ -453,6 +637,104 @@ export default function AdminDashboard() {
     }
   };
 
+  // Appointment functions
+  const fetchAppointments = async () => {
+    try {
+      const response = await appointmentService.getAllAppointments();
+      if (response.success && response.data) {
+        setAppointments(response.data);
+        console.log('Appointments loaded:', response.data);
+      }
+    } catch (error) {
+      console.error('Error fetching appointments:', error);
+      setAppointments([]);
+    }
+  };
+
+  const updateAppointmentStatus = async (appointmentId, status, etat) => {
+    try {
+      const response = await appointmentService.updateAppointment(appointmentId, { status, etat });
+      if (response.success && response.data) {
+        // Update appointments list
+        setAppointments(appointments.map(appointment => 
+          appointment.id === appointmentId 
+            ? { ...appointment, status, etat }
+            : appointment
+        ));
+        
+        // Show success notification
+        const successText = `Rendez-vous ${status === 'CONFIRMED' ? 'confirmé' : status === 'CANCELLED' ? 'annulé' : 'mis à jour'}!`;
+        
+        const successDiv = document.createElement('div');
+        successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center';
+        successDiv.innerHTML = `
+          <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2m0 0l2-2m-2 2l-2-2" />
+          </svg>
+          <span>${successText}</span>
+        `;
+        document.body.appendChild(successDiv);
+        
+        gsap.fromTo(successDiv, {
+          scale: 0, opacity: 0, rotation: -180, x: -100
+        }, {
+          scale: 1, opacity: 1, rotation: 0, x: 0, duration: 0.6, ease: "back.out(1.7)",
+          onComplete: () => {
+            gsap.to(successDiv, {
+              scale: 0, opacity: 0, x: -100, duration: 0.3, delay: 2, ease: "power2.in"
+            });
+            setTimeout(() => {
+              document.body.removeChild(successDiv);
+            }, 2300);
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error updating appointment status:', error);
+      alert('Erreur lors de la mise à jour du statut');
+    }
+  };
+
+  const deleteAppointment = async (appointmentId) => {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce rendez-vous?')) return;
+    
+    try {
+      const response = await appointmentService.deleteAppointment(appointmentId);
+      if (response.success) {
+        // Remove appointment from list
+        setAppointments(appointments.filter(appointment => appointment.id !== appointmentId));
+        
+        // Show success notification
+        const successDiv = document.createElement('div');
+        successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center';
+        successDiv.innerHTML = `
+          <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          <span>Rendez-vous supprimé!</span>
+        `;
+        document.body.appendChild(successDiv);
+        
+        gsap.fromTo(successDiv, {
+          scale: 0, opacity: 0, rotation: -180, x: -100
+        }, {
+          scale: 1, opacity: 1, rotation: 0, x: 0, duration: 0.6, ease: "back.out(1.7)",
+          onComplete: () => {
+            gsap.to(successDiv, {
+              scale: 0, opacity: 0, x: -100, duration: 0.3, delay: 2, ease: "power2.in"
+            });
+            setTimeout(() => {
+              document.body.removeChild(successDiv);
+            }, 2300);
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting appointment:', error);
+      alert('Erreur lors de la suppression');
+    }
+  };
+
   const handleLogout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
@@ -461,6 +743,7 @@ export default function AdminDashboard() {
 
   const menuItems = [
     { id: 'messagerie', icon: '💬', text: 'Messagerie' },
+    { id: 'annonces', icon: '📢', text: 'Annonces' },
     { id: 'users', icon: '👥', text: 'Utilisateurs' },
     { id: 'appointments', icon: '📅', text: 'Rendez-vous' },
     { id: 'contracts', icon: '📄', text: 'Contrats' },
@@ -610,6 +893,243 @@ export default function AdminDashboard() {
           </>
         );
       
+      case 'annonces':
+        return (
+          <ContentCard className="content-card">
+            <h2 className="text-2xl font-bold text-white mb-6">
+              📢 Gestion des Annonces
+            </h2>
+            
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Create New Announcement Form */}
+              <div className="bg-gray-800/50 rounded-xl border border-gray-700/50 p-6">
+                <h3 className="text-lg font-semibold text-white mb-4">
+                  ✨ Créer une nouvelle annonce
+                </h3>
+                
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Titre de l'annonce
+                    </label>
+                    <input
+                      type="text"
+                      value={newAnnouncement.title}
+                      onChange={(e) => setNewAnnouncement({...newAnnouncement, title: e.target.value})}
+                      placeholder="Entrez le titre..."
+                      className="w-full px-4 py-2 bg-gray-700/50 border border-gray-600/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-white placeholder-gray-400"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Contenu de l'annonce
+                    </label>
+                    <textarea
+                      value={newAnnouncement.content}
+                      onChange={(e) => setNewAnnouncement({...newAnnouncement, content: e.target.value})}
+                      placeholder="Entrez le contenu de l'annonce..."
+                      rows={4}
+                      className="w-full px-4 py-2 bg-gray-700/50 border border-gray-600/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-white placeholder-gray-400 resize-none"
+                    />
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Type d'annonce
+                    </label>
+                    <select 
+                      value={newAnnouncement.type}
+                      onChange={(e) => setNewAnnouncement({...newAnnouncement, type: e.target.value})}
+                      className="w-full px-4 py-2 bg-gray-700/50 border border-gray-600/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-white"
+                    >
+                      <option value="INFO">📢 Information</option>
+                      <option value="SUCCESS">✅ Succès</option>
+                      <option value="WARNING">⚠️ Avertissement</option>
+                      <option value="URGENT">🚨 Urgent</option>
+                    </select>
+                  </div>
+                  
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Lien (optionnel)
+                    </label>
+                    <input
+                      type="url"
+                      value={newAnnouncement.link}
+                      onChange={(e) => setNewAnnouncement({...newAnnouncement, link: e.target.value})}
+                      placeholder="https://example.com"
+                      className="w-full px-4 py-2 bg-gray-700/50 border border-gray-600/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-white placeholder-gray-400"
+                    />
+                  </div>
+                </div>
+                
+                <button 
+                  onClick={createAnnouncement}
+                  disabled={isCreatingAnnouncement}
+                  className="w-full px-4 py-2 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                >
+                  {isCreatingAnnouncement ? (
+                    <>
+                      <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Publication en cours...
+                    </>
+                  ) : (
+                    <>
+                      📢 Publier l'annonce
+                    </>
+                  )}
+                </button>
+              </div>
+              
+              {/* Existing Announcements */}
+              <div className="bg-gray-800/50 rounded-xl border border-gray-700/50 p-6">
+                <h3 className="text-lg font-semibold text-white mb-4">
+                  📋 Annonces existantes
+                </h3>
+                
+                {/* Edit Modal */}
+                {editingAnnouncement && (
+                  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                    <div className="bg-gray-800 rounded-xl p-6 max-w-2xl w-full mx-4">
+                      <h3 className="text-lg font-semibold text-white mb-4">
+                        ✏️ Modifier l'annonce
+                      </h3>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-2">
+                            Titre de l'annonce
+                          </label>
+                          <input
+                            type="text"
+                            value={editingAnnouncement.title}
+                            onChange={(e) => setEditingAnnouncement({...editingAnnouncement, title: e.target.value})}
+                            className="w-full px-4 py-2 bg-gray-700/50 border border-gray-600/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-white placeholder-gray-400"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-2">
+                            Contenu de l'annonce
+                          </label>
+                          <textarea
+                            value={editingAnnouncement.content}
+                            onChange={(e) => setEditingAnnouncement({...editingAnnouncement, content: e.target.value})}
+                            rows={4}
+                            className="w-full px-4 py-2 bg-gray-700/50 border border-gray-600/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-white placeholder-gray-400 resize-none"
+                          />
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-2">
+                            Type d'annonce
+                          </label>
+                          <select 
+                            value={editingAnnouncement.type}
+                            onChange={(e) => setEditingAnnouncement({...editingAnnouncement, type: e.target.value})}
+                            className="w-full px-4 py-2 bg-gray-700/50 border border-gray-600/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-white"
+                          >
+                            <option value="INFO">📢 Information</option>
+                            <option value="SUCCESS">✅ Succès</option>
+                            <option value="WARNING">⚠️ Avertissement</option>
+                            <option value="URGENT">🚨 Urgent</option>
+                          </select>
+                        </div>
+                        
+                        <div>
+                          <label className="block text-sm font-medium text-gray-300 mb-2">
+                            Lien (optionnel)
+                          </label>
+                          <input
+                            type="url"
+                            value={editingAnnouncement.link}
+                            onChange={(e) => setEditingAnnouncement({...editingAnnouncement, link: e.target.value})}
+                            placeholder="https://example.com"
+                            className="w-full px-4 py-2 bg-gray-700/50 border border-gray-600/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-white placeholder-gray-400"
+                          />
+                        </div>
+                      </div>
+                      
+                      <div className="flex gap-2 mt-4">
+                        <button
+                          onClick={saveAnnouncement}
+                          className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-colors"
+                        >
+                          💾 Enregistrer
+                        </button>
+                        <button
+                          onClick={() => setEditingAnnouncement(null)}
+                          className="px-4 py-2 bg-gray-500 hover:bg-gray-600 text-white rounded-lg transition-colors"
+                        >
+                          ❌ Annuler
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+                
+                <div className="space-y-4">
+                  {announcements.length === 0 ? (
+                    <div className="text-center py-16">
+                      <div className="inline-flex items-center gap-4 bg-gradient-to-r from-gray-100 to-gray-200 rounded-xl p-8">
+                        <span className="text-6xl text-gray-400 mb-3">📢</span>
+                        <span className="text-xl font-medium text-gray-600">Aucune annonce pour le moment</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {announcements.map((announcement, index) => (
+                        <div 
+                          key={announcement.id}
+                          className="bg-gray-800/50 rounded-xl border border-gray-700/50 p-6 shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 hover:border-green-500"
+                        >
+                          <div className="flex justify-between items-start mb-4">
+                            <div className="flex-1">
+                              <h3 className="text-xl font-bold text-white mb-2 flex items-center gap-2">
+                                <span className="text-green-400">📢</span>
+                                <span className="text-white">{announcement.title}</span>
+                              </h3>
+                              <p className="text-gray-300 text-sm mb-4 leading-relaxed">{announcement.content}</p>
+                              {announcement.link && (
+                                <a 
+                                  href={announcement.link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-green-400 hover:text-green-300 transition-colors inline-flex items-center gap-2 mt-2"
+                                >
+                                  🔗 {announcement.link}
+                                </a>
+                              )}
+                            </div>
+                            <div className="flex gap-2 mt-4">
+                              <button
+                                onClick={() => updateAnnouncement(announcement)}
+                                className="px-4 py-2 bg-green-500 hover:bg-green-600 text-white rounded-lg transition-all duration-300 transform hover:scale-105"
+                              >
+                                ✏️ Modifier
+                              </button>
+                              <button
+                                onClick={() => deleteAnnouncement(announcement.id)}
+                                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-all duration-300 transform hover:scale-105"
+                              >
+                                🗑️ Supprimer
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </ContentCard>
+        );
+      
       case 'users':
         return (
           <ContentCard className="content-card">
@@ -657,11 +1177,102 @@ export default function AdminDashboard() {
             <h2 className="text-2xl font-bold text-white mb-6">
               📅 Tous les Rendez-vous
             </h2>
-            <div className="text-center py-12">
-              <p className="text-gray-400 text-lg">
-                📅 Gestion des rendez-vous coming soon
-              </p>
-            </div>
+            
+            {appointments.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-gray-400 text-lg">
+                  📅 Aucun rendez-vous trouvé
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full text-white">
+                  <thead>
+                    <tr className="border-b border-white/20">
+                      <th className="text-left p-4">Étudiant</th>
+                      <th className="text-left p-4">Type</th>
+                      <th className="text-left p-4">Date</th>
+                      <th className="text-left p-4">Statut</th>
+                      <th className="text-left p-4">Mode</th>
+                      <th className="text-left p-4">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {appointments.map((appointment) => (
+                      <tr key={appointment.id} className="border-b border-white/10 hover:bg-white/5">
+                        <td className="p-4">
+                          <div>
+                            <p className="font-medium">
+                              {appointment.user?.firstName} {appointment.user?.lastName}
+                            </p>
+                            <p className="text-sm text-gray-400">
+                              {appointment.user?.email}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <span className="px-2 py-1 bg-blue-600/20 text-blue-400 rounded text-sm">
+                            {appointment.type}
+                          </span>
+                        </td>
+                        <td className="p-4">
+                          <div>
+                            <p className="text-sm">
+                              {new Date(appointment.date).toLocaleDateString('fr-FR')}
+                            </p>
+                            <p className="text-xs text-gray-400">
+                              {new Date(appointment.date).toLocaleTimeString('fr-FR', {
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </p>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <select
+                            value={appointment.status}
+                            onChange={(e) => updateAppointmentStatus(appointment.id, e.target.value, appointment.etat)}
+                            className={`px-3 py-1 rounded text-sm font-medium ${
+                              appointment.status === 'CONFIRMED' 
+                                ? 'bg-green-600/20 text-green-400' 
+                                : appointment.status === 'CANCELLED'
+                                ? 'bg-red-600/20 text-red-400'
+                                : 'bg-yellow-600/20 text-yellow-400'
+                            }`}
+                          >
+                            <option value="PENDING">⏳ En Attente</option>
+                            <option value="CONFIRMED">✅ Confirmé</option>
+                            <option value="CANCELLED">❌ Annulé</option>
+                          </select>
+                        </td>
+                        <td className="p-4">
+                          <select
+                            value={appointment.etat}
+                            onChange={(e) => updateAppointmentStatus(appointment.id, appointment.status, e.target.value)}
+                            className={`px-3 py-1 rounded text-sm font-medium ${
+                              appointment.etat === 'PRESENTIEL' 
+                                ? 'bg-green-600/20 text-green-400' 
+                                : 'bg-blue-600/20 text-blue-400'
+                            }`}
+                          >
+                            <option value="PRESENTIEL">🏢 Présentiel</option>
+                            <option value="EN_LIGNE">💻 En Ligne</option>
+                          </select>
+                        </td>
+                        <td className="p-4">
+                          <button
+                            onClick={() => deleteAppointment(appointment.id)}
+                            className="px-3 py-1 bg-red-600/20 text-red-400 rounded text-sm hover:bg-red-600/30 transition-colors"
+                          >
+                            🗑️ Supprimer
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </ContentCard>
         );
       
