@@ -1,3 +1,4 @@
+
 const prisma = require("../config/prisma");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -166,4 +167,122 @@ const deleteUser = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getAllUsers, deleteUser };
+// Create user (ADMIN only)
+const createUser = async (req, res) => {
+  try {
+    const currentUser = req.user; // Get current user from auth middleware
+    
+    // Only ADMIN can create users
+    if (currentUser.role !== 'ADMIN') {
+      return res.status(403).json({
+        success: false,
+        message: 'Accès refusé. Seul un administrateur peut créer des utilisateurs.'
+      });
+    }
+
+    const { firstName, lastName, email, password, role = 'USER' } = req.body;
+
+    // Check if user exists
+    const existingUser = await prisma.user.findUnique({ where: { email } });
+    if (existingUser) {
+      return res.status(400).json({ message: "Un utilisateur avec cette adresse e-mail existe déjà." });
+    }
+
+    // Hash password
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    // Create user
+    const user = await prisma.user.create({
+      data: { firstName, lastName, email, password: hashedPassword, role },
+    });
+
+    // Return user data without password
+    const userData = {
+      id: user.id,
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      role: user.role,
+      passport: user.passport,
+      studyType: user.studyType,
+      university: user.university,
+      createdAt: user.createdAt
+    };
+
+    res.status(201).json({ 
+      success: true,
+      message: "Utilisateur créé avec succès", 
+      user: userData,
+      userId: user.id 
+    });
+  } catch (error) {
+    console.error('Error creating user:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la création de l\'utilisateur',
+      error: error.message
+    });
+  }
+};
+
+// Search users
+const searchUsers = async (req, res) => {
+  try {
+    const { query } = req.query;
+    
+    if (!query) {
+      return res.status(400).json({
+        success: false,
+        message: 'Veuillez fournir un terme de recherche'
+      });
+    }
+
+    const users = await prisma.user.findMany({
+      where: {
+        OR: [
+          {
+            firstName: {
+              contains: query
+            }
+          },
+          {
+            lastName: {
+              contains: query
+            }
+          },
+          {
+            email: {
+              contains: query
+            }
+          }
+        ]
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        role: true,
+        createdAt: true
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      data: users,
+      count: users.length
+    });
+  } catch (error) {
+    console.error('Error searching users:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la recherche des utilisateurs',
+      error: error.message
+    });
+  }
+};
+
+module.exports = { register, login, getAllUsers, deleteUser, createUser, searchUsers };

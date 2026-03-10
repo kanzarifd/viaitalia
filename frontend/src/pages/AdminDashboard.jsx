@@ -9,6 +9,7 @@ import contractService from "../api/contractService";
 import announcementService from "../api/announcementService";
 import appointmentService from "../api/appointmentService";
 import universityInfoService from '../api/universityInfoService';
+import authService from "../api/authService";
 
 // Register GSAP
 gsap.registerPlugin();
@@ -204,6 +205,21 @@ export default function AdminDashboard() {
   const [newMessage, setNewMessage] = useState('');
   const [isSendingMessage, setIsSendingMessage] = useState(false);
   const [allUsers, setAllUsers] = useState([]);
+
+  // Create user state
+  const [showCreateUserForm, setShowCreateUserForm] = useState(false);
+  const [newUser, setNewUser] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    role: 'USER'
+  });
+
+  // Search users state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   // Announcement management state
   const [contracts, setContracts] = useState([]);
@@ -798,14 +814,182 @@ export default function AdminDashboard() {
     navigate("/");
   };
 
-  const menuItems = [
-    { id: 'messagerie', icon: '💬', text: 'Messagerie' },
-    { id: 'annonces', icon: '📢', text: 'Annonces' },
-    { id: 'users', icon: '👥', text: 'Utilisateurs' },
-    { id: 'appointments', icon: '📅', text: 'Rendez-vous' },
-    { id: 'contracts', icon: '📄', text: 'Contrats' },
-    { id: 'university', icon: '🎓', text: 'Université' }
-  ];
+  // Create user function
+  const handleCreateUser = async () => {
+    // Only ADMIN can create users
+    if (user.role !== 'ADMIN') {
+      alert('Accès refusé. Seul un administrateur peut créer des utilisateurs.');
+      return;
+    }
+
+    if (!newUser.firstName || !newUser.lastName || !newUser.email || !newUser.password) {
+      alert('Veuillez remplir tous les champs');
+      return;
+    }
+
+    try {
+      const response = await authService.createUser(newUser);
+      
+      if (response.success) {
+        // Reset form
+        setNewUser({
+          firstName: '',
+          lastName: '',
+          email: '',
+          password: '',
+          role: 'USER'
+        });
+        setShowCreateUserForm(false);
+        
+        // Refresh users list
+        fetchAllUsers();
+        
+        // Show success notification
+        const successDiv = document.createElement('div');
+        successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center';
+        successDiv.innerHTML = `
+          <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2m0 0l2-2m-2 2l-2-2" />
+          </svg>
+          <span>Utilisateur créé avec succès!</span>
+        `;
+        document.body.appendChild(successDiv);
+        
+        gsap.fromTo(successDiv, {
+          scale: 0, opacity: 0, rotation: -180, x: -100
+        }, {
+          scale: 1, opacity: 1, rotation: 0, x: 0, duration: 0.6, ease: "back.out(1.7)",
+          onComplete: () => {
+            gsap.to(successDiv, {
+              scale: 0, opacity: 0, x: -100, duration: 0.3, delay: 2, ease: "power2.in"
+            });
+            setTimeout(() => {
+              document.body.removeChild(successDiv);
+            }, 2300);
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error creating user:', error);
+      alert('Erreur lors de la création de l\'utilisateur');
+    }
+  };
+
+  // Search users function
+  const handleSearchUsers = async (query) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const response = await authService.searchUsers(query);
+      if (response.success) {
+        setSearchResults(response.data);
+      }
+    } catch (error) {
+      console.error('Error searching users:', error);
+      setSearchResults([]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Debounced search
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (searchQuery) {
+        handleSearchUsers(searchQuery);
+      } else {
+        setSearchResults([]);
+      }
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [searchQuery]);
+
+  // Animate search results when they change
+  useEffect(() => {
+    if (searchResults.length > 0) {
+      // Animate search results rows
+      gsap.fromTo('.search-result-row', {
+        y: 20,
+        opacity: 0,
+        scale: 0.95
+      }, {
+        y: 0,
+        opacity: 1,
+        scale: 1,
+        duration: 0.4,
+        ease: "back.out(1.7)",
+        stagger: 0.05
+      });
+    }
+  }, [searchResults]);
+
+  // Delete user function
+  const handleDeleteUser = async (userId, userName) => {
+    // Only ADMIN can delete users
+    if (user.role !== 'ADMIN') {
+      alert('Accès refusé. Seul un administrateur peut supprimer des utilisateurs.');
+      return;
+    }
+
+    if (!window.confirm(`Êtes-vous sûr de vouloir supprimer ${userName} ?\n\nCette action supprimera également toutes les données associées (rendez-vous, contrats, messages, etc.).`)) {
+      return;
+    }
+
+    try {
+      const response = await authService.deleteUser(userId);
+      
+      if (response.success) {
+        // Refresh users list
+        fetchAllUsers();
+        
+        // Clear search results if needed
+        if (searchQuery) {
+          handleSearchUsers(searchQuery);
+        }
+        
+        // Show success notification
+        const successDiv = document.createElement('div');
+        successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center';
+        successDiv.innerHTML = `
+          <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          <span>${userName} supprimé avec succès!</span>
+        `;
+        document.body.appendChild(successDiv);
+        
+        gsap.fromTo(successDiv, {
+          scale: 0, opacity: 0, rotation: -180, x: -100
+        }, {
+          scale: 1, opacity: 1, rotation: 0, x: 0, duration: 0.6, ease: "back.out(1.7)",
+          onComplete: () => {
+            gsap.to(successDiv, {
+              scale: 0, opacity: 0, x: -100, duration: 0.3, delay: 2, ease: "power2.in"
+            });
+            setTimeout(() => {
+              document.body.removeChild(successDiv);
+            }, 2300);
+          }
+        });
+      }
+    } catch (error) {
+      alert('Erreur lors de la suppression de l\'utilisateur');
+    }
+  };
+
+const menuItems = [
+  { id: 'messagerie', icon: '💬', text: 'Messagerie' },
+  { id: 'annonces', icon: '📢', text: 'Annonces' },
+  { id: 'users', icon: '👥', text: 'Utilisateurs' },
+  { id: 'appointments', icon: '📅', text: 'Rendez-vous' },
+  { id: 'contracts', icon: '📄', text: 'Contrats' },
+  { id: 'university', icon: '🎓', text: 'Université' }
+];
 
   const renderContent = () => {
     switch(activeMenu) {
@@ -1281,6 +1465,104 @@ export default function AdminDashboard() {
             <h2 className="text-2xl font-bold text-white mb-6">
               👥 Tous les Utilisateurs
             </h2>
+            
+            {/* Search Bar and Create User Button */}
+            <div className="mb-6 flex flex-col sm:flex-row gap-4">
+              {/* Search Bar */}
+              <div className="flex-1">
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    placeholder=" Rechercher des utilisateurs..."
+                    className="w-full px-4 py-2 pl-10 bg-gray-700/50 border border-gray-600/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400"
+                  />
+                  <div className="absolute left-3 top-2.5 text-gray-400">
+                    {isSearching ? (
+                      <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                    ) : (
+                      "🔍"
+                    )}
+                  </div>
+                </div>
+              </div>
+              
+              {/* Create User Button for ADMIN */}
+              {user.role === 'ADMIN' && (
+                <button
+                  onClick={() => setShowCreateUserForm(!showCreateUserForm)}
+                  className="px-6 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 whitespace-nowrap"
+                >
+                  ➕ Créer un Utilisateur
+                </button>
+              )}
+            </div>
+
+            {/* Search Results */}
+            {searchQuery && (
+              <div className="mb-6">
+                <h3 className="text-lg font-semibold text-white mb-3">
+                  📊 Résultats de recherche ({searchResults.length})
+                </h3>
+                {searchResults.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-white">
+                      <thead>
+                        <tr className="border-b border-white/20">
+                          <th className="text-left p-4">Nom</th>
+                          <th className="text-left p-4">Email</th>
+                          <th className="text-left p-4">Rôle</th>
+                          <th className="text-left p-4">Date d'inscription</th>
+                          <th className="text-left p-4">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {searchResults.map((user) => (
+                          <tr key={user.id} className="border-b border-white/10 hover:bg-white/5">
+                            <td className="p-4">{user.firstName} {user.lastName}</td>
+                            <td className="p-4">{user.email}</td>
+                            <td className="p-4">
+                              <span className={`px-2 py-1 rounded text-xs ${
+                                user.role === 'USER' 
+                                  ? 'bg-red-500 text-white' 
+                                  : 'bg-green-500 text-white'
+                              }`}>
+                                {user.role}
+                              </span>
+                            </td>
+                            <td className="p-4">
+                              {new Date(user.createdAt).toLocaleDateString('fr-FR')}
+                            </td>
+                            <td className="p-4">
+                              {user.role === 'USER' && (
+                                <button
+                                  onClick={() => handleDeleteUser(user.id, `${user.firstName} ${user.lastName}`)}
+                                  className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded-lg transition-colors duration-200 transform hover:scale-105"
+                                >
+                                  🗑️ Supprimer
+                                </button>
+                              )}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-gray-400">
+                      😔 Aucun utilisateur trouvé pour "{searchQuery}"
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* All Users Table */}
             <div className="overflow-x-auto">
               <table className="w-full text-white">
                 <thead>
@@ -1289,6 +1571,7 @@ export default function AdminDashboard() {
                     <th className="text-left p-4">Email</th>
                     <th className="text-left p-4">Rôle</th>
                     <th className="text-left p-4">Date d'inscription</th>
+                    <th className="text-left p-4">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1298,7 +1581,7 @@ export default function AdminDashboard() {
                       <td className="p-4">{user.email}</td>
                       <td className="p-4">
                         <span className={`px-2 py-1 rounded text-xs ${
-                          user.role === 'ADMIN' 
+                          user.role === 'USER' 
                             ? 'bg-red-500 text-white' 
                             : 'bg-green-500 text-white'
                         }`}>
@@ -1308,11 +1591,110 @@ export default function AdminDashboard() {
                       <td className="p-4">
                         {new Date(user.createdAt).toLocaleDateString('fr-FR')}
                       </td>
+                      <td className="p-4">
+                        {user.role === 'USER' && (
+                          <button
+                            onClick={() => handleDeleteUser(user.id, `${user.firstName} ${user.lastName}`)}
+                            className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-xs rounded-lg transition-colors duration-200 transform hover:scale-105"
+                          >
+                            🗑️ Supprimer
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
+            
+            {/* Create User Form Modal */}
+            {showCreateUserForm && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                <div className="bg-gray-800 rounded-xl p-6 max-w-md w-full mx-4">
+                  <h3 className="text-lg font-semibold text-white mb-4">
+                    ✨ Créer un Nouvel Utilisateur
+                  </h3>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Prénom
+                      </label>
+                      <input
+                        type="text"
+                        value={newUser.firstName}
+                        onChange={(e) => setNewUser({...newUser, firstName: e.target.value})}
+                        className="w-full px-4 py-2 bg-gray-700/50 border border-gray-600/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-white placeholder-gray-400"
+                        placeholder="Entrez le prénom"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Nom
+                      </label>
+                      <input
+                        type="text"
+                        value={newUser.lastName}
+                        onChange={(e) => setNewUser({...newUser, lastName: e.target.value})}
+                        className="w-full px-4 py-2 bg-gray-700/50 border border-gray-600/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-white placeholder-gray-400"
+                        placeholder="Entrez le nom"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Email
+                      </label>
+                      <input
+                        type="email"
+                        value={newUser.email}
+                        onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                        className="w-full px-4 py-2 bg-gray-700/50 border border-gray-600/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-white placeholder-gray-400"
+                        placeholder="Entrez l'email"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Mot de passe
+                      </label>
+                      <input
+                        type="password"
+                        value={newUser.password}
+                        onChange={(e) => setNewUser({...newUser, password: e.target.value})}
+                        className="w-full px-4 py-2 bg-gray-700/50 border border-gray-600/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-white placeholder-gray-400"
+                        placeholder="Entrez le mot de passe"
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="flex gap-2 mt-4">
+                    <button
+                      onClick={handleCreateUser}
+                      className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                    >
+                      ✅ Créer l'Utilisateur
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowCreateUserForm(false);
+                        setNewUser({
+                          firstName: '',
+                          lastName: '',
+                          email: '',
+                          password: '',
+                          role: 'USER'
+                        });
+                      }}
+                      className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                    >
+                      ❌ Annuler
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </ContentCard>
         );
       
