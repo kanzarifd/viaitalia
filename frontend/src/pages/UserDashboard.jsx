@@ -9,6 +9,7 @@ import messageService from "../api/messageService";
 import contractService from "../api/contractService";
 import announcementService from "../api/announcementService";
 import notificationService from "../api/notificationService";
+import dossierService from "../api/dossierService";
 import AnnouncementCard from "../components/AnnouncementCard";
 import styled from "styled-components";
 
@@ -507,6 +508,10 @@ const addToRefs = (el) => {
   const [announcements, setAnnouncements] = useState([]);
   const [loadingAnnouncements, setLoadingAnnouncements] = useState(false);
 
+  // Dossier state
+  const [dossier, setDossier] = useState(null);
+  const [loadingDossier, setLoadingDossier] = useState(false);
+
   const sidebarRef = useRef(null);
   const headerRef = useRef(null);
   const contentRef = useRef(null);
@@ -522,6 +527,7 @@ const addToRefs = (el) => {
     fetchAnnouncements();
     fetchNotifications();
     fetchUnreadCount();
+    fetchDossier();
   }, []);
 
   // Periodic notification refresh (every 30 seconds)
@@ -632,6 +638,33 @@ const addToRefs = (el) => {
       setAnnouncements([]);
     } finally {
       setLoadingAnnouncements(false);
+    }
+  };
+
+  // Fetch user dossier from backend
+  const fetchDossier = async () => {
+    try {
+      if (!user || !user.id) {
+        console.log('No user logged in, cannot fetch dossier');
+        setDossier(null);
+        return;
+      }
+      
+      setLoadingDossier(true);
+      const response = await dossierService.getDossiersByUserId(user.id);
+      const userDossiers = response.data || [];
+      
+      // Get the first (and should be only) dossier for the user
+      if (userDossiers.length > 0) {
+        setDossier(userDossiers[0]);
+      } else {
+        setDossier(null);
+      }
+    } catch (error) {
+      console.error('Error fetching dossier:', error);
+      setDossier(null);
+    } finally {
+      setLoadingDossier(false);
     }
   };
 
@@ -860,6 +893,15 @@ const addToRefs = (el) => {
     }
   };
 
+  const deleteAppointment = async (id) => {
+    try {
+      await appointmentService.deleteAppointment(id);
+      setAppointments(appointments.filter(apt => apt.id !== id));
+    } catch (error) {
+      console.error('Error deleting appointment:', error);
+    }
+  };
+
   const updateAppointmentStatus = async (id, status) => {
     try {
       console.log('Updating appointment:', { id, status });
@@ -872,15 +914,6 @@ const addToRefs = (el) => {
     } catch (error) {
       console.error('Error updating appointment:', error);
       alert('Erreur lors de la mise à jour du rendez-vous: ' + (error.response?.data?.message || error.message));
-    }
-  };
-
-  const deleteAppointment = async (id) => {
-    try {
-      await appointmentService.deleteAppointment(id);
-      setAppointments(appointments.filter(apt => apt.id !== id));
-    } catch (error) {
-      console.error('Error deleting appointment:', error);
     }
   };
 
@@ -1940,13 +1973,166 @@ const handleSaveUniversityInfo = async () => {
         return (
           <ContentCard className="content-card">
             <h2 className="text-2xl font-bold text-white mb-6">
-              Dossier Administratif
+              Mon Dossier Administratif
             </h2>
-            <div className="text-center py-12">
-              <p className="text-gray-400 text-lg">
-                📁 Vos documents seront bientôt disponibles
-              </p>
-            </div>
+            
+            {loadingDossier ? (
+              <div className="flex justify-center items-center py-12">
+                <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-400 border-t-transparent"></div>
+              </div>
+            ) : !dossier ? (
+              <div className="text-center py-12">
+                <p className="text-gray-400 text-lg">
+                  📁 Vous n'avez pas encore de dossier
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {/* Dossier Title */}
+                <div className="bg-white/10 border border-white/20 rounded-lg p-4">
+                  <h3 className="text-lg font-semibold text-white mb-2">
+                    {dossier.title}
+                  </h3>
+                  <p className="text-gray-300 text-sm">
+                    Créé le {new Date(dossier.createdAt).toLocaleDateString('fr-FR')}
+                  </p>
+                </div>
+
+                {/* Timeline */}
+                <div className="relative">
+                  <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gray-600"></div>
+                  
+                  {/* Traduction Step */}
+                  <div className="relative flex items-center mb-8">
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center z-10 ${
+                      dossier.traductionStatus === 'VALIDE' ? 'bg-green-500' :
+                      dossier.traductionStatus === 'EN_COURS' ? 'bg-blue-500' : 'bg-gray-500'
+                    }`}>
+                      <span className="text-white text-2xl">📝</span>
+                    </div>
+                    <div className="ml-6 flex-1">
+                      <div className="bg-white/10 border border-white/20 rounded-lg p-4">
+                        <h4 className="text-lg font-semibold text-white mb-1">
+                          Traduction
+                        </h4>
+                        <p className="text-gray-300 text-sm mb-2">
+                          Statut: {
+                            dossier.traductionStatus === 'VALIDE' ? '✅ Validé' :
+                            dossier.traductionStatus === 'EN_COURS' ? '🔄 En cours' : '⏳ En attente'
+                          }
+                        </p>
+                        {dossier.traductionStatus === 'VALIDE' && (
+                          <p className="text-green-400 text-sm">
+                            Étape terminée avec succès
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Inscription Step */}
+                  <div className="relative flex items-center mb-8">
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center z-10 ${
+                      dossier.inscriptionStatus === 'VALIDE' ? 'bg-green-500' :
+                      dossier.inscriptionStatus === 'EN_COURS' ? 'bg-blue-500' : 'bg-gray-500'
+                    }`}>
+                      <span className="text-white text-2xl">📋</span>
+                    </div>
+                    <div className="ml-6 flex-1">
+                      <div className={`bg-white/10 border border-white/20 rounded-lg p-4 ${
+                        dossier.traductionStatus !== 'VALIDE' ? 'opacity-50' : ''
+                      }`}>
+                        <h4 className="text-lg font-semibold text-white mb-1">
+                          Inscription
+                        </h4>
+                        <p className="text-gray-300 text-sm mb-2">
+                          Statut: {
+                            dossier.inscriptionStatus === 'VALIDE' ? '✅ Validé' :
+                            dossier.inscriptionStatus === 'EN_COURS' ? '🔄 En cours' : '⏳ En attente'
+                          }
+                        </p>
+                        {dossier.traductionStatus !== 'VALIDE' && (
+                          <p className="text-yellow-400 text-sm">
+                            ⚠️ Disponible après validation de la traduction
+                          </p>
+                        )}
+                        {dossier.inscriptionStatus === 'VALIDE' && (
+                          <p className="text-green-400 text-sm">
+                            Étape terminée avec succès
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Dossier Visa Step */}
+                  <div className="relative flex items-center">
+                    <div className={`w-16 h-16 rounded-full flex items-center justify-center z-10 ${
+                      dossier.visaStatus === 'VALIDE' ? 'bg-green-500' :
+                      dossier.visaStatus === 'EN_COURS' ? 'bg-blue-500' : 'bg-gray-500'
+                    }`}>
+                      <span className="text-white text-2xl">🛂</span>
+                    </div>
+                    <div className="ml-6 flex-1">
+                      <div className={`bg-white/10 border border-white/20 rounded-lg p-4 ${
+                        dossier.inscriptionStatus !== 'VALIDE' ? 'opacity-50' : ''
+                      }`}>
+                        <h4 className="text-lg font-semibold text-white mb-1">
+                          Dossier Visa
+                        </h4>
+                        <p className="text-gray-300 text-sm mb-2">
+                          Statut: {
+                            dossier.visaStatus === 'VALIDE' ? '✅ Validé' :
+                            dossier.visaStatus === 'EN_COURS' ? '🔄 En cours' : '⏳ En attente'
+                          }
+                        </p>
+                        {dossier.inscriptionStatus !== 'VALIDE' && (
+                          <p className="text-yellow-400 text-sm">
+                            ⚠️ Disponible après validation de l'inscription
+                          </p>
+                        )}
+                        {dossier.visaStatus === 'VALIDE' && (
+                          <p className="text-green-400 text-sm">
+                            Étape terminée avec succès
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Overall Progress */}
+                <div className="bg-white/10 border border-white/20 rounded-lg p-4">
+                  <h4 className="text-lg font-semibold text-white mb-3">
+                    Progression Générale
+                  </h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-300">Étapes complétées</span>
+                      <span className="text-white font-medium">
+                        {[
+                          dossier.traductionStatus === 'VALIDE',
+                          dossier.inscriptionStatus === 'VALIDE', 
+                          dossier.visaStatus === 'VALIDE'
+                        ].filter(Boolean).length} / 3
+                      </span>
+                    </div>
+                    <div className="w-full bg-gray-700 rounded-full h-2">
+                      <div 
+                        className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-300"
+                        style={{
+                          width: `${([
+                            dossier.traductionStatus === 'VALIDE',
+                            dossier.inscriptionStatus === 'VALIDE', 
+                            dossier.visaStatus === 'VALIDE'
+                          ].filter(Boolean).length / 3) * 100}%`
+                        }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </ContentCard>
         );
       

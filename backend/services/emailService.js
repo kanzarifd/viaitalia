@@ -5,12 +5,25 @@ const prisma = new PrismaClient();
 
 // Create email transporter
 const transporter = nodemailer.createTransport({
-  service: 'gmail',
+  host: process.env.EMAIL_HOST || 'smtp.gmail.com',
+  port: process.env.EMAIL_PORT || 587,
+  secure: false, // true for 465, false for other ports
   auth: {
     user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS
+    pass: process.env.EMAIL_PASS.replace(/\s/g, '') // Remove spaces from app password
+  },
+  tls: {
+    rejectUnauthorized: false // Allow self-signed certificates
   }
 });
+
+// Log email configuration (without exposing the full password)
+console.log('=== EMAIL SERVICE CONFIGURATION ===');
+console.log('Email User:', process.env.EMAIL_USER);
+console.log('Email Host:', process.env.EMAIL_HOST);
+console.log('Email Port:', process.env.EMAIL_PORT);
+console.log('Email Pass (first 4 chars):', process.env.EMAIL_PASS ? process.env.EMAIL_PASS.replace(/\s/g, '').substring(0, 4) + '...' : 'Not set');
+console.log('====================================');
 
 const emailService = {
   // Send notification email for new message
@@ -483,15 +496,369 @@ const emailService = {
     }
   },
 
+  // Send confirmation email for study form submission
+  sendStudyFormConfirmationEmail: async (formData) => {
+    try {
+      console.log('=== SENDING STUDY FORM CONFIRMATION EMAIL ===');
+      console.log('To:', formData.email);
+      console.log('Name:', formData.fullName);
+      console.log('Pack:', formData.selectedPack);
+
+      const getPackDisplayName = (packId) => {
+        switch(packId) {
+          case 'essential': return 'Pack Essentiel';
+          case 'advanced': return 'Pack Avancé';
+          case 'premium': return 'Pack Premium';
+          default: return packId;
+        }
+      };
+
+      const getPackPrice = (packId) => {
+        switch(packId) {
+          case 'essential': return '1999 DT';
+          case 'advanced': return '2999 DT';
+          case 'premium': return '3999 DT';
+          default: return '';
+        }
+      };
+
+      const mailOptions = {
+        from: process.env.EMAIL_USER || '"Via Italia" <noreply@viaitalia.fr>',
+        to: formData.email,
+        subject: '🎓 Confirmation de votre demande d\'études en Italie - Via Italia',
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Confirmation de Demande - Via Italia</title>
+            <style>
+              body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                background-color: #f5f5f5;
+                margin: 0;
+                padding: 20px;
+                color: #333;
+              }
+              .container {
+                max-width: 600px;
+                margin: 0 auto;
+                background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+                border-radius: 15px;
+                overflow: hidden;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+              }
+              .header {
+                background: linear-gradient(135deg, #e74c3c 0%, #27ae60 100%);
+                padding: 30px;
+                text-align: center;
+                color: white;
+              }
+              .header h1 {
+                margin: 0;
+                font-size: 28px;
+                font-weight: 700;
+                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+              }
+              .header p {
+                margin: 10px 0 0 0;
+                font-size: 16px;
+                opacity: 0.9;
+              }
+              .content {
+                padding: 40px 30px;
+              }
+              .success-box {
+                background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
+                border-left: 4px solid #28a745;
+                padding: 25px;
+                margin: 25px 0;
+                border-radius: 8px;
+                text-align: center;
+              }
+              .success-box h3 {
+                color: #155724;
+                margin: 0 0 15px 0;
+                font-size: 20px;
+              }
+              .success-box p {
+                color: #155724;
+                margin: 0;
+                font-size: 16px;
+              }
+              .info-grid {
+                display: grid;
+                grid-template-columns: 1fr 1fr;
+                gap: 20px;
+                margin: 25px 0;
+              }
+              .info-item {
+                background: #f8f9fa;
+                padding: 15px;
+                border-radius: 8px;
+                border-left: 3px solid #e74c3c;
+              }
+              .info-item h4 {
+                margin: 0 0 8px 0;
+                color: #e74c3c;
+                font-size: 14px;
+                text-transform: uppercase;
+                font-weight: 600;
+              }
+              .info-item p {
+                margin: 0;
+                color: #333;
+                font-size: 16px;
+                font-weight: 500;
+              }
+              .pack-highlight {
+                background: linear-gradient(135deg, rgba(231, 76, 60, 0.1) 0%, rgba(39, 174, 96, 0.1) 100%);
+                border: 2px solid #e74c3c;
+                padding: 25px;
+                margin: 30px 0;
+                border-radius: 12px;
+                text-align: center;
+              }
+              .pack-name {
+                font-size: 24px;
+                font-weight: 700;
+                color: #e74c3c;
+                margin: 0 0 10px 0;
+              }
+              .pack-price {
+                font-size: 28px;
+                font-weight: 800;
+                color: #27ae60;
+                margin: 0 0 15px 0;
+              }
+              .payment-info {
+                background: #fff3cd;
+                border-left: 4px solid #ffc107;
+                padding: 20px;
+                margin: 25px 0;
+                border-radius: 8px;
+              }
+              .payment-info h4 {
+                color: #856404;
+                margin: 0 0 15px 0;
+                font-size: 18px;
+              }
+              .payment-info p {
+                color: #856404;
+                margin: 8px 0;
+                font-size: 14px;
+              }
+              .contact-info {
+                background: linear-gradient(135deg, rgba(0, 255, 51, 0.1) 0%, rgba(239, 68, 68, 0.1) 100%);
+                padding: 20px;
+                margin: 25px 0;
+                border-radius: 8px;
+                border: 1px solid rgba(0, 255, 51, 0.2);
+              }
+              .contact-info h3 {
+                color: #00ff33;
+                margin: 0 0 15px 0;
+                font-size: 18px;
+              }
+              .contact-info p {
+                margin: 8px 0;
+                color: #666;
+              }
+              .footer {
+                background: #f8f9fa;
+                padding: 30px;
+                text-align: center;
+                border-top: 1px solid #e9ecef;
+              }
+              .footer p {
+                margin: 5px 0;
+                color: #666;
+                font-size: 14px;
+              }
+              @media (max-width: 600px) {
+                .info-grid {
+                  grid-template-columns: 1fr;
+                }
+                .container {
+                  margin: 10px;
+                  border-radius: 10px;
+                }
+                .header {
+                  padding: 20px;
+                }
+                .header h1 {
+                  font-size: 24px;
+                }
+                .content {
+                  padding: 30px 20px;
+                }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>🎓 Demande Confirmée!</h1>
+                <p>Via Italia - Service d'Orientation Universitaire</p>
+              </div>
+              
+              <div class="content">
+                <p>Bonjour <strong>${formData.fullName}</strong>,</p>
+                
+                <div class="success-box">
+                  <h3>🎉 Votre demande a été soumise avec succès!</h3>
+                  <p>Nous avons bien reçu votre demande d'études en Italie et nous vous en remercions.</p>
+                </div>
+                
+                <h3 style="color: #2c3e50; margin: 30px 0 20px 0;">📋 Vos Informations:</h3>
+                
+                <div class="info-grid">
+                  <div class="info-item">
+                    <h4>Nom Complet</h4>
+                    <p>${formData.fullName}</p>
+                  </div>
+                  <div class="info-item">
+                    <h4>Email</h4>
+                    <p>${formData.email}</p>
+                  </div>
+                  <div class="info-item">
+                    <h4>Téléphone</h4>
+                    <p>${formData.phoneNumber}</p>
+                  </div>
+                  <div class="info-item">
+                    <h4>Ville</h4>
+                    <p>${formData.city}</p>
+                  </div>
+                  <div class="info-item">
+                    <h4>Niveau Actuel</h4>
+                    <p>${formData.currentLevel}</p>
+                  </div>
+                  <div class="info-item">
+                    <h4>Niveau Désiré</h4>
+                    <p>${formData.desiredLevel}</p>
+                  </div>
+                  <div class="info-item">
+                    <h4>Langue d'Étude</h4>
+                    <p>${formData.studyLanguage}</p>
+                  </div>
+                  <div class="info-item">
+                    <h4>Spécialité</h4>
+                    <p>${formData.desiredSpecialty}</p>
+                  </div>
+                </div>
+                
+                <div class="pack-highlight">
+                  <div class="pack-name">${getPackDisplayName(formData.selectedPack)}</div>
+                  <div class="pack-price">${getPackPrice(formData.selectedPack)}</div>
+                  <p style="margin: 0; color: #666;">Pack sélectionné pour votre projet d'études</p>
+                </div>
+                
+                <div class="payment-info">
+                  <h4>💳 Instructions de Paiement:</h4>
+                  <p><strong>Virement Bancaire (D-17):</strong> Veuillez effectuer le virement vers notre compte bancaire.</p>
+                  <p><strong>RIPoste (D17):</strong> Option de paiement disponible via RIPoste.</p>
+                  <p><strong>Important:</strong> Mentionnez votre nom et "Via Italia" dans la référence du paiement.</p>
+                </div>
+                
+                <div class="contact-info">
+                  <h3>📞 Contactez-Nous:</h3>
+                  <p><strong>Email:</strong> contact@viaitalia.fr</p>
+                  <p><strong>Téléphone:</strong> +33 1 23 45 67 89</p>
+                  <p><strong>Adresse:</strong> 123 Rue de l'Université, 75005 Paris, France</p>
+                  <p><strong>Heures d'ouverture:</strong> Lun-Ven: 9h-18h, Sam: 10h-16h</p>
+                </div>
+                
+                <p style="margin: 30px 0 10px 0;">Notre équipe vous contactera dans les plus brefs délais pour discuter des prochaines étapes de votre projet d'études en Italie.</p>
+                
+                <p>Cordialement,<br>
+                <strong>L'équipe Via Italia</strong></p>
+              </div>
+              
+              <div class="footer">
+                <p>© 2024 Via Italia - Tous droits réservés</p>
+                <p>Service d'orientation universitaire pour les études en Italie</p>
+                <p style="font-size: 12px; color: #999;">
+                  Si vous ne souhaitez plus recevoir ces notifications, 
+                  <a href="https://viaitalia.fr/unsubscribe" style="color: #999;">cliquez ici</a>
+                </p>
+              </div>
+            </div>
+          </body>
+          </html>
+        `
+      };
+
+      const result = await transporter.sendMail(mailOptions);
+      console.log('Study form confirmation email sent successfully:', result.messageId);
+      
+      return {
+        success: true,
+        messageId: result.messageId
+      };
+    } catch (error) {
+      console.error('=== STUDY FORM EMAIL ERROR ===');
+      console.error('Error details:', error);
+      console.error('Error message:', error.message);
+      
+      return {
+        success: false,
+        error: error.message
+      };
+    }
+  },
+
   // Test email configuration
   testEmailConfig: async () => {
     try {
+      console.log('=== TESTING EMAIL CONFIGURATION ===');
+      console.log('Email User:', process.env.EMAIL_USER);
+      console.log('Email Host:', process.env.EMAIL_HOST);
+      console.log('Email Port:', process.env.EMAIL_PORT);
+      console.log('Email Pass (first 4 chars):', process.env.EMAIL_PASS ? process.env.EMAIL_PASS.substring(0, 4) + '...' : 'Not set');
+      
       await transporter.verify();
       console.log('Email service is ready');
       return { success: true };
     } catch (error) {
       console.error('Email service configuration error:', error);
       return { success: false, error: error.message };
+    }
+  },
+
+  // Quick test email
+  sendTestEmail: async () => {
+    try {
+      console.log('=== SENDING TEST EMAIL ===');
+      
+      const mailOptions = {
+        from: process.env.EMAIL_USER || '"Via Italia" <noreply@viaitalia.fr>',
+        to: process.env.EMAIL_USER, // Send to yourself for testing
+        subject: '📧 Test Email - Via Italia Email Service',
+        html: `
+          <h2>✅ Email Service Working!</h2>
+          <p>This is a test email from Via Italia email service.</p>
+          <p><strong>Time:</strong> ${new Date().toLocaleString()}</p>
+          <p><strong>From:</strong> Via Italia Backend</p>
+        `
+      };
+
+      const result = await transporter.sendMail(mailOptions);
+      console.log('Test email sent successfully:', result.messageId);
+      
+      return {
+        success: true,
+        messageId: result.messageId
+      };
+    } catch (error) {
+      console.error('=== TEST EMAIL ERROR ===');
+      console.error('Error details:', error);
+      console.error('Error message:', error.message);
+      
+      return {
+        success: false,
+        error: error.message
+      };
     }
   },
 
@@ -966,6 +1333,373 @@ const emailService = {
     } catch (error) {
       console.error('=== NODEMAILER TEST ERROR ===', error);
       return { success: false, error: error.message };
+    }
+  },
+
+  // Send notification email for dossier status update
+  sendDossierStatusUpdateEmail: async (userEmail, userName, dossierTitle, statusType, newStatus, oldStatus = null) => {
+    try {
+      console.log('=== SENDING DOSSIER STATUS UPDATE EMAIL ===');
+      console.log('To:', userEmail);
+      console.log('User:', userName);
+      console.log('Dossier:', dossierTitle);
+      console.log('Status Type:', statusType);
+      console.log('New Status:', newStatus);
+      console.log('Old Status:', oldStatus);
+
+      const getStatusText = (status) => {
+        switch (status) {
+          case 'PENDING': return '⏳ En attente';
+          case 'EN_COURS': return '🔄 En cours';
+          case 'VALIDE': return '✅ Validé';
+          case 'REJECTED': return '❌ Rejeté';
+          default: return status;
+        }
+      };
+
+      const getStatusColor = (status) => {
+        switch (status) {
+          case 'PENDING': return '#d68910';
+          case 'EN_COURS': return '#3498db';
+          case 'VALIDE': return '#27ae60';
+          case 'REJECTED': return '#e74c3c';
+          default: return '#6c757d';
+        }
+      };
+
+      const getStatusIcon = (statusType) => {
+        switch (statusType) {
+          case 'traduction': return '📝';
+          case 'inscription': return '📋';
+          case 'visa': return '🛂';
+          default: return '📁';
+        }
+      };
+
+      const getStatusTitle = (statusType) => {
+        switch (statusType) {
+          case 'traduction': return 'Traduction';
+          case 'inscription': return 'Inscription';
+          case 'visa': return 'Dossier Visa';
+          default: return 'Dossier';
+        }
+      };
+
+      const getProgressMessage = (statusType, newStatus) => {
+        if (newStatus === 'VALIDE') {
+          switch (statusType) {
+            case 'traduction':
+              return `
+                <div style="background-color: #d4edda; border-left: 4px solid #27ae60; padding: 20px; margin: 25px 0; border-radius: 8px;">
+                  <h3 style="color: #155724; margin: 0 0 10px 0;">🎉 Étape validée!</h3>
+                  <p style="margin: 0; color: #155724;">Félicitations! Votre traduction a été validée. Vous pouvez maintenant passer à l'étape d'inscription.</p>
+                </div>
+              `;
+            case 'inscription':
+              return `
+                <div style="background-color: #d4edda; border-left: 4px solid #27ae60; padding: 20px; margin: 25px 0; border-radius: 8px;">
+                  <h3 style="color: #155724; margin: 0 0 10px 0;">🎉 Étape validée!</h3>
+                  <p style="margin: 0; color: #155724;">Excellent! Votre inscription a été validée. Vous pouvez maintenant procéder à l'étape du dossier visa.</p>
+                </div>
+              `;
+            case 'visa':
+              return `
+                <div style="background-color: #d4edda; border-left: 4px solid #27ae60; padding: 20px; margin: 25px 0; border-radius: 8px;">
+                  <h3 style="color: #155724; margin: 0 0 10px 0;">🎉 Processus terminé!</h3>
+                  <p style="margin: 0; color: #155724;">Félicitations! Votre dossier visa a été validé. Votre processus administratif est maintenant complet.</p>
+                </div>
+              `;
+            default:
+              return '';
+          }
+        } else if (newStatus === 'EN_COURS') {
+          return `
+            <div style="background-color: #d1ecf1; border-left: 4px solid #3498db; padding: 20px; margin: 25px 0; border-radius: 8px;">
+              <h3 style="color: #0c5460; margin: 0 0 10px 0;">🔄 En cours de traitement</h3>
+              <p style="margin: 0; color: #0c5460;">Votre ${getStatusTitle(statusType).toLowerCase()} est en cours d'examen par notre équipe.</p>
+            </div>
+          `;
+        } else if (newStatus === 'REJECTED') {
+          return `
+            <div style="background-color: #f8d7da; border-left: 4px solid #e74c3c; padding: 20px; margin: 25px 0; border-radius: 8px;">
+              <h3 style="color: #721c24; margin: 0 0 10px 0;">⚠️ Action requise</h3>
+              <p style="margin: 0; color: #721c24;">Votre ${getStatusTitle(statusType).toLowerCase()} a été rejeté. Veuillez contacter notre équipe pour plus d'informations.</p>
+            </div>
+          `;
+        }
+        return '';
+      };
+
+      const mailOptions = {
+        from: process.env.EMAIL_USER || '"Via Italia" <noreply@viaitalia.fr>',
+        to: userEmail,
+        subject: `📁 Mise à jour de votre ${getStatusTitle(statusType)} - Via Italia`,
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            <title>Mise à jour de dossier - Via Italia</title>
+            <style>
+              body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                background-color: #f5f5f5;
+                margin: 0;
+                padding: 20px;
+                color: #333;
+              }
+              .container {
+                max-width: 600px;
+                margin: 0 auto;
+                background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+                border-radius: 15px;
+                overflow: hidden;
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+              }
+              .header {
+                background: linear-gradient(135deg, #e74c3c 0%, #27ae60 100%);
+                padding: 30px;
+                text-align: center;
+                color: white;
+              }
+              .header h1 {
+                margin: 0;
+                font-size: 28px;
+                font-weight: 700;
+                text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+              }
+              .header p {
+                margin: 10px 0 0 0;
+                font-size: 16px;
+                opacity: 0.9;
+              }
+              .content {
+                padding: 40px 30px;
+              }
+              .status-badge {
+                display: inline-block;
+                padding: 12px 20px;
+                border-radius: 25px;
+                font-weight: bold;
+                text-transform: uppercase;
+                font-size: 16px;
+                margin: 20px 0;
+                background-color: ${getStatusColor(newStatus)};
+                color: white;
+                text-align: center;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+              }
+              .dossier-info {
+                background-color: #f8f9fa;
+                padding: 20px;
+                border-radius: 8px;
+                margin: 20px 0;
+                border-left: 4px solid #e74c3c;
+              }
+              .dossier-info h3 {
+                margin: 0 0 15px 0;
+                color: #e74c3c;
+                font-size: 18px;
+              }
+              .dossier-info ul {
+                margin: 0;
+                padding-left: 20px;
+              }
+              .dossier-info li {
+                margin: 8px 0;
+                color: #495057;
+              }
+              .progress-steps {
+                display: flex;
+                justify-content: space-between;
+                margin: 30px 0;
+                position: relative;
+              }
+              .progress-steps::before {
+                content: '';
+                position: absolute;
+                top: 20px;
+                left: 30px;
+                right: 30px;
+                height: 2px;
+                background: #e9ecef;
+                z-index: 1;
+              }
+              .step {
+                text-align: center;
+                position: relative;
+                z-index: 2;
+                flex: 1;
+              }
+              .step-icon {
+                width: 40px;
+                height: 40px;
+                border-radius: 50%;
+                background: #e9ecef;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                margin: 0 auto 10px;
+                font-size: 18px;
+              }
+              .step.active .step-icon {
+                background: ${getStatusColor(newStatus)};
+              }
+              .step.completed .step-icon {
+                background: #27ae60;
+              }
+              .step-label {
+                font-size: 12px;
+                color: #666;
+                font-weight: 600;
+              }
+              .cta-button {
+                display: inline-block;
+                background: linear-gradient(135deg, #e74c3c 0%, #27ae60 100%);
+                color: white;
+                padding: 15px 30px;
+                text-decoration: none;
+                border-radius: 25px;
+                font-weight: 600;
+                margin: 20px 0;
+                transition: transform 0.3s ease, box-shadow 0.3s ease;
+                box-shadow: 0 4px 6px rgba(0, 255, 51, 0.3);
+              }
+              .cta-button:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 12px rgba(0, 255, 51, 0.4);
+              }
+              .footer {
+                background: #f8f9fa;
+                padding: 30px;
+                text-align: center;
+                border-top: 1px solid #dee2e6;
+                color: #6c757d;
+                font-size: 14px;
+              }
+              .footer p {
+                margin: 5px 0;
+              }
+              @media (max-width: 600px) {
+                .container {
+                  margin: 10px;
+                  border-radius: 10px;
+                }
+                .header {
+                  padding: 20px;
+                }
+                .header h1 {
+                  font-size: 24px;
+                }
+                .content {
+                  padding: 30px 20px;
+                }
+                .progress-steps {
+                  flex-direction: column;
+                  gap: 20px;
+                }
+                .progress-steps::before {
+                  display: none;
+                }
+              }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <h1>${getStatusIcon(statusType)} Mise à jour de ${getStatusTitle(statusType)}</h1>
+                <p>Via Italia - Service d'Orientation Universitaire</p>
+              </div>
+              
+              <div class="content">
+                <p>Bonjour <strong>${userName}</strong>,</p>
+                
+                <p>Nous vous informons que le statut de votre <strong>${getStatusTitle(statusType).toLowerCase()}</strong> dans le dossier <strong>"${dossierTitle}"</strong> a été mis à jour.</p>
+                
+                <div style="text-align: center; margin: 25px 0;">
+                  <div class="status-badge">
+                    ${getStatusText(newStatus)}
+                  </div>
+                </div>
+                
+                <div class="dossier-info">
+                  <h3>📋 Détails de la mise à jour:</h3>
+                  <ul>
+                    <li><strong>Dossier:</strong> ${dossierTitle}</li>
+                    <li><strong>Étape:</strong> ${getStatusIcon(statusType)} ${getStatusTitle(statusType)}</li>
+                    <li><strong>Nouveau statut:</strong> ${getStatusText(newStatus)}</li>
+                    ${oldStatus ? `<li><strong>Ancien statut:</strong> ${getStatusText(oldStatus)}</li>` : ''}
+                    <li><strong>Date:</strong> ${new Date().toLocaleDateString('fr-FR', { 
+                      weekday: 'long', 
+                      year: 'numeric', 
+                      month: 'long', 
+                      day: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit'
+                    })}</li>
+                  </ul>
+                </div>
+                
+                <div class="progress-steps">
+                  <div class="step ${statusType === 'traduction' ? 'active' : 'completed'}">
+                    <div class="step-icon">📝</div>
+                    <div class="step-label">Traduction</div>
+                  </div>
+                  <div class="step ${statusType === 'inscription' ? 'active' : statusType === 'visa' ? 'completed' : ''}">
+                    <div class="step-icon">📋</div>
+                    <div class="step-label">Inscription</div>
+                  </div>
+                  <div class="step ${statusType === 'visa' ? 'active' : ''}">
+                    <div class="step-icon">🛂</div>
+                    <div class="step-label">Dossier Visa</div>
+                  </div>
+                </div>
+                
+                ${getProgressMessage(statusType, newStatus)}
+                
+                <div style="text-align: center;">
+                  <a href="https://viaitalia.fr/login" class="cta-button">
+                    🚀 Accéder à mon tableau de bord
+                  </a>
+                </div>
+                
+                <p>Nous sommes là pour vous accompagner dans votre projet d'études en Italie!</p>
+                
+                <p>Cordialement,<br>
+                <strong>L'équipe Via Italia</strong></p>
+              </div>
+              
+              <div class="footer">
+                <p>© 2024 Via Italia - Tous droits réservés</p>
+                <p>Service d'orientation universitaire pour les études en Italie</p>
+                <p style="font-size: 12px; color: #999;">
+                  Si vous ne souhaitez plus recevoir ces notifications, 
+                  <a href="https://viaitalia.fr/unsubscribe" style="color: #999;">cliquez ici</a>
+                </p>
+              </div>
+            </div>
+          </body>
+          </html>
+        `
+      };
+
+      const result = await transporter.sendMail(mailOptions);
+      console.log('Dossier status update email sent successfully:', result.messageId);
+      
+      return {
+        success: true,
+        messageId: result.messageId
+      };
+    } catch (error) {
+      console.error('=== DOSSIER STATUS EMAIL ERROR ===');
+      console.error('Error details:', error);
+      console.error('Error message:', error.message);
+      
+      return {
+        success: false,
+        error: error.message
+      };
     }
   }
 };

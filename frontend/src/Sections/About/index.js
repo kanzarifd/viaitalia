@@ -14,14 +14,13 @@ const move = keyframes`
 `;
 
 const AboutSection = styled.section`
-  min-height: 100vh;
   background: linear-gradient(135deg, #0a0b10 0%, #1a1f2e 100%);
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
   width: 100%;
-  padding: 5rem 0;
+  padding: 8rem 0;
   position: relative;
   overflow: hidden;
 

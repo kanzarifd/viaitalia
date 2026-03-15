@@ -20,11 +20,30 @@ const register = async (req, res) => {
       data: { firstName, lastName, email, password: hashedPassword, role },
     });
 
+    // Automatically create a dossier for the new user
+    try {
+      // Generate automatic title from user information
+      const userName = `${firstName} ${lastName}`;
+      const dossierTitle = `Dossier de ${userName}`;
+      
+      const dossier = await prisma.dossier.create({
+        data: {
+          title: dossierTitle,
+          status: 'PENDING',
+          userId: user.id
+        }
+      });
+      console.log('Dossier created automatically for user:', user.id, 'Dossier ID:', dossier.id, 'Title:', dossierTitle);
+    } catch (dossierError) {
+      console.error('Error creating automatic dossier:', dossierError);
+      // Don't fail the user registration if dossier creation fails
+    }
+
     // Return user data without password
     const userData = {
       id: user.id,
       firstName: user.firstName,
-      lastName: user.lastName,
+      lastName: user.lastName, 
       email: user.email,
       role: user.role,
       passport: user.passport,
@@ -195,6 +214,25 @@ const createUser = async (req, res) => {
     const user = await prisma.user.create({
       data: { firstName, lastName, email, password: hashedPassword, role },
     });
+
+    // Automatically create a dossier for the new user
+    try {
+      // Generate automatic title from user information
+      const userName = `${firstName} ${lastName}`;
+      const dossierTitle = `Dossier de ${userName}`;
+      
+      const dossier = await prisma.dossier.create({
+        data: {
+          title: dossierTitle,
+          status: 'PENDING',
+          userId: user.id
+        }
+      });
+      console.log('Dossier created automatically for user:', user.id, 'Dossier ID:', dossier.id, 'Title:', dossierTitle);
+    } catch (dossierError) {
+      console.error('Error creating automatic dossier:', dossierError);
+      // Don't fail the user creation if dossier creation fails
+    }
 
     // Return user data without password
     const userData = {

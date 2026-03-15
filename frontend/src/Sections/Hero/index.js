@@ -1,5 +1,6 @@
 // The Ultimate Hero Section - Best Design Ever
 import React, { useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import styled, { keyframes } from "styled-components";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -192,6 +193,18 @@ const CTAButton = styled.button`
   overflow: hidden;
   opacity: 0;
   transform: translateY(20px) scale(0.9);
+  width: auto;
+  min-width: 200px;
+
+@media only screen and (max-width: 768px) {
+  width: 100%;          /* button stretches to full width */
+  max-width: 300px;     /* optional max width */
+  padding: 1rem 2rem;
+  font-size: 1rem;
+  margin: 0 auto;       /* centers the button horizontally */
+  display: flex;        /* ensures content inside button is aligned */
+  justify-content: center; /* centers icon/text inside the button */
+}
 
   &::before {
     content: '';
@@ -208,6 +221,11 @@ const CTAButton = styled.button`
     width: 1.5rem;
     margin-left: 0.8rem;
     transition: transform 0.3s ease;
+
+    @media only Screen and (max-width: 768px) {
+      width: 1.2rem;
+      margin-left: 0.6rem;
+    }
   }
 
   &:hover {
@@ -286,11 +304,13 @@ const FloatingShape = styled.div`
 `;
 
 const Hero = () => {
+  const navigate = useNavigate();
   const heroRef = useRef(null);
   const badgeRef = useRef(null);
   const titleRef = useRef(null);
   const subtitleRef = useRef(null);
-  const ctaRef = useRef(null);
+  const appointmentBtnRef = useRef(null);
+  const registerBtnRef = useRef(null);
   const mobileRef = useRef(null);
   const cosmicRef = useRef(null);
   const shapesRef = useRef([]);
@@ -319,7 +339,7 @@ const Hero = () => {
           rotationX: rotateX,
           x: translateX,
           y: translateY,
-          duration: 0.8,
+          duration: 0.4,
           ease: "power2.out"
         });
       }
@@ -333,7 +353,7 @@ const Hero = () => {
           rotationX: 0,
           x: 0,
           y: 0,
-          duration: 1,
+          duration: 0.6,
           ease: "elastic.out(1, 0.3)"
         });
       }
@@ -346,22 +366,21 @@ const Hero = () => {
       heroElement.addEventListener('mouseleave', handleMouseLeave);
     }
 
-    // Create cosmic background
+    // Create cosmic background - REDUCED ELEMENTS
     const createCosmicBackground = () => {
-      // Create stars
-      for (let i = 0; i < 100; i++) {
+      // Create fewer stars for better performance
+      for (let i = 0; i < 30; i++) {
         const star = document.createElement('div');
         star.className = 'star';
         star.style.cssText = `
           position: absolute;
-          width: ${Math.random() * 3 + 1}px;
-          height: ${Math.random() * 3 + 1}px;
+          width: ${Math.random() * 2 + 1}px;
+          height: ${Math.random() * 2 + 1}px;
           background: white;
           border-radius: 50%;
           left: ${Math.random() * 100}%;
           top: ${Math.random() * 100}%;
-          box-shadow: 0 0 ${Math.random() * 8 + 2}px white;
-          animation: float ${Math.random() * 8 + 4}s linear infinite;
+          animation: twinkle ${Math.random() * 3 + 2}s ease-in-out infinite;
           opacity: ${Math.random() * 0.8 + 0.2};
         `;
         
@@ -370,23 +389,23 @@ const Hero = () => {
         }
       }
 
-      // Create nebulas
-      for (let i = 0; i < 4; i++) {
+      // Create fewer nebulas
+      for (let i = 0; i < 3; i++) {
         const nebula = document.createElement('div');
         nebula.className = 'nebula';
         nebula.style.cssText = `
           position: absolute;
-          width: ${Math.random() * 300 + 200}px;
-          height: ${Math.random() * 300 + 200}px;
+          width: ${Math.random() * 200 + 100}px;
+          height: ${Math.random() * 200 + 100}px;
           border-radius: 50%;
           background: radial-gradient(circle, 
             ${Math.random() > 0.5 ? 'rgba(0, 255, 51, 0.1)' : 'rgba(239, 68, 68, 0.1)'} 0%, 
             transparent 70%);
-          filter: blur(${Math.random() * 40 + 20}px);
+          filter: blur(${Math.random() * 30 + 15}px);
           left: ${Math.random() * 100}%;
           top: ${Math.random() * 100}%;
-          animation: gradientShift ${Math.random() * 15 + 10}s ease-in-out infinite;
-          opacity: ${Math.random() * 0.3 + 0.1};
+          animation: gradientShift ${Math.random() * 10 + 5}s ease-in-out infinite;
+          opacity: ${Math.random() * 0.2 + 0.1};
         `;
         
         if (cosmicRef.current) {
@@ -394,22 +413,22 @@ const Hero = () => {
         }
       }
 
-      // Create floating shapes
-      for (let i = 0; i < 8; i++) {
+      // Create fewer floating shapes
+      for (let i = 0; i < 4; i++) {
         const shape = document.createElement('div');
         shape.className = 'floating-shape';
         shape.style.cssText = `
           position: absolute;
-          width: ${Math.random() * 100 + 50}px;
-          height: ${Math.random() * 100 + 50}px;
+          width: ${Math.random() * 80 + 40}px;
+          height: ${Math.random() * 80 + 40}px;
           border-radius: 50%;
           background: linear-gradient(135deg, 
             rgba(0, 255, 51, 0.05) 0%, 
             rgba(239, 68, 68, 0.05) 100%);
-          filter: blur(20px);
+          filter: blur(15px);
           left: ${Math.random() * 100}%;
           top: ${Math.random() * 100}%;
-          animation: float ${Math.random() * 20 + 10}s ease-in-out infinite;
+          animation: float ${Math.random() * 15 + 8}s ease-in-out infinite;
         `;
         
         if (heroRef.current) {
@@ -417,21 +436,21 @@ const Hero = () => {
           shapesRef.current.push(shape);
 
           gsap.to(shape, {
-            x: `+=${Math.random() * 100 - 50}`,
-            y: `+=${Math.random() * 100 - 50}`,
-            scale: Math.random() * 1.2 + 0.8,
-            opacity: Math.random() * 0.3 + 0.1,
-            duration: Math.random() * 10 + 5,
+            x: `+=${Math.random() * 50 - 25}`,
+            y: `+=${Math.random() * 50 - 25}`,
+            scale: Math.random() * 1.1 + 0.9,
+            opacity: Math.random() * 0.2 + 0.1,
+            duration: Math.random() * 6 + 3,
             repeat: -1,
             yoyo: true,
             ease: "sine.inOut",
-            delay: Math.random() * 2
+            delay: Math.random() * 1
           });
         }
       }
     };
 
-    // Epic entrance animations
+    // Epic entrance animations - FASTER
     const tl = gsap.timeline();
     
     tl.fromTo(badgeRef.current, {
@@ -440,8 +459,8 @@ const Hero = () => {
     }, {
       opacity: 1,
       y: 0,
-      duration: 1,
-      ease: "power3.out"
+      duration: 0.6,
+      ease: "power2.out"
     })
     .fromTo(titleRef.current, {
       opacity: 0,
@@ -449,19 +468,19 @@ const Hero = () => {
     }, {
       opacity: 1,
       y: 0,
-      duration: 1.2,
-      ease: "power3.out"
-    }, "-=0.5")
+      duration: 0.8,
+      ease: "power2.out"
+    }, "-=0.3")
     .fromTo(subtitleRef.current, {
       opacity: 0,
       y: 20
     }, {
       opacity: 1,
       y: 0,
-      duration: 1,
-      ease: "power3.out"
-    }, "-=0.3")
-    .fromTo(ctaRef.current, {
+      duration: 0.6,
+      ease: "power2.out"
+    }, "-=0.2")
+    .fromTo(appointmentBtnRef.current, {
       opacity: 0,
       y: 20,
       scale: 0.9
@@ -469,9 +488,20 @@ const Hero = () => {
       opacity: 1,
       y: 0,
       scale: 1,
-      duration: 1,
+      duration: 0.7,
       ease: "back.out(1.7)"
-    }, "-=0.2")
+    }, "-=0.1")
+    .fromTo(registerBtnRef.current, {
+      opacity: 0,
+      y: 20,
+      scale: 0.9
+    }, {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      duration: 0.7,
+      ease: "back.out(1.7)"
+    }, "-=0.05")
     .fromTo(mobileRef.current, {
       opacity: 0,
       x: 50,
@@ -480,13 +510,13 @@ const Hero = () => {
       opacity: 1,
       x: 0,
       scale: 1,
-      duration: 1.5,
+      duration: 1,
       ease: "back.out(1.7)"
-    }, "-=0.5");
+    }, "-=0.3");
 
     // Scroll-based animations
     gsap.to(heroRef.current, {
-      y: -100,
+      y: 0,
       duration: 1,
       scrollTrigger: {
         trigger: heroRef.current,
@@ -517,26 +547,29 @@ const Hero = () => {
       
       <HeroContainer>
         <ContentBlock>
-          <Badge ref={badgeRef}>
-            <BadgeIcon />
-            <span>Via Italia Excellence</span>
-          </Badge>
+        
           
-          <Title ref={titleRef}>
-            Service d'Admission
-            <br />
-            <span style={{ color: 'var(--green)' }}>Premium</span>
-          </Title>
+ <Title ref={titleRef}>
+  <span style={{ color: 'red' }}>Via</span>{" "}
+  <span style={{ color: 'green' }}>Italia</span>
+
+</Title>
           
           <Subtitle ref={subtitleRef}>
-            Votre partenaire de confiance pour l'admission dans les universités italiennes. 
-            Nous vous accompagnons à chaque étape de votre parcours académique avec expertise et passion.
+            ViaItalia propose plusieurs formules d'accompagnement pour les étudiants souhaitant poursuivre leurs études en Italie.
+            Chaque pack inclut un suivi personnalisé et une assistance administrative afin de faciliter les démarches universitaires et l'organisation du projet d'études.
           </Subtitle>
           
-          <CTAButton ref={ctaRef}>
-            Commencer Votre Voyage
-            <img src={arrow} alt="Arrow" />
-          </CTAButton>
+          <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+            <CTAButton ref={appointmentBtnRef} onClick={() => window.open('https://calendly.com/viaitaliaagency/30min', '_blank')}>
+               Rendez-vous Free
+              <img src={arrow} alt="Arrow" />
+            </CTAButton>
+            <CTAButton ref={registerBtnRef} onClick={() => navigate('/study-form')} style={{ background: 'linear-gradient(90deg, var(--red), var(--green))' }}>
+              Inscription
+              <img src={arrow} alt="Arrow" />
+            </CTAButton>
+          </div>
         </ContentBlock>
         
         <VisualBlock>

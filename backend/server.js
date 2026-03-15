@@ -10,6 +10,9 @@ const emailRoutes = require("./routes/emailRoutes");
 const contractRoutes = require("./routes/contractRoutes");
 const announcementRoutes = require("./routes/announcementRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
+const studyFormRoutes = require("./routes/studyFormRoutes");
+const paymentRoutes = require("./routes/paymentRoutes");
+const dossierRoutes = require("./routes/dossierRoutes");
 
 const app = express();
 
@@ -34,6 +37,9 @@ app.use("/api/email", emailRoutes);
 app.use("/api/contracts", contractRoutes);
 app.use("/api/announcements", announcementRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/study-forms", studyFormRoutes);
+app.use("/api/payments", paymentRoutes);
+app.use("/api/dossiers", dossierRoutes);
 
 // Simple dashboard routes (no auth for testing)
 app.get("/api/user/dashboard", (req, res) => {

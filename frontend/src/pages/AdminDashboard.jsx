@@ -10,6 +10,8 @@ import announcementService from "../api/announcementService";
 import appointmentService from "../api/appointmentService";
 import universityInfoService from '../api/universityInfoService';
 import authService from "../api/authService";
+import dossierService from "../api/dossierService";
+import DossierKanban from "../components/DossierKanban";
 
 // Register GSAP
 gsap.registerPlugin();
@@ -24,6 +26,10 @@ const DashboardContainer = styled.div`
   background: linear-gradient(135deg, #0a0b10 0%, #1a1f2e 100%);
   display: flex;
   overflow-x: hidden;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
 `;
 
 const Sidebar = styled.div`
@@ -36,6 +42,15 @@ const Sidebar = styled.div`
   flex-direction: column;
   z-index: 1000;
   color: var(--white);
+  
+  @media (max-width: 768px) {
+    position: fixed;
+    top: 0;
+    left: 0;
+    height: 100vh;
+    transform: translateX(${props => props.isOpen ? '0' : '-100%'});
+    transition: transform 0.3s ease-in-out;
+  }
 `;
 
 const SidebarItem = styled.div`
@@ -194,11 +209,42 @@ const UserItem = styled.div`
   }
 `;
 
+const HamburgerButton = styled.button`
+  display: none;
+  background: none;
+  border: none;
+  color: white;
+  font-size: 1.5rem;
+  cursor: pointer;
+  padding: 0.5rem;
+  
+  @media (max-width: 768px) {
+    display: block;
+  }
+`;
+
+const MobileOverlay = styled.div`
+  display: none;
+  
+  @media (max-width: 768px) {
+    display: ${props => props.isOpen ? 'block' : 'none'};
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+  }
+`;
+
 export default function AdminDashboard() {
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
   
   const [activeMenu, setActiveMenu] = useState('messagerie');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [users, setUsers] = useState([]);
   const [selectedUser, setSelectedUser] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -239,6 +285,38 @@ export default function AdminDashboard() {
 
   // Appointment state
   const [appointments, setAppointments] = useState([]);
+
+  // Study forms state
+  const [studyForms, setStudyForms] = useState([]);
+  const [selectedStudyForm, setSelectedStudyForm] = useState(null);
+  const [studyFormSearchQuery, setStudyFormSearchQuery] = useState('');
+  const [studyFormSearchResults, setStudyFormSearchResults] = useState([]);
+  const [isSearchingStudyForms, setIsSearchingStudyForms] = useState(false);
+
+  // Payment state
+  const [payments, setPayments] = useState([]);
+  const [paymentStats, setPaymentStats] = useState(null);
+  const [selectedPayment, setSelectedPayment] = useState(null);
+  const [showAddPaymentModal, setShowAddPaymentModal] = useState(false);
+  const [addPaymentAmount, setAddPaymentAmount] = useState('');
+  const [showCreatePaymentModal, setShowCreatePaymentModal] = useState(false);
+  const [newPayment, setNewPayment] = useState({
+    userId: '',
+    prixTotal: '',
+    prixPaye: '0',
+    status: 'PENDING'
+  });
+
+  // Dossier state
+  const [dossiers, setDossiers] = useState([]);
+  const [dossierStats, setDossierStats] = useState(null);
+  const [selectedDossier, setSelectedDossier] = useState(null);
+  const [showCreateDossierModal, setShowCreateDossierModal] = useState(false);
+  const [newDossier, setNewDossier] = useState({
+    title: '',
+    userId: '',
+    status: 'PENDING'
+  });
 
   // Message templates state
   const [messageTemplates, setMessageTemplates] = useState([
@@ -449,6 +527,11 @@ export default function AdminDashboard() {
     fetchContracts(); // Fetch contracts
     fetchAnnouncements(); // Fetch announcements
     fetchAppointments(); // Fetch appointments
+    fetchStudyForms(); // Fetch study forms
+    fetchPayments(); // Fetch payments
+    fetchPaymentStats(); // Fetch payment stats
+    fetchDossiers(); // Fetch dossiers
+    fetchDossierStats(); // Fetch dossier stats
   }, []);
 
   const fetchUsers = async () => {
@@ -928,6 +1011,209 @@ export default function AdminDashboard() {
     }
   }, [searchResults]);
 
+  // Study forms API functions
+  const fetchStudyForms = async () => {
+    try {
+      const response = await axios.get('/api/study-forms/all');
+      if (response.data.success) {
+        setStudyForms(response.data.data || []);
+        console.log('Study forms loaded:', response.data.data);
+      } else {
+        console.error('Error fetching study forms:', response.data.message);
+      }
+    } catch (error) {
+      console.error('Error fetching study forms:', error);
+      setStudyForms([]);
+    }
+  };
+
+  const searchStudyForms = async (query) => {
+    if (!query.trim()) {
+      setStudyFormSearchResults([]);
+      return;
+    }
+
+    setIsSearchingStudyForms(true);
+    try {
+      const response = await axios.get(`/api/study-forms/search?name=${encodeURIComponent(query)}`);
+      if (response.data.success) {
+        setStudyFormSearchResults(response.data.data || []);
+      } else {
+        console.error('Error searching study forms:', response.data.message);
+        setStudyFormSearchResults([]);
+      }
+    } catch (error) {
+      console.error('Error searching study forms:', error);
+      setStudyFormSearchResults([]);
+    } finally {
+      setIsSearchingStudyForms(false);
+    }
+  };
+
+  // Debounced search for study forms
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      if (studyFormSearchQuery) {
+        searchStudyForms(studyFormSearchQuery);
+      } else {
+        setStudyFormSearchResults([]);
+      }
+    }, 300);
+
+    return () => clearTimeout(timeoutId);
+  }, [studyFormSearchQuery]);
+
+  // Payment API functions
+  const fetchPayments = async () => {
+    try {
+      const response = await axios.get('/api/payments');
+      if (response.data.success) {
+        setPayments(response.data.data || []);
+        console.log('Payments loaded:', response.data.data);
+      } else {
+        console.error('Error fetching payments:', response.data.message);
+      }
+    } catch (error) {
+      console.error('Error fetching payments:', error);
+      setPayments([]);
+    }
+  };
+
+  const fetchPaymentStats = async () => {
+    try {
+      const response = await axios.get('/api/payments/stats');
+      if (response.data.success) {
+        setPaymentStats(response.data.data);
+        console.log('Payment stats loaded:', response.data.data);
+      } else {
+        console.error('Error fetching payment stats:', response.data.message);
+      }
+    } catch (error) {
+      console.error('Error fetching payment stats:', error);
+      setPaymentStats(null);
+    }
+  };
+
+  const handleAddPayment = async () => {
+    if (!selectedPayment || !addPaymentAmount || parseFloat(addPaymentAmount) <= 0) {
+      alert('Veuillez entrer un montant valide');
+      return;
+    }
+
+    try {
+      const response = await axios.post(`/api/payments/${selectedPayment.id}/add-payment`, {
+        amount: parseFloat(addPaymentAmount)
+      });
+
+      if (response.data.success) {
+        // Update payments list
+        setPayments(payments.map(payment => 
+          payment.id === selectedPayment.id ? response.data.data : payment
+        ));
+        
+        // Update selected payment
+        setSelectedPayment(response.data.data);
+        
+        // Reset modal
+        setShowAddPaymentModal(false);
+        setAddPaymentAmount('');
+        
+        // Refresh stats
+        fetchPaymentStats();
+        
+        // Show success notification
+        const successDiv = document.createElement('div');
+        successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center';
+        successDiv.innerHTML = `
+          <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2m0 0l2-2m-2 2l-2-2" />
+          </svg>
+          <span>Paiement ajouté avec succès!</span>
+        `;
+        document.body.appendChild(successDiv);
+        
+        gsap.fromTo(successDiv, {
+          scale: 0, opacity: 0, rotation: -180, x: -100
+        }, {
+          scale: 1, opacity: 1, rotation: 0, x: 0, duration: 0.6, ease: "back.out(1.7)",
+          onComplete: () => {
+            gsap.to(successDiv, {
+              scale: 0, opacity: 0, x: -100, duration: 0.3, delay: 2, ease: "power2.in"
+            });
+            setTimeout(() => {
+              document.body.removeChild(successDiv);
+            }, 2300);
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error adding payment:', error);
+      alert('Erreur lors de l\'ajout du paiement');
+    }
+  };
+
+  const handleCreatePayment = async () => {
+    if (!newPayment.userId || !newPayment.prixTotal) {
+      alert('Veuillez remplir tous les champs');
+      return;
+    }
+
+    try {
+      const response = await axios.post('/api/payments', {
+        userId: parseInt(newPayment.userId),
+        amount: parseFloat(newPayment.prixTotal), // Add amount field
+        prixTotal: parseFloat(newPayment.prixTotal),
+        prixPaye: parseFloat(newPayment.prixPaye),
+        status: newPayment.status
+      });
+
+      if (response.data.success) {
+        // Add new payment to list
+        setPayments([...payments, response.data.data]);
+        
+        // Reset modal
+        setShowCreatePaymentModal(false);
+        setNewPayment({
+          userId: '',
+          prixTotal: '',
+          prixPaye: '0',
+          status: 'PENDING'
+        });
+        
+        // Refresh stats
+        fetchPaymentStats();
+        
+        // Show success notification
+        const successDiv = document.createElement('div');
+        successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center';
+        successDiv.innerHTML = `
+          <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2m0 0l2-2m-2 2l-2-2" />
+          </svg>
+          <span>Paiement créé avec succès!</span>
+        `;
+        document.body.appendChild(successDiv);
+        
+        gsap.fromTo(successDiv, {
+          scale: 0, opacity: 0, rotation: -180, x: -100
+        }, {
+          scale: 1, opacity: 1, rotation: 0, x: 0, duration: 0.6, ease: "back.out(1.7)",
+          onComplete: () => {
+            gsap.to(successDiv, {
+              scale: 0, opacity: 0, x: -100, duration: 0.3, delay: 2, ease: "power2.in"
+            });
+            setTimeout(() => {
+              document.body.removeChild(successDiv);
+            }, 2300);
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error creating payment:', error);
+      alert('Erreur lors de la création du paiement: ' + (error.response?.data?.message || error.message));
+    }
+  };
+
   // Delete user function
   const handleDeleteUser = async (userId, userName) => {
     // Only ADMIN can delete users
@@ -982,13 +1268,242 @@ export default function AdminDashboard() {
     }
   };
 
+  // Dossier API functions
+  const fetchDossiers = async () => {
+    try {
+      const response = await dossierService.getAllDossiers();
+      if (response.success && response.data) {
+        setDossiers(response.data);
+        console.log('Dossiers loaded:', response.data);
+      } else {
+        console.error('Error fetching dossiers:', response.error);
+        setDossiers([]);
+      }
+    } catch (error) {
+      console.error('Error fetching dossiers:', error);
+      setDossiers([]);
+    }
+  };
+
+  const fetchDossierStats = async () => {
+    try {
+      const response = await dossierService.getDossierStats();
+      if (response.success && response.data) {
+        setDossierStats(response.data);
+        console.log('Dossier stats loaded:', response.data);
+      } else {
+        console.error('Error fetching dossier stats:', response.error);
+        setDossierStats(null);
+      }
+    } catch (error) {
+      console.error('Error fetching dossier stats:', error);
+      setDossierStats(null);
+    }
+  };
+
+  const handleCreateDossier = async () => {
+    if (!newDossier.title || !newDossier.userId) {
+      alert('Veuillez remplir le titre et sélectionner un utilisateur');
+      return;
+    }
+
+    try {
+      const response = await dossierService.createDossier(newDossier);
+      
+      if (response.success && response.data) {
+        // Add new dossier to list
+        setDossiers([...dossiers, response.data]);
+        
+        // Reset modal
+        setShowCreateDossierModal(false);
+        setNewDossier({
+          title: '',
+          userId: '',
+          status: 'PENDING'
+        });
+        
+        // Refresh stats
+        fetchDossierStats();
+        
+        // Show success notification
+        const successDiv = document.createElement('div');
+        successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center';
+        successDiv.innerHTML = `
+          <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2m0 0l2-2m-2 2l-2-2" />
+          </svg>
+          <span>Dossier créé avec succès!</span>
+        `;
+        document.body.appendChild(successDiv);
+        
+        gsap.fromTo(successDiv, {
+          scale: 0, opacity: 0, rotation: -180, x: -100
+        }, {
+          scale: 1, opacity: 1, rotation: 0, x: 0, duration: 0.6, ease: "back.out(1.7)",
+          onComplete: () => {
+            gsap.to(successDiv, {
+              scale: 0, opacity: 0, x: -100, duration: 0.3, delay: 2, ease: "power2.in"
+            });
+            setTimeout(() => {
+              document.body.removeChild(successDiv);
+            }, 2300);
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error creating dossier:', error);
+      alert('Erreur lors de la création du dossier: ' + (error.response?.data?.message || error.message));
+    }
+  };
+
+  const handleUpdateDossier = async (dossierId, updateData) => {
+    try {
+      const response = await dossierService.updateDossier(dossierId, updateData);
+      
+      if (response.success && response.data) {
+        // Update dossiers list
+        setDossiers(dossiers.map(dossier => 
+          dossier.id === dossierId ? response.data : dossier
+        ));
+        
+        // Update selected dossier if it's the one being updated
+        if (selectedDossier && selectedDossier.id === dossierId) {
+          setSelectedDossier(response.data);
+        }
+        
+        // Refresh stats
+        fetchDossierStats();
+        
+        // Show success notification
+        const successDiv = document.createElement('div');
+        successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center';
+        successDiv.innerHTML = `
+          <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2m0 0l2-2m-2 2l-2-2" />
+          </svg>
+          <span>Dossier mis à jour avec succès!</span>
+        `;
+        document.body.appendChild(successDiv);
+        
+        gsap.fromTo(successDiv, {
+          scale: 0, opacity: 0, rotation: -180, x: -100
+        }, {
+          scale: 1, opacity: 1, rotation: 0, x: 0, duration: 0.6, ease: "back.out(1.7)",
+          onComplete: () => {
+            gsap.to(successDiv, {
+              scale: 0, opacity: 0, x: -100, duration: 0.3, delay: 2, ease: "power2.in"
+            });
+            setTimeout(() => {
+              document.body.removeChild(successDiv);
+            }, 2300);
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error updating dossier:', error);
+      alert('Erreur lors de la mise à jour du dossier');
+    }
+  };
+
+  const handleDeleteDossier = async (dossierId) => {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce dossier?')) return;
+    
+    try {
+      const response = await dossierService.deleteDossier(dossierId);
+      if (response.success) {
+        // Remove dossier from list
+        setDossiers(dossiers.filter(dossier => dossier.id !== dossierId));
+        
+        // Clear selected dossier if it was the one deleted
+        if (selectedDossier && selectedDossier.id === dossierId) {
+          setSelectedDossier(null);
+        }
+        
+        // Refresh stats
+        fetchDossierStats();
+        
+        // Show success notification
+        const successDiv = document.createElement('div');
+        successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center';
+        successDiv.innerHTML = `
+          <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-7 7-7-7-7 7 7 7 7-7 7 7" />
+          </svg>
+          <span>Dossier supprimé avec succès!</span>
+        `;
+        document.body.appendChild(successDiv);
+        
+        gsap.fromTo(successDiv, {
+          scale: 0, opacity: 0, rotation: -180, x: -100
+        }, {
+          scale: 1, opacity: 1, rotation: 0, x: 0, duration: 0.6, ease: "back.out(1.7)",
+          onComplete: () => {
+            gsap.to(successDiv, {
+              scale: 0, opacity: 0, x: -100, duration: 0.3, delay: 2, ease: "power2.in"
+            });
+            setTimeout(() => {
+              document.body.removeChild(successDiv);
+            }, 2300);
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting dossier:', error);
+      alert('Erreur lors de la suppression du dossier');
+    }
+  };
+
+  const handleCreateMissingDossiers = async () => {
+    if (!window.confirm('Êtes-vous sûr de vouloir créer des dossiers pour tous les utilisateurs qui n\'en ont pas?')) return;
+    
+    try {
+      const response = await dossierService.createMissingDossiers();
+      
+      if (response.success) {
+        // Refresh dossiers list and stats
+        await fetchDossiers();
+        await fetchDossierStats();
+        
+        // Show success notification
+        const successDiv = document.createElement('div');
+        successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center';
+        successDiv.innerHTML = `
+          <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2m0 0l2-2m-2 2l-2-2" />
+          </svg>
+          <span>${response.data.message}</span>
+        `;
+        document.body.appendChild(successDiv);
+        
+        gsap.fromTo(successDiv, {
+          scale: 0, opacity: 0, rotation: -180, x: -100
+        }, {
+          scale: 1, opacity: 1, rotation: 0, x: 0, duration: 0.6, ease: "back.out(1.7)",
+          onComplete: () => {
+            gsap.to(successDiv, {
+              scale: 0, opacity: 0, x: -100, duration: 0.3, delay: 2, ease: "power2.in"
+            });
+            setTimeout(() => {
+              document.body.removeChild(successDiv);
+            }, 2300);
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error creating missing dossiers:', error);
+      alert('Erreur lors de la création des dossiers manquants');
+    }
+  };
+
 const menuItems = [
   { id: 'messagerie', icon: '💬', text: 'Messagerie' },
   { id: 'annonces', icon: '📢', text: 'Annonces' },
   { id: 'users', icon: '👥', text: 'Utilisateurs' },
   { id: 'appointments', icon: '📅', text: 'Rendez-vous' },
   { id: 'contracts', icon: '📄', text: 'Contrats' },
-  { id: 'university', icon: '🎓', text: 'Université' }
+  { id: 'dossiers', icon: '📁', text: 'Dossiers' },
+  { id: 'studyForms', icon: '📝', text: 'Formulaires d\'étude' },
+  { id: 'payments', icon: '💳', text: 'Paiements' }
 ];
 
   const renderContent = () => {
@@ -1769,7 +2284,7 @@ const menuItems = [
                           >
                             <option value="PENDING">⏳ En Attente</option>
                             <option value="CONFIRMED">✅ Confirmé</option>
-                            <option value="CANCELLED">❌ Annulé</option>
+                            <option value="VALIDATED">✅ Validé</option>
                           </select>
                         </td>
                         <td className="p-4">
@@ -1969,12 +2484,634 @@ const menuItems = [
           </ContentCard>
         );
       
+      case 'studyForms':
+        return (
+          <ContentCard className="content-card">
+            <h2 className="text-2xl font-bold text-white mb-6">
+              📝 Formulaires d'Étude en Italie
+            </h2>
+            
+            {/* Search Bar */}
+            <div className="mb-6">
+              <div className="relative">
+                <input
+                  type="text"
+                  value={studyFormSearchQuery}
+                  onChange={(e) => setStudyFormSearchQuery(e.target.value)}
+                  placeholder=" Rechercher par nom..."
+                  className="w-full px-4 py-3 pl-12 bg-gray-800/50 border border-gray-700/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-white placeholder-gray-400"
+                />
+                <div className="absolute left-4 top-3.5 text-gray-400">
+                  🔍
+                </div>
+                {isSearchingStudyForms && (
+                  <div className="absolute right-4 top-3.5">
+                    <svg className="animate-spin h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Study Forms List */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Forms List */}
+              <div className="bg-gray-800/50 rounded-xl border border-gray-700/50 p-6">
+                <h3 className="text-lg font-semibold text-white mb-4">
+                  📋 Liste des Demandes
+                </h3>
+                
+                <div className="space-y-3 max-h-96 overflow-y-auto">
+                  {studyFormSearchResults.length > 0 ? (
+                    studyFormSearchResults.map((form) => (
+                      <div
+                        key={form.id}
+                        onClick={() => setSelectedStudyForm(form)}
+                        className={`p-4 rounded-lg cursor-pointer transition-all ${
+                          selectedStudyForm?.id === form.id
+                            ? 'bg-green-500/20 border border-green-500'
+                            : 'bg-gray-700/50 border border-gray-600/50 hover:bg-gray-700/70'
+                        }`}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="font-semibold text-white">
+                              {form.fullName}
+                            </h4>
+                            <p className="text-sm text-gray-400">
+                              📧 {form.email}
+                            </p>
+                            <p className="text-sm text-gray-400">
+                              📱 {form.phoneNumber}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <div className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs font-medium">
+                              {form.selectedPack === 'essential' ? 'Pack Essentiel' : 
+                               form.selectedPack === 'advanced' ? 'Pack Avancé' : 'Pack Premium'}
+                            </div>
+                            <p className="text-xs text-gray-500 mt-2">
+                              {new Date(form.submissionDate).toLocaleDateString('fr-FR')}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : studyForms.length > 0 ? (
+                    studyForms.map((form) => (
+                      <div
+                        key={form.id}
+                        onClick={() => setSelectedStudyForm(form)}
+                        className={`p-4 rounded-lg cursor-pointer transition-all ${
+                          selectedStudyForm?.id === form.id
+                            ? 'bg-green-500/20 border border-green-500'
+                            : 'bg-gray-700/50 border border-gray-600/50 hover:bg-gray-700/70'
+                        }`}
+                      >
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h4 className="font-semibold text-white">
+                              {form.fullName}
+                            </h4>
+                            <p className="text-sm text-gray-400">
+                              📧 {form.email}
+                            </p>
+                            <p className="text-sm text-gray-400">
+                              📱 {form.phoneNumber}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <div className="px-3 py-1 bg-blue-500/20 text-blue-400 rounded-full text-xs font-medium">
+                              {form.selectedPack === 'essential' ? 'Pack Essentiel' : 
+                               form.selectedPack === 'advanced' ? 'Pack Avancé' : 'Pack Premium'}
+                            </div>
+                            <p className="text-xs text-gray-500 mt-2">
+                              {new Date(form.submissionDate).toLocaleDateString('fr-FR')}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="text-center py-8">
+                      <p className="text-gray-400">
+                        📝 Aucune demande d'étude trouvée
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Form Details */}
+              <div className="bg-gray-800/50 rounded-xl border border-gray-700/50 p-6">
+                <h3 className="text-lg font-semibold text-white mb-4">
+                  📄 Détails de la Demande
+                </h3>
+                
+                {selectedStudyForm ? (
+                  <div className="space-y-4">
+                    {/* Personal Information */}
+                    <div className="bg-gray-700/30 rounded-lg p-4">
+                      <h4 className="font-semibold text-green-400 mb-3">
+                        👤 Informations Personnelles
+                      </h4>
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <span className="text-gray-400">Nom:</span>
+                          <p className="text-white font-medium">{selectedStudyForm.fullName}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-400">Email:</span>
+                          <p className="text-white font-medium">{selectedStudyForm.email}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-400">Téléphone:</span>
+                          <p className="text-white font-medium">{selectedStudyForm.phoneNumber}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-400">Ville:</span>
+                          <p className="text-white font-medium">{selectedStudyForm.city}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-400">Âge:</span>
+                          <p className="text-white font-medium">{selectedStudyForm.age} ans</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-400">Passeport:</span>
+                          <p className="text-white font-medium">{selectedStudyForm.passportStatus}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Academic Information */}
+                    <div className="bg-gray-700/30 rounded-lg p-4">
+                      <h4 className="font-semibold text-green-400 mb-3">
+                        🎓 Informations Académiques
+                      </h4>
+                      <div className="grid grid-cols-2 gap-3 text-sm">
+                        <div>
+                          <span className="text-gray-400">Niveau Actuel:</span>
+                          <p className="text-white font-medium">{selectedStudyForm.currentLevel}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-400">Niveau Désiré:</span>
+                          <p className="text-white font-medium">{selectedStudyForm.desiredLevel}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-400">Langue d'Étude:</span>
+                          <p className="text-white font-medium">{selectedStudyForm.studyLanguage}</p>
+                        </div>
+                        <div>
+                          <span className="text-gray-400">Spécialité:</span>
+                          <p className="text-white font-medium">{selectedStudyForm.desiredSpecialty}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Pack Information */}
+                    <div className="bg-gray-700/30 rounded-lg p-4">
+                      <h4 className="font-semibold text-green-400 mb-3">
+                        💰 Pack Sélectionné
+                      </h4>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="text-white font-medium text-lg">
+                            {selectedStudyForm.selectedPack === 'essential' ? 'Pack Essentiel' : 
+                             selectedStudyForm.selectedPack === 'advanced' ? 'Pack Avancé' : 'Pack Premium'}
+                          </p>
+                          <p className="text-gray-400 text-sm">
+                            {selectedStudyForm.selectedPack === 'essential' ? '1999 DT' : 
+                             selectedStudyForm.selectedPack === 'advanced' ? '2999 DT' : '3999 DT'}
+                          </p>
+                        </div>
+                        <div className="px-4 py-2 bg-green-500/20 text-green-400 rounded-lg font-medium">
+                          Sélectionné
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Submission Date */}
+                    <div className="bg-gray-700/30 rounded-lg p-4">
+                      <h4 className="font-semibold text-green-400 mb-3">
+                        📅 Date de Soumission
+                      </h4>
+                      <p className="text-white">
+                        {new Date(selectedStudyForm.submissionDate).toLocaleDateString('fr-FR', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <p className="text-gray-400">
+                      👆 Sélectionnez une demande pour voir les détails
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </ContentCard>
+        );
+      
+      case 'payments':
+        return (
+          <ContentCard className="content-card">
+            <h2 className="text-2xl font-bold text-white mb-6">
+              💳 Gestion des Paiements
+            </h2>
+            
+            {/* Payment Statistics */}
+            {paymentStats && (
+              <div className="grid grid-cols-4 gap-4 mb-6">
+                <div className="bg-gray-800/50 border border-gray-700/50 rounded-lg p-4 text-center">
+                  <div className="text-2xl mb-2">💰</div>
+                  <div className="text-2xl font-bold text-white">{paymentStats.totalPayments}</div>
+                  <div className="text-sm text-gray-400">Total Paiements</div>
+                </div>
+                <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-4 text-center">
+                  <div className="text-2xl mb-2">✅</div>
+                  <div className="text-2xl font-bold text-green-400">{paymentStats.paidPayments}</div>
+                  <div className="text-sm text-gray-400">Payés</div>
+                </div>
+                <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-4 text-center">
+                  <div className="text-2xl mb-2">⏳</div>
+                  <div className="text-2xl font-bold text-yellow-400">{paymentStats.pendingPayments}</div>
+                  <div className="text-sm text-gray-400">En Attente</div>
+                </div>
+                <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-4 text-center">
+                  <div className="text-2xl mb-2">💵</div>
+                  <div className="text-2xl font-bold text-blue-400">{paymentStats.totalRemaining.toFixed(2)} DT</div>
+                  <div className="text-sm text-gray-400">Reste à Payer</div>
+                </div>
+              </div>
+            )}
+
+            {/* Create Payment Button */}
+            <div className="mb-6">
+              <button
+                onClick={() => setShowCreatePaymentModal(true)}
+                className="px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 flex items-center gap-2"
+              >
+                ➕ Créer un Paiement
+              </button>
+            </div>
+
+            {/* Payments Table */}
+            <div className="overflow-x-auto">
+              <table className="w-full text-white">
+                <thead>
+                  <tr className="border-b border-white/20">
+                    <th className="text-left p-4">Client</th>
+                    <th className="text-left p-4">Total</th>
+                    <th className="text-left p-4">Payé</th>
+                    <th className="text-left p-4">Reste</th>
+                    <th className="text-left p-4">Statut</th>
+                    <th className="text-left p-4">Date</th>
+                    <th className="text-left p-4">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {payments.map((payment) => (
+                    <tr key={payment.id} className="border-b border-white/10 hover:bg-white/5">
+                      <td className="p-4">
+                        <div>
+                          <p className="font-medium">
+                            {payment.user?.firstName} {payment.user?.lastName}
+                          </p>
+                          <p className="text-sm text-gray-400">
+                            {payment.user?.email}
+                          </p>
+                        </div>
+                      </td>
+                      <td className="p-4">
+                        <span className="text-white font-medium">{payment.prixTotal} DT</span>
+                      </td>
+                      <td className="p-4">
+                        <span className="text-green-400 font-medium">{payment.prixPaye} DT</span>
+                      </td>
+                      <td className="p-4">
+                        <span className={`font-medium ${payment.prixReste > 0 ? 'text-yellow-400' : 'text-green-400'}`}>
+                          {payment.prixReste} DT
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                          payment.status === 'PAID' 
+                            ? 'bg-green-500/20 text-green-400 border border-green-500/30' 
+                            : 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30'
+                        }`}>
+                          {payment.status === 'PAID' ? '✅ Payé' : '⏳ En Attente'}
+                        </span>
+                      </td>
+                      <td className="p-4">
+                        <p className="text-sm">
+                          {new Date(payment.createdAt).toLocaleDateString('fr-FR')}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {new Date(payment.createdAt).toLocaleTimeString('fr-FR', {
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      </td>
+                      <td className="p-4">
+                        <div className="flex space-x-2">
+                          {payment.status === 'PENDING' && (
+                            <button
+                              onClick={() => {
+                                setSelectedPayment(payment);
+                                setShowAddPaymentModal(true);
+                              }}
+                              className="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded text-sm transition-colors"
+                              title="Ajouter un paiement"
+                            >
+                              💳
+                            </button>
+                          )}
+                          <button
+                            onClick={() => setSelectedPayment(payment)}
+                            className="px-3 py-1 bg-gray-500 hover:bg-gray-600 text-white rounded text-sm transition-colors"
+                            title="Voir les détails"
+                          >
+                            👁️
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              
+              {payments.length === 0 && (
+                <div className="text-center py-12">
+                  <p className="text-gray-400 text-lg">
+                    💳 Aucun paiement trouvé
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Add Payment Modal */}
+            {showAddPaymentModal && selectedPayment && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 w-96">
+                  <h3 className="text-lg font-semibold text-white mb-4">
+                    💳 Ajouter un Paiement
+                  </h3>
+                  
+                  <div className="mb-4">
+                    <p className="text-gray-400 text-sm">
+                      Client: {selectedPayment.user?.firstName} {selectedPayment.user?.lastName}
+                    </p>
+                    <p className="text-gray-400 text-sm">
+                      Total: {selectedPayment.prixTotal} DT
+                    </p>
+                    <p className="text-gray-400 text-sm">
+                      Déjà payé: {selectedPayment.prixPaye} DT
+                    </p>
+                    <p className="text-yellow-400 text-sm font-medium">
+                      Reste à payer: {selectedPayment.prixReste} DT
+                    </p>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-300 mb-2">
+                      Montant à ajouter (DT)
+                    </label>
+                    <input
+                      type="number"
+                      value={addPaymentAmount}
+                      onChange={(e) => setAddPaymentAmount(e.target.value)}
+                      placeholder="Entrez le montant..."
+                      className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400"
+                      min="0"
+                      max={selectedPayment.prixReste}
+                      step="0.01"
+                    />
+                  </div>
+                  
+                  <div className="flex space-x-3">
+                    <button
+                      onClick={handleAddPayment}
+                      disabled={!addPaymentAmount || parseFloat(addPaymentAmount) <= 0}
+                      className="flex-1 px-4 py-2 bg-blue-500 hover:bg-blue-600 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                    >
+                      Ajouter
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowAddPaymentModal(false);
+                        setAddPaymentAmount('');
+                        setSelectedPayment(null);
+                      }}
+                      className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                    >
+                      Annuler
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Payment Details Modal */}
+            {selectedPayment && !showAddPaymentModal && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 w-96">
+                  <h3 className="text-lg font-semibold text-white mb-4">
+                    💳 Détails du Paiement
+                  </h3>
+                  
+                  <div className="space-y-3">
+                    <div>
+                      <span className="text-gray-400">Client:</span>
+                      <p className="text-white font-medium">
+                        {selectedPayment.user?.firstName} {selectedPayment.user?.lastName}
+                      </p>
+                      <p className="text-sm text-gray-400">{selectedPayment.user?.email}</p>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <span className="text-gray-400">Total:</span>
+                        <p className="text-white font-medium">{selectedPayment.prixTotal} DT</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-400">Payé:</span>
+                        <p className="text-green-400 font-medium">{selectedPayment.prixPaye} DT</p>
+                      </div>
+                      <div>
+                        <span className="text-gray-400">Reste:</span>
+                        <p className={`font-medium ${selectedPayment.prixReste > 0 ? 'text-yellow-400' : 'text-green-400'}`}>
+                          {selectedPayment.prixReste} DT
+                        </p>
+                      </div>
+                      <div>
+                        <span className="text-gray-400">Statut:</span>
+                        <p className={`font-medium ${selectedPayment.status === 'PAID' ? 'text-green-400' : 'text-yellow-400'}`}>
+                          {selectedPayment.status === 'PAID' ? 'Payé' : 'En Attente'}
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <span className="text-gray-400">Date de création:</span>
+                      <p className="text-white">
+                        {new Date(selectedPayment.createdAt).toLocaleDateString('fr-FR', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-6">
+                    <button
+                      onClick={() => setSelectedPayment(null)}
+                      className="w-full px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                    >
+                      Fermer
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Create Payment Modal */}
+            {showCreatePaymentModal && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+                <div className="bg-gray-800 rounded-xl border border-gray-700 p-6 w-96">
+                  <h3 className="text-lg font-semibold text-white mb-4">
+                    💳 Créer un Paiement
+                  </h3>
+                  
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Client
+                      </label>
+                      <select
+                        value={newPayment.userId}
+                        onChange={(e) => setNewPayment({...newPayment, userId: e.target.value})}
+                        className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                      >
+                        <option value="">Sélectionner un client</option>
+                        {allUsers.filter(u => u.role === 'USER').map((user) => (
+                          <option key={user.id} value={user.id}>
+                            {user.firstName} {user.lastName} - {user.email}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Total (DT)
+                      </label>
+                      <input
+                        type="number"
+                        value={newPayment.prixTotal}
+                        onChange={(e) => setNewPayment({...newPayment, prixTotal: e.target.value})}
+                        placeholder="Entrez le montant total..."
+                        className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400"
+                        min="0"
+                        step="0.01"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Montant payé (DT)
+                      </label>
+                      <input
+                        type="number"
+                        value={newPayment.prixPaye}
+                        onChange={(e) => setNewPayment({...newPayment, prixPaye: e.target.value})}
+                        placeholder="Entrez le montant payé..."
+                        className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-gray-400"
+                        min="0"
+                        step="0.01"
+                      />
+                    </div>
+                    
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-2">
+                        Statut
+                      </label>
+                      <select
+                        value={newPayment.status}
+                        onChange={(e) => setNewPayment({...newPayment, status: e.target.value})}
+                        className="w-full px-4 py-2 bg-gray-700 border border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-white"
+                      >
+                        <option value="PENDING">⏳ En Attente</option>
+                        <option value="PAID">✅ Payé</option>
+                      </select>
+                    </div>
+                  </div>
+                  
+                  <div className="flex space-x-3 mt-6">
+                    <button
+                      onClick={handleCreatePayment}
+                      disabled={!newPayment.userId || !newPayment.prixTotal}
+                      className="flex-1 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+                    >
+                      Créer
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowCreatePaymentModal(false);
+                        setNewPayment({
+                          userId: '',
+                          prixTotal: '',
+                          prixPaye: '0',
+                          status: 'PENDING'
+                        });
+                      }}
+                      className="flex-1 px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors"
+                    >
+                      Annuler
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </ContentCard>
+        );
+      
+      case 'dossiers':
+        return (
+          <ContentCard className="content-card">
+            <h2 className="text-2xl font-bold text-white mb-6">
+              📁 Gestion des Dossiers
+            </h2>
+            <DossierKanban 
+              dossiers={dossiers} 
+              onDossierUpdate={(updatedDossier) => {
+                setDossiers(dossiers.map(dossier => 
+                  dossier.id === updatedDossier.id ? updatedDossier : dossier
+                ));
+                fetchDossierStats();
+              }}
+            />
+          </ContentCard>
+        );
+      
       default:
         return null;
     }
   };
 
-  // GSAP Animations
   useEffect(() => {
     // Animate sidebar
     gsap.fromTo(sidebarRef.current, {

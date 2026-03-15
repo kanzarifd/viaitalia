@@ -6,6 +6,7 @@ import Login from "./pages/Login";
 import UserDashboard from "./pages/UserDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
 import Register from "./pages/Register";
+import StudyForm from "./pages/StudyForm";
 
 function App() {
   const { token, role, loading } = useContext(AuthContext);
@@ -33,6 +34,7 @@ function App() {
         <Route path="/" element={<Accueil />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/study-form" element={<StudyForm />} />
 
         {/* Protected USER Route */}
         <Route

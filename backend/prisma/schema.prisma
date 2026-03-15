@@ -29,6 +29,26 @@ enum DossierStatus {
   REJECTED
 }
 
+enum DossierStage {
+  EN_COURS
+  VALIDE
+}
+
+enum TraductionStatus {
+  EN_COURS
+  VALIDE
+}
+
+enum InscriptionStatus {
+  EN_COURS
+  VALIDE
+}
+
+enum VisaStatus {
+  EN_COURS
+  VALIDE
+}
+
 enum PaymentStatus {
   PENDING
   PAID
@@ -93,21 +113,27 @@ model Appointment {
 }
 
 model Dossier {
-  id        Int           @id @default(autoincrement())
-  title     String
-  status    DossierStatus @default(PENDING)
-  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    Int
-  createdAt DateTime      @default(now())
+  id                   Int                @id @default(autoincrement())
+  title                String
+  status               DossierStatus      @default(PENDING)
+  traductionStatus     TraductionStatus  @default(EN_COURS)
+  inscriptionStatus    InscriptionStatus @default(EN_COURS)
+  visaStatus           VisaStatus         @default(EN_COURS)
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId               Int
+  createdAt            DateTime           @default(now())
 }
 
 model Payment {
-  id        Int           @id @default(autoincrement())
-  amount    Float
-  status    PaymentStatus @default(PENDING)
-  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
-  userId    Int
-  createdAt DateTime      @default(now())
+  id          Int           @id @default(autoincrement())
+  amount      Float
+  prixTotal   Float
+  prixPaye    Float         @default(0)
+  prixReste   Float
+  status      PaymentStatus @default(PENDING)
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId      Int
+  createdAt   DateTime      @default(now())
 }
 
 model Message {
@@ -163,4 +189,24 @@ model UserAnnouncement {
   announcement Announcement @relation(fields: [announcementId], references: [id], onDelete: Cascade)
   
   @@unique([userId, announcementId])
+}
+
+model StudyInItalyForm {
+  id               Int      @id @default(autoincrement())
+  fullName         String
+  phoneNumber      String
+  email            String
+  city             String
+  passportStatus   String   // "Oui" | "Non" | "En cours"
+  currentLevel     String   // "Baccalauréat Obtenu" | "Baccalauréat en cours" | "Licence Obtenu" | "Licence en cours" | "Master Obtenu" | "Master en cours"
+  desiredLevel     String   // "Licence" | "Master" | "2ème Master"
+  studyLanguage    String   // "Italien" | "Anglais"
+  desiredSpecialty String
+  age              Int
+  selectedPack     String   // "Pack Essentiel" | "Pack Avancé" | "Pack Premium"
+  submissionDate   DateTime @default(now())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@map("study_in_italy_forms")
 }
