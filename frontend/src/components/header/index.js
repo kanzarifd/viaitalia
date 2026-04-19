@@ -13,6 +13,7 @@ const Headers = styled.header`
   color: var(--white);
   position: relative;
   z-index: 500;
+  transition: all 0.3s ease;
   @media only Screen and (max-width: 64em) {
     padding: 0.5rem 3rem;
   }
@@ -54,6 +55,8 @@ const Nav = styled.nav`
     font-weight: 600;
     line-height: 1.5;
     color: var(--white);
+    font-size: 1.2rem;
+    font-family: 'Gagalin', sans-serif;
     &::after {
       content: "";
       display: block;
@@ -215,6 +218,10 @@ const Header = () => {
         borderRadius: "0 0 50px 50px",
 
         border: "2px solid var(--white)",
+        
+        backgroundColor: "rgba(53, 53, 63, 0.1)",
+        backdropFilter: "blur(10px)",
+        WebkitBackdropFilter: "blur(10px)",
 
         duration: 1,
         ease: "power1.out",
@@ -237,6 +244,10 @@ const Header = () => {
         borderRadius: "50px",
 
         border: "3px solid var(--white)",
+        
+        backgroundColor: "rgba(53, 53, 63, 0.1)",
+        backdropFilter: "blur(10px)",
+        WebkitBackdropFilter: "blur(10px)",
 
         duration: 1,
         ease: "power1.out",
@@ -267,7 +278,7 @@ const Header = () => {
           Services
         </a>
         <a href="/login" onClick={(e) => navigateToLogin(e)}>
-          <Button>Contact Us</Button>
+          <Button>Login</Button>
         </a>
       </Nav>
       <HamburgerBtn clicked={+click} onClick={() => setClick(!click)}>
@@ -284,7 +295,7 @@ const Header = () => {
           Services
         </a>
         <a href="#contact" onClick={(e) => handleClick("contact", e)}>
-          <Button>Contact Us</Button>
+          <Button>Login</Button>
         </a>
       </MobileMenu>
     </Headers>

@@ -4,6 +4,9 @@ import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import rocket from "../../assets/rocket image.png";
 import hand from "../../assets/hand.svg";
+import university from "../../assets/University-of-Pisa-Italy.png";
+import support from "../../assets/Support.svg";
+import checked from "../../assets/checked.png";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -14,7 +17,6 @@ const move = keyframes`
 `;
 
 const AboutSection = styled.section`
-  background: linear-gradient(135deg, #0a0b10 0%, #1a1f2e 100%);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -31,9 +33,7 @@ const AboutSection = styled.section`
     left: 0;
     right: 0;
     bottom: 0;
-    background: 
-      radial-gradient(circle at 20% 50%, rgba(0, 255, 51, 0.1) 0%, transparent 50%),
-      radial-gradient(circle at 80% 50%, rgba(239, 68, 68, 0.1) 0%, transparent 50%);
+ 
     pointer-events: none;
     z-index: 1;
   }
@@ -104,10 +104,10 @@ const AboutContent = styled.div`
 
 const AboutText = styled.p`
   color: var(--white);
-  font-size: 1.1rem;
+  font-size: 1.5rem;
   line-height: 1.8;
   opacity: 0.9;
-  margin: 0;
+  margin: 1rem ;
 `;
 
 const FeaturesList = styled.div`
@@ -139,18 +139,14 @@ const FeatureItem = styled.div`
   }
 `;
 
-const FeatureIcon = styled.div`
-  width: 50px;
-  height: 50px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: linear-gradient(90deg, var(--green), var(--red));
-  border-radius: 50%;
+const FeatureIcon = styled.img`
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
   transition: all 0.3s ease;
 
   ${FeatureItem}:hover & {
-    transform: scale(1.1) rotate(360deg);
+    transform: scale(1.1) rotate(5deg);
   }
 `;
 
@@ -233,178 +229,7 @@ const About = () => {
   useEffect(() => {
     const section = sectionRef.current;
     
-    // Create moving stars
-    const createStars = () => {
-      const colors = ['rgba(255, 255, 255, 0.8)', 'rgba(0, 255, 51, 0.8)', 'rgba(239, 68, 68, 0.8)'];
-      
-      for (let i = 0; i < 25; i++) {
-        const star = document.createElement('div');
-        star.className = 'star';
-        const color = colors[Math.floor(Math.random() * colors.length)];
-        
-        star.style.cssText = `
-          position: absolute;
-          width: ${Math.random() * 3 + 1}px;
-          height: ${Math.random() * 3 + 1}px;
-          background: ${color};
-          clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
-          pointer-events: none;
-          z-index: 1;
-          box-shadow: 0 0 ${Math.random() * 10 + 5}px ${color};
-        `;
-        section.appendChild(star);
-        particlesRef.current.push(star);
-
-        // Animate each star
-        gsap.set(star, {
-          x: Math.random() * window.innerWidth,
-          y: Math.random() * window.innerHeight,
-          rotation: Math.random() * 360,
-          scale: 0
-        });
-
-        gsap.to(star, {
-          x: `+=${Math.random() * 300 - 150}`,
-          y: `+=${Math.random() * 300 - 150}`,
-          rotation: `+=${Math.random() * 360 - 180}`,
-          scale: Math.random() * 1.5 + 0.5,
-          opacity: Math.random() * 0.7 + 0.3,
-          duration: Math.random() * 8 + 4,
-          repeat: -1,
-          yoyo: true,
-          ease: "sine.inOut",
-          delay: Math.random() * 3
-        });
-
-        // Twinkling effect
-        gsap.to(star, {
-          opacity: Math.random() * 0.5 + 0.5,
-          duration: Math.random() * 2 + 1,
-          repeat: -1,
-          yoyo: true,
-          ease: "power2.inOut"
-        });
-      }
-    };
-
-    // Create floating particles
-    const createParticles = () => {
-      for (let i = 0; i < 10; i++) {
-        const particle = document.createElement('div');
-        particle.className = 'particle';
-        particle.style.cssText = `
-          position: absolute;
-          width: ${Math.random() * 4 + 1}px;
-          height: ${Math.random() * 4 + 1}px;
-          background: ${Math.random() > 0.5 ? 'rgba(0, 255, 51, 0.6)' : 'rgba(239, 68, 68, 0.6)'};
-          border-radius: 50%;
-          pointer-events: none;
-          z-index: 1;
-        `;
-        section.appendChild(particle);
-        particlesRef.current.push(particle);
-
-        // Animate each particle
-        gsap.set(particle, {
-          x: Math.random() * window.innerWidth,
-          y: Math.random() * window.innerHeight,
-          scale: 0
-        });
-
-        gsap.to(particle, {
-          x: `+=${Math.random() * 200 - 100}`,
-          y: `+=${Math.random() * 200 - 100}`,
-          scale: Math.random() * 2 + 0.5,
-          opacity: Math.random() * 0.8 + 0.2,
-          duration: Math.random() * 10 + 5,
-          repeat: -1,
-          yoyo: true,
-          ease: "sine.inOut",
-          delay: Math.random() * 5
-        });
-      }
-    };
-
-    // Create moving gradients
-    const createMovingGradients = () => {
-      for (let i = 0; i < 5; i++) {
-        const gradient = document.createElement('div');
-        gradient.className = 'moving-gradient';
-        gradient.style.cssText = `
-          position: absolute;
-          width: ${Math.random() * 300 + 100}px;
-          height: ${Math.random() * 300 + 100}px;
-          background: ${Math.random() > 0.5 ? 
-            'radial-gradient(circle, rgba(0, 255, 51, 0.3) 0%, transparent 70%)' : 
-            'radial-gradient(circle, rgba(239, 68, 68, 0.3) 0%, transparent 70%)'};
-          border-radius: 50%;
-          pointer-events: none;
-          z-index: 1;
-          filter: blur(40px);
-        `;
-        section.appendChild(gradient);
-        gradientsRef.current.push(gradient);
-
-        // Animate each gradient
-        gsap.set(gradient, {
-          x: Math.random() * window.innerWidth,
-          y: Math.random() * window.innerHeight,
-          scale: 0
-        });
-
-        gsap.to(gradient, {
-          x: `+=${Math.random() * 400 - 200}`,
-          y: `+=${Math.random() * 400 - 200}`,
-          scale: Math.random() * 3 + 1,
-          opacity: Math.random() * 0.4 + 0.1,
-          duration: Math.random() * 15 + 10,
-          repeat: -1,
-          yoyo: true,
-          ease: "power1.inOut",
-          delay: Math.random() * 3
-        });
-      }
-    };
-
-    // Background color animation
-    const bgTimeline = gsap.timeline({ repeat: -1, yoyo: true });
-    
-    bgTimeline
-      .to(section, {
-        duration: 3,
-        background: 'linear-gradient(135deg, rgba(0, 255, 51, 0.05) 0%, #1a1f2e 100%)',
-        ease: "power2.inOut"
-      })
-      .to(section, {
-        duration: 3,
-        background: 'linear-gradient(135deg, #0a0b10 0%, rgba(239, 68, 68, 0.05) 100%)',
-        ease: "power2.inOut"
-      })
-      .to(section, {
-        duration: 3,
-        background: 'linear-gradient(135deg, rgba(0, 255, 51, 0.03) 0%, rgba(239, 68, 68, 0.03) 100%)',
-        ease: "power2.inOut"
-      })
-      .to(section, {
-        duration: 3,
-        background: 'linear-gradient(135deg, #0a0b10 0%, #1a1f2e 100%)',
-        ease: "power2.inOut"
-      });
-
-    // Create dynamic elements
-    createStars();
-    createParticles();
-    createMovingGradients();
-
-    // Pulsing radial overlay
-    gsap.to(section.querySelector('::before'), {
-      opacity: 0.5,
-      duration: 4,
-      repeat: -1,
-      yoyo: true,
-      ease: "sine.inOut"
-    });
-
+ 
     // Title animation
     gsap.fromTo(titleRef.current, {
       opacity: 0,
@@ -501,50 +326,47 @@ const About = () => {
 
   const features = [
     {
-      title: "Accompagnement Personnalisé",
-      description: "Nous vous guidons à chaque étape de votre parcours académique en Italie",
-      color: "var(--red)"
+      title: "Personalized Guidance",
+      description: "We guide you through each step of your journey to study in Italy",
+      color: "var(--red)",
+      icon: checked
     },
     {
-      title: "Expertise Universitaire",
-      description: "Connaissance approfondie des universités italiennes et de leurs exigences",
-      color: "var(--white)"
+      title: "University Expertise",
+      description: "In-depth knowledge of Italian universities and their requirements",
+      color: "var(--white)",
+      icon: checked
     },
     {
-      title: "Support Complet",
-      description: "De l'inscription à l'installation, nous sommes à vos côtés",
-      color: "var(--green)"
+      title: "Full Support",
+      description: "From registration to installation, we are by your side",
+      color: "var(--green)",
+      icon: checked
     }
   ];
 
   return (
     <AboutSection ref={sectionRef} id="about">
       <Title ref={titleRef}>
-        À Propos de Viaitalia
-      </Title>
+About Vialtalia       </Title>
       
       <AboutContainer>
         <AboutContent ref={contentRef}>
           <AboutText>
-            Viaitalia est une plateforme spécialisée dans l'accompagnement des étudiants souhaitant poursuivre leurs études en Italie. 
-            Notre mission est simple : rendre votre projet académique clair, sécurisé et réalisable, de la première inscription jusqu'à votre installation en Italie.
+            Vialtalia is your trusted partner for enrolling in Italian universities. We simplify your
+            academic journey with clear, secure, and personalized support from the first application to your arrival in Italy.
           </AboutText>
-          <AboutText>
-            Nous mettons à votre disposition notre expertise et notre réseau pour garantir votre succès dans les meilleures universités italiennes.
-          </AboutText>
+          
         </AboutContent>
         
         <div>
           <RocketContainer ref={rocketRef}>
-            <RocketImage src={rocket} alt="Rocket" />
           </RocketContainer>
           
           <FeaturesList>
             {features.map((feature, index) => (
               <FeatureItem key={index} ref={addToFeaturesRef}>
-                <FeatureIcon>
-                  <FeatureCircle color={feature.color} />
-                </FeatureIcon>
+                <FeatureIcon src={feature.icon} alt={feature.title} />
                 <FeatureText>
                   <FeatureTitle>{feature.title}</FeatureTitle>
                   <FeatureDescription>{feature.description}</FeatureDescription>
@@ -555,9 +377,7 @@ const About = () => {
         </div>
       </AboutContainer>
 
-      <HandContainer ref={handRef}>
-        <HandImage src={hand} alt="Hand" />
-      </HandContainer>
+     
     </AboutSection>
   );
 };

@@ -1,7 +1,211 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import axiosInstance from "../api/axiosInstance";
 import { gsap } from "gsap";
+import styled from "styled-components";
+import axiosInstance from "../api/axiosInstance";
+import logoSvg from "../assets/logo.svg";
+
+// Register GSAP
+gsap.registerPlugin();
+
+// Styled Components
+const RegisterContainer = styled.div`
+  min-height: 100vh;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow-x: hidden;
+  background: linear-gradient(135deg, #006400, #8B0000);
+`;
+
+const RegisterCard = styled.div`
+  background: rgba(28, 28, 35, 0.8);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 20px;
+  padding: 3rem;
+  width: 100%;
+  max-width: 450px;
+  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  transform: translateY(50px) scale(0.9);
+  
+  @media (max-width: 768px) {
+    padding: 2rem;
+    margin: 1rem;
+    max-width: none;
+  }
+`;
+
+const LogoContainer = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2rem;
+  
+  img {
+    height: 60px;
+    width: 150px;
+    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  
+  &:hover img {
+    transform: translateY(-2px) scale(1.05);
+    filter: drop-shadow(0 8px 12px rgba(0, 255, 51, 0.3));
+  }
+`;
+
+const Title = styled.h1`
+  font-size: 2rem;
+  font-weight: 800;
+  background: linear-gradient(90deg, var(--green), var(--red));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-align: center;
+  margin-bottom: 0.5rem;
+  opacity: 0;
+  transform: translateY(20px);
+`;
+
+const Subtitle = styled.p`
+  color: rgba(255, 255, 255, 0.7);
+  text-align: center;
+  margin-bottom: 2rem;
+  font-size: 0.95rem;
+  opacity: 0;
+  transform: translateY(20px);
+`;
+
+const ErrorMessage = styled.div`
+  background: linear-gradient(135deg, rgba(20, 20, 25, 0.8), rgba(239, 68, 68, 0.1));
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #ff6b6b;
+  padding: 1rem;
+  border-radius: 12px;
+  margin-bottom: 1.5rem;
+  text-align: center;
+  backdrop-filter: blur(10px);
+  opacity: 0;
+  transform: translateY(-10px);
+`;
+
+const Form = styled.form`
+  space-y: 1.5rem;
+`;
+
+const FormGroup = styled.div`
+  margin-bottom: 1.5rem;
+  opacity: 0;
+  transform: translateY(20px);
+`;
+
+const Label = styled.label`
+  display: block;
+  color: rgba(255, 255, 255, 0.9);
+  margin-bottom: 0.5rem;
+  font-weight: 500;
+  font-size: 0.9rem;
+`;
+
+const Input = styled.input`
+  width: 100%;
+  padding: 1rem;
+  background: rgba(20, 20, 25, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  color: var(--white);
+  font-size: 1rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+  
+  &::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+  }
+  
+  &:focus {
+    outline: none;
+    border-color: var(--green);
+    background: rgba(20, 20, 25, 0.9);
+    box-shadow: 0 0 20px rgba(0, 255, 51, 0.3);
+    transform: translateY(-2px);
+  }
+`;
+
+const SubmitButton = styled.button`
+  width: 100%;
+  padding: 1rem;
+  background: linear-gradient(135deg, var(--green), rgba(0, 255, 51, 0.8));
+  border: 1px solid rgba(0, 255, 51, 0.3);
+  border-radius: 25px;
+  color: var(--white);
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 4px 12px rgba(0, 255, 51, 0.2);
+  position: relative;
+  overflow: hidden;
+  opacity: 0;
+  transform: translateY(20px);
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 255, 51, 0.3), transparent);
+    transition: left 0.5s;
+  }
+  
+  &:hover:not(:disabled) {
+    background: linear-gradient(135deg, rgba(0, 255, 51, 0.9), var(--green));
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0 8px 20px rgba(0, 255, 51, 0.4);
+    border-color: rgba(0, 255, 51, 0.5);
+    
+    &::before {
+      left: 100%;
+    }
+  }
+  
+  &:active:not(:disabled) {
+    transform: translateY(0) scale(0.98);
+  }
+  
+  &:disabled {
+    background: linear-gradient(135deg, rgba(20, 20, 25, 0.6), rgba(20, 20, 25, 0.4));
+    border-color: rgba(255, 255, 255, 0.05);
+    cursor: not-allowed;
+    transform: none;
+  }
+`;
+
+const SwitchText = styled.p`
+  text-align: center;
+  color: rgba(255, 255, 255, 0.7);
+  margin-top: 2rem;
+  font-size: 0.9rem;
+  opacity: 0;
+  transform: translateY(20px);
+  
+  span {
+    color: var(--green);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    
+    &:hover {
+      color: rgba(0, 255, 51, 0.8);
+      text-shadow: 0 0 10px rgba(0, 255, 51, 0.5);
+    }
+  }
+`;
 
 const Register = () => {
   const navigate = useNavigate();
@@ -16,8 +220,11 @@ const Register = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // GSAP refs
-  const formRef = useRef(null);
+  const cardRef = useRef(null);
+  const logoRef = useRef(null);
   const titleRef = useRef(null);
+  const subtitleRef = useRef(null);
+  const formRef = useRef(null);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -58,163 +265,203 @@ const Register = () => {
 
   // GSAP animations on component mount
   useEffect(() => {
-    // Delay animations to ensure DOM is ready
-    const timer = setTimeout(() => {
-      try {
-        // Animate title
-        if (titleRef.current) {
-          gsap.from(titleRef.current, {
-            duration: 1,
-            y: -20,
-            opacity: 0,
-            ease: "power3.out",
-            clearProps: true
-          });
-        }
+    // Animate card entrance
+    gsap.fromTo(cardRef.current, {
+      scale: 0.9,
+      opacity: 0,
+      y: 50
+    }, {
+      scale: 1,
+      opacity: 1,
+      y: 0,
+      duration: 1.2,
+      ease: "power3.out",
+      delay: 0.2
+    });
 
-        // Animate form container
-        if (formRef.current) {
-          gsap.from(formRef.current, {
-            duration: 1.2,
-            scale: 0.8,
-            opacity: 0,
-            ease: "back.out(1.7)",
-            clearProps: true
-          });
+    // Animate logo
+    gsap.fromTo(logoRef.current, {
+      scale: 0,
+      rotation: -180,
+      opacity: 0
+    }, {
+      scale: 1,
+      rotation: 0,
+      opacity: 1,
+      duration: 1,
+      ease: "back.out(1.7)",
+      delay: 0.6
+    });
 
-          // Animate form fields with stagger
-          const inputs = formRef.current.querySelectorAll('input');
-          if (inputs && inputs.length > 0) {
-            gsap.from(inputs, {
-              duration: 0.8,
-              y: 20,
-              opacity: 0,
-              stagger: 0.1,
-              ease: "power2.out",
-              clearProps: true
-            });
-          }
+    // Animate title and subtitle
+    gsap.fromTo(titleRef.current, {
+      y: 20,
+      opacity: 0
+    }, {
+      y: 0,
+      opacity: 1,
+      duration: 0.8,
+      ease: "power3.out",
+      delay: 0.8
+    });
 
-          // Animate button
-          const button = formRef.current.querySelector('button');
-          if (button) {
-            gsap.from(button, {
-              duration: 0.8,
-              scale: 0.8,
-              opacity: 0,
-              ease: "elastic.out(1, 0.5)",
-              clearProps: true
-            });
-          }
-        }
-      } catch (error) {
-        console.log('GSAP Animation Error:', error);
-      }
-    }, 100); // Small delay to ensure DOM is ready
+    gsap.fromTo(subtitleRef.current, {
+      y: 20,
+      opacity: 0
+    }, {
+      y: 0,
+      opacity: 1,
+      duration: 0.8,
+      ease: "power3.out",
+      delay: 0.9
+    });
 
-    return () => clearTimeout(timer);
+    // Animate form elements with stagger
+    gsap.fromTo('.form-group', {
+      y: 20,
+      opacity: 0
+    }, {
+      y: 0,
+      opacity: 1,
+      duration: 0.6,
+      ease: "power3.out",
+      stagger: 0.1,
+      delay: 1.1
+    });
+
+    // Animate submit button
+    gsap.fromTo('.submit-btn', {
+      y: 20,
+      opacity: 0
+    }, {
+      y: 0,
+      opacity: 1,
+      duration: 0.8,
+      ease: "power3.out",
+      delay: 1.5
+    });
+
+    // Animate switch text
+    gsap.fromTo('.switch-text', {
+      y: 20,
+      opacity: 0
+    }, {
+      y: 0,
+      opacity: 1,
+      duration: 0.6,
+      ease: "power3.out",
+      delay: 1.7
+    });
+
+    // Dynamic background animation
+    gsap.to('.register-container', {
+      background: 'linear-gradient(135deg, rgba(0, 255, 51, 0.05) 0%, rgba(239, 68, 68, 0.05) 50%, rgba(0, 255, 51, 0.02) 100%)',
+      duration: 4,
+      ease: "power2.inOut",
+      repeat: -1,
+      yoyo: true
+    });
   }, []);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-tr from-gray-900 via-indigo-950 to-black">
-      <div className="bg-gray-900 text-gray-100 rounded-2xl shadow-2xl w-full max-w-md p-8 border border-gray-80">
-        <div className="text-center mb-8">
-          <h1 ref={titleRef} className="text-3xl font-bold text-white mb-2">VIA ITALIA</h1>
-        </div>
+    <RegisterContainer className="register-container">
+      <RegisterCard ref={cardRef}>
+        <LogoContainer ref={logoRef}>
+          <img src={logoSvg} alt="Via Italia" />
+        </LogoContainer>
+        
+        <Title ref={titleRef}>
+          Create Account
+        </Title>
+        
+        <Subtitle ref={subtitleRef}>
+          Fill in your details to get started
+        </Subtitle>
 
-        <form ref={formRef} onSubmit={handleSubmit} className="space-y-6">
-          {/* First Name Field */}
-          <div>
-            <label className="block text-gray-400 mb-1">Nome</label>
-            <input
+        {message && (
+          <ErrorMessage className="error-message">
+            {message}
+          </ErrorMessage>
+        )}
+
+        <Form ref={formRef} onSubmit={handleSubmit}>
+          <FormGroup className="form-group">
+            <Label>First Name</Label>
+            <Input
               type="text"
               name="firstName"
               value={formData.firstName}
               onChange={handleChange}
-              placeholder="Inserisci il tuo nome"
-              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 outline-none"
+              placeholder="Enter your first name"
               required
             />
-          </div>
+          </FormGroup>
 
-          {/* Last Name Field */}
-          <div>
-            <label className="block text-gray-400 mb-1">Cognome</label>
-            <input
+          <FormGroup className="form-group">
+            <Label>Last Name</Label>
+            <Input
               type="text"
               name="lastName"
               value={formData.lastName}
               onChange={handleChange}
-              placeholder="Inserisci il tuo cognome"
-              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 outline-none"
+              placeholder="Enter your last name"
               required
             />
-          </div>
+          </FormGroup>
 
-          {/* Email Field */}
-          <div>
-            <label className="block text-gray-400 mb-1">Email</label>
-            <input
+          <FormGroup className="form-group">
+            <Label>Email</Label>
+            <Input
               type="email"
               name="email"
               value={formData.email}
               onChange={handleChange}
-              placeholder="Inserisci la tua email"
-              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 outline-none"
+              placeholder="Enter your email"
               required
             />
-          </div>
+          </FormGroup>
 
-          {/* Password Field */}
-          <div>
-            <label className="block text-gray-400 mb-1">Password</label>
-            <input
+          <FormGroup className="form-group">
+            <Label>Password</Label>
+            <Input
               type="password"
               name="password"
               value={formData.password}
               onChange={handleChange}
-              placeholder="Inserisci la tua password"
-              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 outline-none"
+              placeholder="Create a password"
               required
             />
-          </div>
+          </FormGroup>
 
-          {/* Confirm Password Field */}
-          <div>
-            <label className="block text-gray-400 mb-1">Conferma Password</label>
-            <input
+          <FormGroup className="form-group">
+            <Label>Confirm Password</Label>
+            <Input
               type="password"
               name="confirmPassword"
               value={formData.confirmPassword}
               onChange={handleChange}
-              placeholder="Conferma la tua password"
-              className="w-full px-4 py-3 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-500 focus:ring-2 focus:ring-indigo-500 outline-none"
+              placeholder="Confirm your password"
               required
             />
-          </div>
+          </FormGroup>
 
-          <button
+          <SubmitButton
             type="submit"
             disabled={isSubmitting}
-            className={`w-full py-3 rounded-lg font-semibold text-white transition-all ${isSubmitting ? "bg-indigo-800 cursor-not-allowed" : "bg-indigo-600 hover:bg-indigo-500 active:scale-95"}`}
+            className="submit-btn"
           >
-            {isSubmitting ? "Registrazione in corso..." : "Registrati"}
-          </button>
+            {isSubmitting ? "Creating Account..." : "Register"}
+          </SubmitButton>
+        </Form>
 
-        </form>
-
-        <p className="text-center text-gray-400 mt-6 text-sm">
-          Hai già un account?{" "}
-          <span
-            className="text-indigo-400 font-medium hover:underline cursor-pointer"
-            onClick={() => navigate("/login")}
-          >
-            Accedi
+        <SwitchText className="switch-text">
+          Already have an account?{" "}
+          <span onClick={() => navigate("/login")}>
+            Sign In
           </span>
-        </p>
-
-      </div>
-    </div>
+        </SwitchText>
+      </RegisterCard>
+    </RegisterContainer>
   );
 };
 

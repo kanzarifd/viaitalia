@@ -210,3 +210,15 @@ model StudyInItalyForm {
 
   @@map("study_in_italy_forms")
 }
+
+model ContactMessage {
+  id          Int      @id @default(autoincrement())
+  fullName    String   // "Nom complet"
+  email       String   // Email
+  phone       String?  // "Téléphone" (optional)
+  message     String   // "Votre message"
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+
+  @@map("contact_messages")
+}

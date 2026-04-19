@@ -33,7 +33,7 @@ const DashboardContainer = styled.div`
 `;
 
 const Sidebar = styled.div`
-  width: 280px;
+ width: 280px;
   background-color: var(--nav);
   backdrop-filter: blur(20px);
   border-right: 1px solid rgba(255, 255, 255, 0.08);
@@ -42,14 +42,46 @@ const Sidebar = styled.div`
   flex-direction: column;
   z-index: 1000;
   color: var(--white);
+
+  @media (max-width: 768px) {
+    display: none !important;
+    width: 0;
+    padding: 0;
+    border: none;
+    position: absolute;
+    left: -100%;
+    visibility: hidden;
+  }
+`;
+
+const SidebarControls = styled.div`
+  display: none;
   
   @media (max-width: 768px) {
-    position: fixed;
-    top: 0;
-    left: 0;
-    height: 100vh;
-    transform: translateX(${props => props.isOpen ? '0' : '-100%'});
-    transition: transform 0.3s ease-in-out;
+    display: flex;
+    justify-content: space-between;
+    padding: 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+`;
+
+const SidebarButton = styled.button`
+  background: rgba(0, 255, 51, 0.2);
+  border: 1px solid rgba(0, 255, 51, 0.3);
+  color: var(--green);
+  padding: 0.5rem 1rem;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    background: rgba(0, 255, 51, 0.3);
+    transform: translateY(-1px);
+  }
+  
+  &:active {
+    transform: translateY(0);
   }
 `;
 
@@ -139,6 +171,10 @@ const ContentArea = styled.div`
   background: linear-gradient(135deg, 
     rgba(239, 68, 68, 0.05) 20%, 
     rgba(0, 255, 51, 0.02) 100%);
+  
+  @media (max-width: 768px) {
+    padding-bottom: 5rem;
+  }
 `;
 
 const ContentCard = styled.div`
@@ -218,9 +254,6 @@ const HamburgerButton = styled.button`
   cursor: pointer;
   padding: 0.5rem;
   
-  @media (max-width: 768px) {
-    display: block;
-  }
 `;
 
 const MobileOverlay = styled.div`
@@ -238,7 +271,60 @@ const MobileOverlay = styled.div`
   }
 `;
 
-export default function AdminDashboard() {
+const BottomNav = styled.div`
+  display: none;
+
+  @media (max-width: 768px) {
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background: rgba(28, 28, 35, 0.95);
+    backdrop-filter: blur(20px);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0.5rem 0;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 1000;
+  }
+`;
+
+const BottomNavItem = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 0.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  color: rgba(255, 255, 255, 0.7);
+  
+  &:hover {
+    color: var(--green);
+    transform: translateY(-2px);
+  }
+  
+  &.active {
+    color: var(--green);
+    
+    .icon {
+      transform: scale(1.1);
+    }
+  }
+  
+  .icon {
+    font-size: 1.2rem;
+    margin-bottom: 0.2rem;
+    transition: all 0.3s ease;
+  }
+  
+  span {
+    font-size: 0.7rem;
+    font-weight: 500;
+  }
+`;
+
+function AdminDashboard() {
   const navigate = useNavigate();
   const { user } = useContext(AuthContext);
   
@@ -895,6 +981,17 @@ export default function AdminDashboard() {
     localStorage.removeItem("token");
     localStorage.removeItem("role");
     navigate("/");
+  };
+
+  const toggleMobileSidebar = () => {
+    setSidebarOpen(!sidebarOpen);
+  };
+
+  const handleMobileMenuClick = (menuId) => {
+    setActiveMenu(menuId);
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
   };
 
   // Create user function
@@ -3200,8 +3297,21 @@ const menuItems = [
 
   return (
     <DashboardContainer>
+      {/* Mobile Overlay */}
+      <MobileOverlay isOpen={sidebarOpen} onClick={toggleMobileSidebar} />
+      
       {/* Sidebar */}
-      <Sidebar ref={sidebarRef}>
+      <Sidebar ref={sidebarRef} className="sidebar" isOpen={sidebarOpen}>
+        {/* Mobile Controls */}
+        <SidebarControls>
+          <SidebarButton onClick={() => setSidebarOpen(false)}>
+            ✕ Hide
+          </SidebarButton>
+          <SidebarButton onClick={() => setSidebarOpen(true)}>
+            ☰ Show
+          </SidebarButton>
+        </SidebarControls>
+        
         <div className="px-4 mb-8">
           <h3 className="text-white font-bold text-lg mb-2">
             Via Italia Admin
@@ -3215,7 +3325,7 @@ const menuItems = [
           <SidebarItem
             key={item.id}
             className={activeMenu === item.id ? 'active' : ''}
-            onClick={() => setActiveMenu(item.id)}
+            onClick={() => handleMobileMenuClick(item.id)}
           >
             <span className="icon">{item.icon}</span>
             <span className="text">{item.text}</span>
@@ -3226,6 +3336,10 @@ const menuItems = [
       <MainContent>
         <Header ref={headerRef}>
           <HeaderLeft>
+            {/* Hamburger Menu - Mobile Only */}
+            <HamburgerButton onClick={toggleMobileSidebar}>
+              ☰
+            </HamburgerButton>
             <h1 className="text-2xl font-bold text-white">
               Tableau de Bord Administrateur
             </h1>
@@ -3242,6 +3356,23 @@ const menuItems = [
           {renderContent()}
         </ContentArea>
       </MainContent>
+      
+      {/* Bottom Navigation - Mobile Only */}
+      <BottomNav>
+        {menuItems.map((item, index) => (
+          <BottomNavItem
+            key={item.id}
+            className={activeMenu === item.id ? "active" : ""}
+            onClick={() => setActiveMenu(item.id)}
+          >
+            <span className="icon">{item.icon}</span>
+            <span>{item.text}</span>
+          </BottomNavItem>
+        ))}
+      </BottomNav>
     </DashboardContainer>
   );
-} 
+};
+
+export default AdminDashboard;
+

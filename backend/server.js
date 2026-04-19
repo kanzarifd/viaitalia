@@ -13,6 +13,7 @@ const notificationRoutes = require("./routes/notificationRoutes");
 const studyFormRoutes = require("./routes/studyFormRoutes");
 const paymentRoutes = require("./routes/paymentRoutes");
 const dossierRoutes = require("./routes/dossierRoutes");
+const contactRoutes = require("./routes/contactRoutes");
 
 const app = express();
 
@@ -40,6 +41,7 @@ app.use("/api/notifications", notificationRoutes);
 app.use("/api/study-forms", studyFormRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/dossiers", dossierRoutes);
+app.use("/api/contact", contactRoutes);
 
 // Simple dashboard routes (no auth for testing)
 app.get("/api/user/dashboard", (req, res) => {

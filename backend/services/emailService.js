@@ -36,7 +36,7 @@ const emailService = {
       console.log('Message preview:', messageContent.substring(0, 50) + '...');
 
       const mailOptions = {
-        from: process.env.EMAIL_USER || '"Via Italia" <noreply@viaitalia.fr>',
+        from: process.env.EMAIL_USER || '"Via Italia" <viaitaliaagency@gmail.com<>',
         to: userEmail,
         subject: '📬 Nouveau message de Via Italia',
         html: `
@@ -181,8 +181,8 @@ const emailService = {
                 
                 <div class="contact-info">
                   <h3>📞 Besoin d'aide ?</h3>
-                  <p><strong>Email :</strong> contact@viaitalia.fr</p>
-                  <p><strong>Téléphone :</strong> +33 1 23 45 67 89</p>
+                  <p><strong>Email :</strong> viaitaliaagency@gmail.com<</p>
+                  <p><strong>Téléphone :</strong> +216 22 552 722</p>
                   <p><strong>Heures d'ouverture :</strong> Lun-Ven: 9h-18h, Sam: 10h-16h</p>
                 </div>
                 
@@ -291,7 +291,7 @@ const emailService = {
       };
 
       const mailOptions = {
-        from: process.env.EMAIL_USER || '"Via Italia" <noreply@viaitalia.fr>',
+        from: process.env.EMAIL_USER || '"Via Italia" <viaitaliaagency@gmail.com>',
         to: userEmail,
         subject: '📄 Mise à jour du statut de votre contrat - Viaitalia',
         html: `
@@ -523,7 +523,7 @@ const emailService = {
       };
 
       const mailOptions = {
-        from: process.env.EMAIL_USER || '"Via Italia" <noreply@viaitalia.fr>',
+        from: process.env.EMAIL_USER || '"Via Italia" <viaitaliaagency@gmail.com<>',
         to: formData.email,
         subject: '🎓 Confirmation de votre demande d\'études en Italie - Via Italia',
         html: `
@@ -763,9 +763,9 @@ const emailService = {
                 
                 <div class="contact-info">
                   <h3>📞 Contactez-Nous:</h3>
-                  <p><strong>Email:</strong> contact@viaitalia.fr</p>
-                  <p><strong>Téléphone:</strong> +33 1 23 45 67 89</p>
-                  <p><strong>Adresse:</strong> 123 Rue de l'Université, 75005 Paris, France</p>
+                  <p><strong>Email:</strong> viaitaliaagency@gmail.com<</p>
+                  <p><strong>Téléphone:</strong> +216 22 552 722</p>
+                  <p><strong>Adresse:</strong> Tunis, Tunisie</p>
                   <p><strong>Heures d'ouverture:</strong> Lun-Ven: 9h-18h, Sam: 10h-16h</p>
                 </div>
                 

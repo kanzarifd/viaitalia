@@ -15,7 +15,6 @@ gsap.registerPlugin(ScrollTrigger);
 const ServiceSection = styled.section`
   width: 100vw;
   min-height: 100vh;
-  background: linear-gradient(135deg, #0a0b10 0%, #1a1b2e 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -383,36 +382,31 @@ const Services = () => {
     {
       icon: "📄",
       title: "Traduction & Apostille",
-      description: "Traduction professionnelle et apostille de tous vos documents académiques",
+      description: "Certified document translation",
       features: [
-        "Traduction certifiée",
-        "Apostille de La Haye",
-        "Documents légaux",
-        "Support administratif"
+        "Certified document translation",
+        "The Hague Apostille"
       ]
     },
     {
       icon: "🎓",
-      title: "Inscription Universités",
-      description: "Processus d'inscription dans les meilleures universités italiennes",
+      title: "University Applications", 
+      description: "Complete admission support",
       features: [
-        "Sélection d'universités",
-        "Préparation des dossiers",
-        "Suivi des candidatures",
-        "Accompagnement personnalisé"
+        "Selection of universities",
+        "File preparation"
       ]
     },
     {
       icon: "💰",
-      title: "Bourses & Logement",
-      description: "Aide financière et solutions de logement jusqu'à 7000€",
+      title: "Scholarships & Housing",
+      description: "Financial aid up to €7000",
       features: [
-        "Recherche de bourses",
-        "Dossier de demande",
-        "Foyers universitaires",
-        "Logement étudiant"
+        "Recherche of bourses",
+        "Surj ase samigolares"
       ]
     },
+ /*
     {
       icon: "💻",
       title: "Tests en Ligne",
@@ -445,7 +439,7 @@ const Services = () => {
         "Suivi du dossier",
         "Assistance consulaire"
       ]
-    },
+    },*/
 
   ];
 

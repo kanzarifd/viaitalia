@@ -1,4 +1,4 @@
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import styled from "styled-components";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -11,7 +11,6 @@ gsap.registerPlugin(ScrollTrigger);
 
 const ContactSection = styled.section`
   min-height: 100vh;
-  background: linear-gradient(135deg, #0a0b10 0%, #1a1f2e 100%);
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -28,9 +27,7 @@ const ContactSection = styled.section`
     left: 0;
     right: 0;
     bottom: 0;
-    background: 
-      radial-gradient(circle at 20% 50%, rgba(0, 255, 51, 0.1) 0%, transparent 50%),
-      radial-gradient(circle at 80% 50%, rgba(239, 68, 68, 0.1) 0%, transparent 50%);
+
     pointer-events: none;
     z-index: 1;
   }
@@ -222,6 +219,39 @@ const SubmitButton = styled.button`
   &:active {
     transform: translateY(0) scale(0.98);
   }
+
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+`;
+
+const StatusMessage = styled.div`
+  padding: 1rem;
+  margin-top: 1rem;
+  border-radius: 10px;
+  text-align: center;
+  font-weight: 500;
+  animation: slideIn 0.3s ease;
+
+  background: ${props => props.success 
+    ? 'linear-gradient(90deg, rgba(0, 200, 83, 0.1), rgba(0, 230, 118, 0.1))' 
+    : 'linear-gradient(90deg, rgba(239, 68, 68, 0.1), rgba(244, 67, 54, 0.1))'
+  };
+  color: ${props => props.success ? 'var(--green)' : 'var(--red)'};
+  border: 1px solid ${props => props.success ? 'rgba(0, 200, 83, 0.3)' : 'rgba(239, 68, 68, 0.3)'};
+
+  @keyframes slideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
 `;
 
 const SocialIcons = styled.div`
@@ -268,6 +298,14 @@ const Contact = () => {
   const contactItemsRef = useRef([]);
   const formRef = useRef(null);
   const socialIconsRef = useRef([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState('');
+  const [formData, setFormData] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    message: ''
+  });
 
   useEffect(() => {
     // Title animation
@@ -349,10 +387,47 @@ const Contact = () => {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle form submission here
-    console.log('Form submitted');
+    setIsSubmitting(true);
+    setSubmitStatus('');
+
+    try {
+      const response = await fetch('http://localhost:5000/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setSubmitStatus('Message envoyé avec succès!');
+        setFormData({
+          fullName: '',
+          email: '',
+          phone: '',
+          message: ''
+        });
+      } else {
+        setSubmitStatus(data.message || 'Erreur lors de l\'envoi du message');
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      setSubmitStatus('Erreur serveur. Veuillez réessayer plus tard.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -367,7 +442,7 @@ const Contact = () => {
             <img src={Mobile} alt="Location" />
             <ContactText>
               <ContactLabel>Adresse</ContactLabel>
-              <ContactValue>Via Roma, 123 - 00100 Rome, Italie</ContactValue>
+              <ContactValue>Tunis, Tunisie</ContactValue>
             </ContactText>
           </ContactItem>
           
@@ -375,7 +450,7 @@ const Contact = () => {
             <img src={Mobile} alt="Phone" />
             <ContactText>
               <ContactLabel>Téléphone</ContactLabel>
-              <ContactValue>+39 06 12345678</ContactValue>
+              <ContactValue>+216 22 552 722</ContactValue>
             </ContactText>
           </ContactItem>
           
@@ -383,15 +458,15 @@ const Contact = () => {
             <img src={Mail} alt="Email" />
             <ContactText>
               <ContactLabel>Email</ContactLabel>
-              <ContactValue>contact@viaitalia.it</ContactValue>
+              <ContactValue>viaitaliaagency@gmail.com</ContactValue>
             </ContactText>
           </ContactItem>
           
           <SocialIcons>
-            <SocialIcon ref={addToSocialIconsRef} href="https://facebook.com">
+            <SocialIcon ref={addToSocialIconsRef} href="https://www.facebook.com/share/18gE6aiDxC/?mibextid=wwXIfr">
               <img src={Facebook} alt="Facebook" />
             </SocialIcon>
-            <SocialIcon ref={addToSocialIconsRef} href="https://instagram.com">
+            <SocialIcon ref={addToSocialIconsRef} href="https://www.instagram.com/via_italiaconsulting?igsh=cW96NWZ4czBnOXZh">
               <img src={Instagram} alt="Instagram" />
             </SocialIcon>
           </SocialIcons>
@@ -399,14 +474,45 @@ const Contact = () => {
         
         <Form ref={formRef} onSubmit={handleSubmit}>
           <FormGroup>
-            <Input type="text" placeholder="Nom complet" required />
-            <Input type="email" placeholder="Email" required />
+            <Input 
+              type="text" 
+              name="fullName" 
+              placeholder="Nom complet" 
+              value={formData.fullName}
+              onChange={handleInputChange}
+              required 
+            />
+            <Input 
+              type="email" 
+              name="email" 
+              placeholder="Email" 
+              value={formData.email}
+              onChange={handleInputChange}
+              required 
+            />
           </FormGroup>
-          <Input type="tel" placeholder="Téléphone" />
-          <TextArea placeholder="Votre message..." required />
-          <SubmitButton type="submit">
-            Envoyer le Message
+          <Input 
+            type="tel" 
+            name="phone" 
+            placeholder="Téléphone" 
+            value={formData.phone}
+            onChange={handleInputChange}
+          />
+          <TextArea 
+            name="message" 
+            placeholder="Votre message..." 
+            value={formData.message}
+            onChange={handleInputChange}
+            required 
+          />
+          <SubmitButton type="submit" disabled={isSubmitting}>
+            {isSubmitting ? 'Envoi en cours...' : 'Envoyer le Message'}
           </SubmitButton>
+          {submitStatus && (
+            <StatusMessage success={submitStatus.includes('succès')}>
+              {submitStatus}
+            </StatusMessage>
+          )}
         </Form>
       </ContactContainer>
     </ContactSection>

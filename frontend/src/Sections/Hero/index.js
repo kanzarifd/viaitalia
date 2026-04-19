@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import styled, { keyframes } from "styled-components";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-
+import SocialProof from "./SocialProof";
 import arrow from "../../assets/Arrow Right.svg";
 
 // Register GSAP plugins
@@ -30,7 +30,6 @@ const gradientShift = keyframes`
 
 const HeroSection = styled.section`
   min-height: 100vh;
-  background: linear-gradient(135deg, #0a0b10 0%, #1a1f2e 100%);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -45,10 +44,7 @@ const HeroSection = styled.section`
     left: 0;
     right: 0;
     bottom: 0;
-    background: 
-      radial-gradient(circle at 20% 30%, rgba(0, 255, 51, 0.15) 0%, transparent 50%),
-      radial-gradient(circle at 80% 70%, rgba(239, 68, 68, 0.15) 0%, transparent 50%),
-      radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.05) 0%, transparent 70%);
+  
     animation: ${pulseAnimation} 10s ease-in-out infinite;
     pointer-events: none;
     z-index: 1;
@@ -154,7 +150,7 @@ const BadgeIcon = styled.div`
 `;
 
 const Title = styled.h1`
-  font-size: clamp(2rem, 5vw, 4rem);
+  font-size: clamp(2rem, 3vw, 4rem);
   line-height: 1.1;
   margin-bottom: 1.5rem;
   background: linear-gradient(90deg, var(--white), var(--green), var(--red));
@@ -178,33 +174,35 @@ const Subtitle = styled.p`
 `;
 
 const CTAButton = styled.button`
-  background: linear-gradient(90deg, var(--green), var(--red));
+  background: ${props => props.primary ? 'var(--green)' : 'rgba(0, 0, 0, 0.7)'};
   color: var(--white);
-  padding: 1.2rem 2.5rem;
-  border-radius: 30px;
+  padding: 1rem 2rem;
+  border-radius: 12px;
   cursor: pointer;
-  font-size: 1.1rem;
-  font-weight: 700;
+  font-size: 1rem;
+  font-weight: 600;
   display: inline-flex;
   align-items: center;
-  transition: all 0.4s ease;
-  border: none;
+  transition: all 0.3s ease;
+  border: ${props => props.primary ? 'none' : '1px solid rgba(255, 255, 255, 0.2)'};
   position: relative;
   overflow: hidden;
   opacity: 0;
   transform: translateY(20px) scale(0.9);
   width: auto;
-  min-width: 200px;
+  min-width: 180px;
+  text-decoration: none;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
 
-@media only screen and (max-width: 768px) {
-  width: 100%;          /* button stretches to full width */
-  max-width: 300px;     /* optional max width */
-  padding: 1rem 2rem;
-  font-size: 1rem;
-  margin: 0 auto;       /* centers the button horizontally */
-  display: flex;        /* ensures content inside button is aligned */
-  justify-content: center; /* centers icon/text inside the button */
-}
+  @media only screen and (max-width: 768px) {
+    width: 100%;
+    max-width: 280px;
+    padding: 0.9rem 1.8rem;
+    font-size: 0.95rem;
+    margin: 0 auto;
+    display: flex;
+    justify-content: center;
+  }
 
   &::before {
     content: '';
@@ -213,38 +211,39 @@ const CTAButton = styled.button`
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
-    transition: left 0.6s ease;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s ease;
   }
 
   img {
-    width: 1.5rem;
-    margin-left: 0.8rem;
+    width: 1.2rem;
+    margin-left: 0.6rem;
     transition: transform 0.3s ease;
 
     @media only Screen and (max-width: 768px) {
-      width: 1.2rem;
-      margin-left: 0.6rem;
+      width: 1rem;
+      margin-left: 0.5rem;
     }
   }
 
   &:hover {
-    transform: translateY(-5px) scale(1.05);
-    box-shadow: 
-      0 25px 50px rgba(0, 255, 51, 0.4),
-      0 15px 30px rgba(239, 68, 68, 0.3);
+    transform: translateY(-3px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+    background: ${props => props.primary ? 'var(--green)' : 'rgba(0, 0, 0, 0.8)'};
+    border: ${props => props.primary ? 'none' : '1px solid rgba(255, 255, 255, 0.3)'};
 
     &::before {
       left: 100%;
     }
 
     img {
-      transform: translateX(5px);
+      transform: translateX(3px);
     }
   }
 
   &:active {
-    transform: translateY(-2px) scale(1.02);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
   }
 `;
 
@@ -537,8 +536,8 @@ const Hero = () => {
   }, []);
 
   return (
+    <>
     <HeroSection ref={heroRef} id="home">
-      <CosmicBackground ref={cosmicRef} />
       <FloatingElements>
         {shapesRef.current.map((shape, index) => (
           <FloatingShape key={index} />
@@ -550,24 +549,20 @@ const Hero = () => {
         
           
  <Title ref={titleRef}>
-  <span style={{ color: 'red' }}>Via</span>{" "}
-  <span style={{ color: 'green' }}>Italia</span>
-
+  Your easiest way to study in Italy
 </Title>
           
           <Subtitle ref={subtitleRef}>
-            ViaItalia propose plusieurs formules d'accompagnement pour les étudiants souhaitant poursuivre leurs études en Italie.
-            Chaque pack inclut un suivi personnalisé et une assistance administrative afin de faciliter les démarches universitaires et l'organisation du projet d'études.
-          </Subtitle>
+Get admitted to top Italian universities with personalized guidance from our experts.          </Subtitle>
           
           <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-            <CTAButton ref={appointmentBtnRef} onClick={() => window.open('https://calendly.com/viaitaliaagency/30min', '_blank')}>
-               Rendez-vous Free
-              <img src={arrow} alt="Arrow" />
+            <CTAButton ref={appointmentBtnRef} primary onClick={() => window.open('https://calendly.com/viaitaliaagency/30min', '_blank')}>
+               Book free consultation
+              <span style={{ marginLeft: '0.6rem', fontSize: '1.2rem', filter: 'brightness(0.7)' }}>📅</span>
             </CTAButton>
-            <CTAButton ref={registerBtnRef} onClick={() => navigate('/study-form')} style={{ background: 'linear-gradient(90deg, var(--red), var(--green))' }}>
-              Inscription
-              <img src={arrow} alt="Arrow" />
+            <CTAButton ref={registerBtnRef} onClick={() => navigate('/study-form')}>
+              Start your application
+              <img src={arrow} alt="Arrow" style={{ filter: 'brightness(0.7)' }} />
             </CTAButton>
           </div>
         </ContentBlock>
@@ -576,7 +571,11 @@ const Hero = () => {
         
         </VisualBlock>
       </HeroContainer>
+      
     </HeroSection>
+    <SocialProof />
+    
+    </>
   );
 };
 

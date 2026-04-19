@@ -6,6 +6,7 @@ import Instagram from "../../assets/instagram-square-brands.svg";
 import Facebook from "../../assets/facebook-square-brands.svg";
 import Mail from "../../assets/envelope-open-solid.svg";
 import Mobile from "../../assets/mobile.svg";
+import CTAButton from '../CTAButton'; // added import for CTAButton
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -321,6 +322,7 @@ const Footer = () => {
   const sectionsRef = useRef([]);
   const socialIconsRef = useRef([]);
   const bottomBarRef = useRef(null);
+  const appointmentBtnRef = useRef(null);
 
   useEffect(() => {
     // Footer sections animation
@@ -398,14 +400,14 @@ const Footer = () => {
         <FooterSection ref={addToSectionsRef}>
           <SectionTitle>À Propos de Viaitalia</SectionTitle>
           <FooterText>
-            Viaitalia est votre partenaire de confiance pour l'admission dans les universités italiennes. 
-            Nous vous accompagnons à chaque étape de votre parcours académique en Italie.
+            Vialtalia is your trusted partner for enrolling in Italian universities. We simplify your academic journey with clear, secure, and personalized support 
+            from the first application to your arrival in Italy.
           </FooterText>
           <SocialIcons>
-            <SocialIcon ref={addToSocialIconsRef} href="https://facebook.com">
+            <SocialIcon ref={addToSocialIconsRef} href="https://www.facebook.com/share/18gE6aiDxC/?mibextid=wwXIfr">
               <img src={Facebook} alt="Facebook" />
             </SocialIcon>
-            <SocialIcon ref={addToSocialIconsRef} href="https://instagram.com">
+            <SocialIcon ref={addToSocialIconsRef} href="https://www.instagram.com/via_italiaconsulting?igsh=cW96NWZ4czBnOXZh">
               <img src={Instagram} alt="Instagram" />
             </SocialIcon>
           </SocialIcons>
@@ -416,15 +418,15 @@ const Footer = () => {
           <ContactInfo>
             <ContactItem>
               <img src={Mobile} alt="Location" />
-              <ContactText>Via Roma, 123 - 00100 Rome, Italie</ContactText>
+              <ContactText>Tunis, Tunisie</ContactText>
             </ContactItem>
             <ContactItem>
               <img src={Mobile} alt="Phone" />
-              <ContactText>+39 06 12345678</ContactText>
+              <ContactText>+216 22 552 722</ContactText>
             </ContactItem>
             <ContactItem>
               <img src={Mail} alt="Email" />
-              <ContactText>contact@viaitalia.it</ContactText>
+              <ContactText>viaitaliaagency@gmail.com</ContactText>
             </ContactItem>
           </ContactInfo>
         </FooterSection>
@@ -437,23 +439,17 @@ const Footer = () => {
             <FooterLink href="#contact">Contact</FooterLink>
             <FooterLink href="#about">À Propos</FooterLink>
           </QuickLinks>
-          <NewsletterForm onSubmit={handleNewsletterSubmit}>
-            <NewsletterInput 
-              type="email" 
-              placeholder="Votre email pour la newsletter" 
-              required 
-            />
-            <NewsletterButton type="submit">
-              S'inscrire
-            </NewsletterButton>
-          </NewsletterForm>
+                     <CTAButton ref={appointmentBtnRef} primary onClick={() => window.open('https://calendly.com/viaitaliaagency/30min', '_blank')}>
+              Book free consultation
+              <span style={{ marginLeft: '0.6rem', fontSize: '1.2rem', filter: 'brightness(0.7)' }}>📅</span>
+            </CTAButton>
         </FooterSection>
       </FooterContainer>
 
       <BottomBar ref={bottomBarRef}>
         <BottomContent>
           <Copyright>
-            &copy; 2024 Viaitalia. Tous droits réservés.
+            &copy; 2026 Viaitalia. Tous droits réservés.
           </Copyright>
           <BottomLinks>
             <BottomLink href="#privacy">Politique de Confidentialité</BottomLink>
