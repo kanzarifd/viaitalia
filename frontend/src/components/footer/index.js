@@ -416,10 +416,7 @@ const Footer = () => {
         <FooterSection ref={addToSectionsRef}>
           <SectionTitle>Contact Rapide</SectionTitle>
           <ContactInfo>
-            <ContactItem>
-              <img src={Mobile} alt="Location" />
-              <ContactText>Tunis, Tunisie</ContactText>
-            </ContactItem>
+         
             <ContactItem>
               <img src={Mobile} alt="Phone" />
               <ContactText>+216 22 552 722</ContactText>

@@ -2,6 +2,12 @@ import React, { useRef, useEffect } from "react";
 import styled, { keyframes } from "styled-components";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import meundies from "../../assets/meundies.png";
+import bolognaLogo from "../../assets/525-5257894_thumb-image-university-of-bologna-logo-hd-png.png";
+import pisaLogo from "../../assets/University-of-Pisa-Italy.png";
+import unimiLogo from "../../assets/Unimi-logo.png";
+import trentoLogo from "../../assets/Sigillo_Università_di_Trento.svg.png";
+import romeLogo from "../../assets/Uniroma1.svg.png";
 
 // Register GSAP plugins
 gsap.registerPlugin(ScrollTrigger);
@@ -208,6 +214,17 @@ const UniversityLogo = styled.div`
   cursor: pointer;
   position: relative;
   overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 80px;
+
+  img {
+    max-width: 100%;
+    max-height: 60px;
+    object-fit: contain;
+    transition: all 0.3s ease;
+  }
 
   &::before {
     content: '';
@@ -229,6 +246,11 @@ const UniversityLogo = styled.div`
     &::before {
       left: 100%;
     }
+
+    img {
+      transform: scale(1.1);
+      filter: brightness(1.2);
+    }
   }
 
   &:active {
@@ -238,6 +260,11 @@ const UniversityLogo = styled.div`
   @media only Screen and (max-width: 768px) {
     padding: 0.8rem 1rem;
     font-size: 0.7rem;
+    min-height: 70px;
+
+    img {
+      max-height: 50px;
+    }
   }
 `;
 
@@ -420,7 +447,7 @@ const SocialProof = () => {
           
           <StatsContainer ref={statsRef}>
             <StatItem>
-              <StatNumber>500+</StatNumber>
+              <StatNumber>200+</StatNumber>
               <StatSubtext>students helped</StatSubtext>
             </StatItem>
             
@@ -438,12 +465,25 @@ const SocialProof = () => {
           <Divider ref={dividerRef} />
           
           <LogosContainer ref={logosRef}>
-            <UniversityLogo>University of Milan</UniversityLogo>
-            <UniversityLogo>University of Bologna</UniversityLogo>
-            <UniversityLogo>Università di Trento</UniversityLogo>
-            <UniversityLogo>University of Padua</UniversityLogo>
-            <UniversityLogo>University of Florence</UniversityLogo>
-            <UniversityLogo>University of Pisa</UniversityLogo>
+            <UniversityLogo>
+              <img src={unimiLogo} alt="University of Milan" />
+            </UniversityLogo>
+            <UniversityLogo>
+              <img src={bolognaLogo} alt="University of Bologna" />
+            </UniversityLogo>
+            <UniversityLogo>
+              <img src={trentoLogo} alt="Università di Trento" />
+            </UniversityLogo>
+            <UniversityLogo>
+              <img src={meundies} alt="University of Padua" />
+            </UniversityLogo>
+           
+            <UniversityLogo>
+              <img src={pisaLogo} alt="University of Pisa" />
+            </UniversityLogo>
+            <UniversityLogo>
+              <img src={romeLogo} alt="University of Rome" />
+            </UniversityLogo>
           </LogosContainer>
         </Container>
       </SocialProofSection>

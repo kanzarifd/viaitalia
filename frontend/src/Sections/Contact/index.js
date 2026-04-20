@@ -438,14 +438,8 @@ const Contact = () => {
       
       <ContactContainer>
         <ContactInfo>
-          <ContactItem ref={addToContactItemsRef}>
-            <img src={Mobile} alt="Location" />
-            <ContactText>
-              <ContactLabel>Adresse</ContactLabel>
-              <ContactValue>Tunis, Tunisie</ContactValue>
-            </ContactText>
-          </ContactItem>
-          
+         
+            
           <ContactItem ref={addToContactItemsRef}>
             <img src={Mobile} alt="Phone" />
             <ContactText>
