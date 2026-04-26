@@ -323,4 +323,118 @@ const searchUsers = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getAllUsers, deleteUser, createUser, searchUsers };
+// Update user profile
+const updateUser = async (req, res) => {
+  try {
+    const userId = req.user.userId; // Get userId from JWT token
+    const { firstName, lastName, email, passport, studyType, university } = req.body;
+
+    // Check if user exists
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // If email is being updated, check if it's already taken by another user
+    if (email && email !== user.email) {
+      const existingUser = await prisma.user.findUnique({ where: { email } });
+      if (existingUser) {
+        return res.status(400).json({ message: "Email already exists" });
+      }
+    }
+
+    // Update user data
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        ...(firstName && { firstName }),
+        ...(lastName && { lastName }),
+        ...(email && { email }),
+        ...(passport !== undefined && { passport }),
+        ...(studyType !== undefined && { studyType }),
+        ...(university !== undefined && { university })
+      },
+      select: {
+        id: true,
+        firstName: true,
+        lastName: true,
+        email: true,
+        role: true,
+        passport: true,
+        studyType: true,
+        university: true,
+        createdAt: true
+      }
+    });
+
+    res.status(200).json({
+      success: true,
+      message: "Profile updated successfully",
+      user: updatedUser
+    });
+  } catch (error) {
+    console.error('Error updating user profile:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error updating profile',
+      error: error.message
+    });
+  }
+};
+
+// Change password
+const changePassword = async (req, res) => {
+  try {
+    const userId = req.user.userId; // Get userId from JWT token
+    const { currentPassword, newPassword } = req.body;
+
+    // Validate input
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({
+        success: false,
+        message: 'Current password and new password are required'
+      });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        success: false,
+        message: 'New password must be at least 6 characters long'
+      });
+    }
+
+    // Get user with password
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Verify current password
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({
+        success: false,
+        message: 'Current password is incorrect'
+      });
+    }
+
+    // Hash new password
+    const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+
+    // Update password
+    await prisma.user.update({
+      where: { id: userId },
+      data: { password: hashedNewPassword }
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Password changed successfully'
+    });
+  } catch (error) {
+    console.error('Error changing password:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error changing password',
+      error: error.message
+    });
+  }
+};
+
+module.exports = { register, login, getAllUsers, deleteUser, createUser, searchUsers, updateUser, changePassword };

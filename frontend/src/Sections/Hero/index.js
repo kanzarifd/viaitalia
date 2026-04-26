@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import styled, { keyframes } from "styled-components";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import SocialProof from "./SocialProof";
+
 import arrow from "../../assets/Arrow Right.svg";
 
 // Register GSAP plugins
@@ -30,6 +30,7 @@ const gradientShift = keyframes`
 
 const HeroSection = styled.section`
   min-height: 100vh;
+  background: linear-gradient(135deg, #0a0b10 100%, #1a1f2e 100%);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -44,7 +45,10 @@ const HeroSection = styled.section`
     left: 0;
     right: 0;
     bottom: 0;
-  
+    background: 
+      radial-gradient(circle at 20% 30%, rgba(0, 255, 51, 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 80% 70%, rgba(239, 68, 68, 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.05) 0%, transparent 70%);
     animation: ${pulseAnimation} 10s ease-in-out infinite;
     pointer-events: none;
     z-index: 1;
@@ -536,8 +540,8 @@ const Hero = () => {
   }, []);
 
   return (
-    <>
     <HeroSection ref={heroRef} id="home">
+      <CosmicBackground ref={cosmicRef} />
       <FloatingElements>
         {shapesRef.current.map((shape, index) => (
           <FloatingShape key={index} />
@@ -571,11 +575,7 @@ Get admitted to top Italian universities with personalized guidance from our exp
         
         </VisualBlock>
       </HeroContainer>
-      
     </HeroSection>
-    <SocialProof />
-    
-    </>
   );
 };
 

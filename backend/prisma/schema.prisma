@@ -140,6 +140,10 @@ model Message {
   id        Int      @id @default(autoincrement())
   content   String
   sender    String   // USER or ADMIN
+  fileName  String?  // Optional file name
+  filePath  String?  // Optional file path
+  fileType  String?  // Optional file type (pdf, doc, image, etc.)
+  fileSize  Int?    // Optional file size in bytes
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    Int
   createdAt DateTime @default(now())
@@ -209,16 +213,4 @@ model StudyInItalyForm {
   updatedAt        DateTime @updatedAt
 
   @@map("study_in_italy_forms")
-}
-
-model ContactMessage {
-  id          Int      @id @default(autoincrement())
-  fullName    String   // "Nom complet"
-  email       String   // Email
-  phone       String?  // "Téléphone" (optional)
-  message     String   // "Votre message"
-  isRead      Boolean  @default(false)
-  createdAt   DateTime @default(now())
-
-  @@map("contact_messages")
 }

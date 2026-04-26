@@ -30,31 +30,14 @@ const Section = styled.div`
     pointer-events: none;
     z-index: 1;
   }
-  
-  @media only Screen and (max-width: 768px) {
-    padding: 3rem 0;
-    min-height: auto;
-    justify-content: flex-start;
-    align-items: stretch;
-  }
-  
-  @media only Screen and (max-width: 480px) {
-    padding: 2rem 0;
-    min-height: auto;
-    justify-content: flex-start;
-    align-items: stretch;
-  }
 `;
 
 const Title = styled.h1`
   color: #ffffff;
   display: inline-block;
-  font-size: clamp(1.5rem, 4vw, 2.5rem);
+  font-size: calc(1rem + 1.5vw);
   margin-top: 1.5rem;
-  margin-bottom: 2rem;
   position: relative;
-  text-align: center;
-  
   &::before {
     content: "";
     height: 4px;
@@ -63,98 +46,86 @@ const Title = styled.h1`
     left: 50%;
     bottom: 0;
     transform: translate(-50%, 0.5rem);
+    /* or 100px */
     background: linear-gradient(90deg, var(--green), var(--red));
     border-radius: 2px;
   }
-  
-  @media only Screen and (max-width: 768px) {
-    font-size: clamp(1.3rem, 5vw, 2rem);
-    margin-top: 1rem;
-    margin-bottom: 1.5rem;
-    
-    &::before {
-      width: 90%;
-      transform: translate(-50%, 0.4rem);
-    }
-  }
-  
-  @media only Screen and (max-width: 480px) {
-    font-size: clamp(1.2rem, 6vw, 1.8rem);
-    margin-top: 0.8rem;
-    margin-bottom: 1rem;
-    padding: 0 1rem;
-    
-    &::before {
-      width: 100%;
-      height: 3px;
-      transform: translate(-50%, 0.3rem);
-    }
-  }
 `;
 
-const Grid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
-  width: 90%;
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 2rem 0;
-  
-  @media only Screen and (max-width: 1024px) {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.8rem;
-    width: 95%;
+const Carousal = styled.div`
+  width: 50vw;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  @media only Screen and (max-width: 40em) {
+    width: 90vw;
+    .slick-slider .slick-arrow {
+      display: none;
+    }
   }
-  
-  @media only Screen and (max-width: 768px) {
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 1.5rem;
-    width: 95%;
-    padding: 1.5rem 0;
+  .slick-slider .slick-arrow:before {
+    color: #0a0b10;
+    font-size: 1.5rem;
+    @media only Screen and (max-width: 40em) {
+      display: none;
+    }
   }
-  
-  @media only Screen and (max-width: 600px) {
-    grid-template-columns: 1fr;
-    gap: 1.2rem;
-    width: 100%;
-    padding: 1rem;
+  .slick-slider .slick-dots button:before {
+    color: #0a0b10;
+    font-size: 1.5rem;
   }
-  
-  @media only Screen and (max-width: 480px) {
-    grid-template-columns: 1fr;
-    gap: 1rem;
-    width: 100%;
-    padding: 1rem 0.5rem;
+  .slick-slide.slick-active {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    margin: 0;
+    padding: 0;
+    margin-bottom: 3rem;
   }
 `;
 
 const Testimonials = () => {
+  const settings = {
+    dots: true,
+    infinite: true,
+
+    speed: 1000,
+    slidesToShow: 1,
+    slidesToScroll: 1,
+  };
+
   return (
     <Section>
       <Title>Few good words about us!</Title>
-      <Grid>
-        <Card
-          text="Viaitalia m’a beaucoup aidé dans toutes les étapes, du choix de l’université jusqu’à la préparation de mon dossier. Le processus était beaucoup plus simple que je ne l’imaginais. Je recommande vivement.
-          "
-            name="Rania B. – Sousse"
+      <Carousal>
+        <Slider {...settings}>
+          <Card
+            text="CodeBucks has been essential part of our business. I would definetly
+        recommend CodeBucks. It has been amazing to have them."
+            name="Jenny (CodeCall)"
             image="avatar-1"
-        />
+          />
 
-        <Card
-          text="Grâce à Viaitalia, j’ai été accepté dans une université en Italie sans stress. L’équipe est très professionnelle et toujours disponible pour répondre aux questions."
-            name="Fedi K. – Tunis"
+          <Card
+            text="CodeBucks has been essential part of our business. I would definetly recommend CodeBucks. It has been amazing to have them."
+            name="Jenny (CodeCall)"
             image="avatar-2"
-        />
+          />
 
-        <Card
-          text="J’étais un peu perdu au début, mais Viaitalia m’a guidé étape par étape. Ils savent vraiment ce qu’ils font. Service de qualité."
-            name="Ahmed M. – Sfax"
+          <Card
+            text="CodeBucks has been essential part of our business. I would definetly recommend CodeBucks. It has been amazing to have them."
+            name="Jenny (CodeCall)"
             image="avatar-3"
-        />
+          />
 
-
-      </Grid>
+          <Card
+            text="CodeBucks has been essential part of our business. I would definetly recommend CodeBucks. It has been amazing to have them."
+            name="Jenny (CodeCall)"
+            image="avatar-4"
+          />
+        </Slider>
+      </Carousal>
     </Section>
   );
 };

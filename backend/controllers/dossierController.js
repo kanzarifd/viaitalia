@@ -407,6 +407,51 @@ const getDossiersByUserId = async (req, res) => {
   }
 };
 
+// Get single dossier by user ID
+const getDossierByUserId = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    
+    const dossier = await prisma.dossier.findFirst({
+      where: {
+        userId: parseInt(userId)
+      },
+      include: {
+        user: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true
+          }
+        }
+      },
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
+
+    if (!dossier) {
+      return res.status(404).json({
+        success: false,
+        message: "Dossier not found for this user"
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: dossier
+    });
+  } catch (error) {
+    console.error("Error fetching user dossier:", error);
+    res.status(500).json({
+      success: false,
+      message: "Error fetching user dossier",
+      error: error.message
+    });
+  }
+};
+
 // Get dossier statistics
 const getDossierStats = async (req, res) => {
   try {
@@ -448,5 +493,6 @@ module.exports = {
   updateDossier,
   deleteDossier,
   getDossiersByUserId,
+  getDossierByUserId,
   getDossierStats
 };

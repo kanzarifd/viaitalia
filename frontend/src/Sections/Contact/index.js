@@ -1,4 +1,4 @@
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect } from "react";
 import styled from "styled-components";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
@@ -27,7 +27,7 @@ const ContactSection = styled.section`
     left: 0;
     right: 0;
     bottom: 0;
-
+ 
     pointer-events: none;
     z-index: 1;
   }
@@ -219,39 +219,6 @@ const SubmitButton = styled.button`
   &:active {
     transform: translateY(0) scale(0.98);
   }
-
-  &:disabled {
-    opacity: 0.6;
-    cursor: not-allowed;
-    transform: none;
-  }
-`;
-
-const StatusMessage = styled.div`
-  padding: 1rem;
-  margin-top: 1rem;
-  border-radius: 10px;
-  text-align: center;
-  font-weight: 500;
-  animation: slideIn 0.3s ease;
-
-  background: ${props => props.success 
-    ? 'linear-gradient(90deg, rgba(0, 200, 83, 0.1), rgba(0, 230, 118, 0.1))' 
-    : 'linear-gradient(90deg, rgba(239, 68, 68, 0.1), rgba(244, 67, 54, 0.1))'
-  };
-  color: ${props => props.success ? 'var(--green)' : 'var(--red)'};
-  border: 1px solid ${props => props.success ? 'rgba(0, 200, 83, 0.3)' : 'rgba(239, 68, 68, 0.3)'};
-
-  @keyframes slideIn {
-    from {
-      opacity: 0;
-      transform: translateY(-10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
 `;
 
 const SocialIcons = styled.div`
@@ -298,14 +265,6 @@ const Contact = () => {
   const contactItemsRef = useRef([]);
   const formRef = useRef(null);
   const socialIconsRef = useRef([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitStatus, setSubmitStatus] = useState('');
-  const [formData, setFormData] = useState({
-    fullName: '',
-    email: '',
-    phone: '',
-    message: ''
-  });
 
   useEffect(() => {
     // Title animation
@@ -387,47 +346,10 @@ const Contact = () => {
     }
   };
 
-  const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleSubmit = async (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
-    setIsSubmitting(true);
-    setSubmitStatus('');
-
-    try {
-      const response = await fetch('http://localhost:5000/api/contact', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      });
-
-      const data = await response.json();
-
-      if (data.success) {
-        setSubmitStatus('Message envoyé avec succès!');
-        setFormData({
-          fullName: '',
-          email: '',
-          phone: '',
-          message: ''
-        });
-      } else {
-        setSubmitStatus(data.message || 'Erreur lors de l\'envoi du message');
-      }
-    } catch (error) {
-      console.error('Error submitting form:', error);
-      setSubmitStatus('Erreur serveur. Veuillez réessayer plus tard.');
-    } finally {
-      setIsSubmitting(false);
-    }
+    // Handle form submission here
+    console.log('Form submitted');
   };
 
   return (
@@ -438,8 +360,14 @@ const Contact = () => {
       
       <ContactContainer>
         <ContactInfo>
-         
-            
+          <ContactItem ref={addToContactItemsRef}>
+            <img src={Mobile} alt="Location" />
+            <ContactText>
+              <ContactLabel>Adresse</ContactLabel>
+              <ContactValue>Tunis, Tunisie</ContactValue>
+            </ContactText>
+          </ContactItem>
+          
           <ContactItem ref={addToContactItemsRef}>
             <img src={Mobile} alt="Phone" />
             <ContactText>
@@ -468,45 +396,14 @@ const Contact = () => {
         
         <Form ref={formRef} onSubmit={handleSubmit}>
           <FormGroup>
-            <Input 
-              type="text" 
-              name="fullName" 
-              placeholder="Nom complet" 
-              value={formData.fullName}
-              onChange={handleInputChange}
-              required 
-            />
-            <Input 
-              type="email" 
-              name="email" 
-              placeholder="Email" 
-              value={formData.email}
-              onChange={handleInputChange}
-              required 
-            />
+            <Input type="text" placeholder="Nom complet" required />
+            <Input type="email" placeholder="Email" required />
           </FormGroup>
-          <Input 
-            type="tel" 
-            name="phone" 
-            placeholder="Téléphone" 
-            value={formData.phone}
-            onChange={handleInputChange}
-          />
-          <TextArea 
-            name="message" 
-            placeholder="Votre message..." 
-            value={formData.message}
-            onChange={handleInputChange}
-            required 
-          />
-          <SubmitButton type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Envoi en cours...' : 'Envoyer le Message'}
+          <Input type="tel" placeholder="Téléphone" />
+          <TextArea placeholder="Votre message..." required />
+          <SubmitButton type="submit">
+            Envoyer le Message
           </SubmitButton>
-          {submitStatus && (
-            <StatusMessage success={submitStatus.includes('succès')}>
-              {submitStatus}
-            </StatusMessage>
-          )}
         </Form>
       </ContactContainer>
     </ContactSection>

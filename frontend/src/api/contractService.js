@@ -1,62 +1,70 @@
 import axiosInstance from "./axiosInstance";
 
 export const contractService = {
-  // Upload contract
+
   uploadContract: async (formData) => {
     try {
-      const response = await axiosInstance.post("/contracts/upload", formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      console.log("🚀 Sending contract upload request...");
+
+      // 🔍 Debug: show FormData content
+      for (let [key, value] of formData.entries()) {
+        console.log("📦", key, value);
+      }
+
+      // ⚠️ IMPORTANT:
+      // DO NOT set Content-Type manually
+      // Axios will handle multipart/form-data automatically
+
+      const response = await axiosInstance.post(
+        "/contracts/upload",
+        formData
+      );
+
+      console.log("✅ Upload success:", response.data);
       return response.data;
+
     } catch (error) {
-      console.error('Error uploading contract:', error);
+      console.error("❌ Upload failed:");
+      console.error("Message:", error.message);
+      console.error("Backend response:", error.response?.data);
+      console.error("Status:", error.response?.status);
+
       throw error;
     }
   },
 
-  // Get user's own contract
-  getContractByUserId: async (userId) => {
+  // (optional but useful later)
+  getContractByUserId: async () => {
     try {
-      // For regular users getting their own contract, use /my-contract endpoint
-      // For admin viewing specific user's contract, use /user/:userId endpoint
-      const url = userId && userId !== 'undefined' && userId !== null
-        ? `${axiosInstance.defaults.baseURL}/contracts/user/${userId}`
-        : `${axiosInstance.defaults.baseURL}/contracts/my-contract`;
-      
-      console.log('Fetching contract from URL:', url);
-      const response = await axiosInstance.get(url);
+      const response = await axiosInstance.get("/contracts/my-contract");
       return response.data;
     } catch (error) {
-      console.error('Error fetching contract:', error);
+      console.error("❌ Fetch contract error:", error.response?.data);
       throw error;
     }
   },
 
-  // Get all contracts (admin only)
+  // Admin methods
   getAllContracts: async () => {
     try {
       const response = await axiosInstance.get("/contracts");
       return response.data;
     } catch (error) {
-      console.error('Error fetching contracts:', error);
+      console.error("❌ Fetch all contracts error:", error.response?.data);
       throw error;
     }
   },
 
-  // Update contract status (admin only)
   updateContractStatus: async (contractId, status) => {
     try {
       const response = await axiosInstance.patch(`/contracts/${contractId}/status`, { status });
       return response.data;
     } catch (error) {
-      console.error('Error updating contract status:', error);
+      console.error("❌ Update contract status error:", error.response?.data);
       throw error;
     }
   },
 
-  // Download contract (admin only)
   downloadContract: async (contractId) => {
     try {
       const response = await axiosInstance.get(`/contracts/${contractId}/download`, {
@@ -64,45 +72,21 @@ export const contractService = {
       });
       return response.data;
     } catch (error) {
-      console.error('Error downloading contract:', error);
+      console.error("❌ Download contract error:", error.response?.data);
       throw error;
     }
   },
 
-  // Delete contract (admin only)
   deleteContract: async (contractId) => {
     try {
       const response = await axiosInstance.delete(`/contracts/${contractId}`);
       return response.data;
     } catch (error) {
-      console.error('Error deleting contract:', error);
-      throw error;
-    }
-  },
-
-  // Get contract status (authenticated users)
-  getContractStatus: async (userId) => {
-    try {
-      const response = await axiosInstance.get(`/contracts/status/${userId}`);
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching contract status:', error);
-      throw error;
-    }
-  },
-
-  // View contract (admin only)
-  viewContract: async (contractId) => {
-    try {
-      const response = await axiosInstance.get(`/contracts/${contractId}/view`, {
-        responseType: 'blob'
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error viewing contract:', error);
+      console.error("❌ Delete contract error:", error.response?.data);
       throw error;
     }
   }
+
 };
 
 export default contractService;

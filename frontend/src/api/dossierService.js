@@ -78,6 +78,17 @@ const dossierService = {
     }
   },
 
+  // Get single dossier by user ID
+  getDossierByUserId: async (userId) => {
+    try {
+      const response = await axiosInstance.get(`/dossiers/user/${userId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching user dossier:', error);
+      throw error;
+    }
+  },
+
   // Create missing dossiers for existing users
   createMissingDossiers: async () => {
     try {

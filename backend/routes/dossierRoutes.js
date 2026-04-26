@@ -26,4 +26,7 @@ router.delete('/:id', dossierController.deleteDossier);
 // Get dossiers by user ID
 router.get('/users/:userId/dossiers', dossierController.getDossiersByUserId);
 
+// Get single dossier by user ID
+router.get('/user/:userId', dossierController.getDossierByUserId);
+
 module.exports = router;

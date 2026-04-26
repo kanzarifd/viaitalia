@@ -6,15 +6,25 @@ const createMessage = async (req, res) => {
   try {
     console.log('=== CREATE MESSAGE DEBUG ===');
     console.log('Request body:', req.body);
+    console.log('Request files:', req.files);
     
     const { content, sender, userId } = req.body;
     
-    // Validate required fields
-    if (!content || !sender || !userId) {
+    // Validate required fields (sender and userId always required)
+    if (!sender || !userId) {
       return res.status(400).json({
         success: false,
         message: 'Champs requis manquants',
-        error: 'Content, sender, and userId are required'
+        error: 'Sender and userId are required'
+      });
+    }
+
+    // Validate that we have either content or file (or both)
+    if (!content && !req.file && (!req.files || req.files.length === 0)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Message ou fichier requis',
+        error: 'Content or file is required'
       });
     }
 
@@ -37,17 +47,107 @@ const createMessage = async (req, res) => {
       });
     }
 
+    // Handle file attachment
+    let fileData = {};
+    console.log('File object:', req.file);
+    console.log('Files object:', req.files);
+    
+    // Check for file in req.files array (from upload.any()) or req.file (fallback)
+    let uploadedFile = null;
+    
+    console.log('File detection - req.files type:', typeof req.files);
+    console.log('File detection - req.files isArray:', Array.isArray(req.files));
+    console.log('File detection - req.files length:', req.files?.length);
+    
+    if (req.files && Array.isArray(req.files) && req.files.length > 0) {
+      console.log('Checking req.files array with', req.files.length, 'items');
+      // Find file with fieldname 'file' in the array
+      uploadedFile = req.files.find(f => f.fieldname === 'file');
+      console.log('Found file in req.files array:', uploadedFile ? uploadedFile.originalname : 'Not found');
+      if (!uploadedFile) {
+        console.log('Available fieldnames:', req.files.map(f => f.fieldname));
+      }
+    } else if (req.files && req.files.file) {
+      // Handle case where req.files.file exists (not array)
+      uploadedFile = req.files.file;
+      console.log('Found file in req.files.file:', uploadedFile.originalname);
+    } else if (req.file) {
+      // Fallback to req.file
+      uploadedFile = req.file;
+      console.log('Found file in req.file:', uploadedFile.originalname);
+    } else {
+      console.log('No file found in any location');
+      console.log('req.files keys:', req.files ? Object.keys(req.files) : 'undefined');
+    }
+    
+    if (uploadedFile) {
+      // Handle case where uploadedFile is an array (multiple files)
+      const file = Array.isArray(uploadedFile) ? uploadedFile[0] : uploadedFile;
+      
+      console.log('Uploaded file details:', {
+        fieldname: file.fieldname,
+        originalname: file.originalname,
+        mimetype: file.mimetype,
+        size: file.size,
+        path: file.path
+      });
+      
+      fileData = {
+        fileName: file.originalname,
+        filePath: file.path,
+        fileType: file.mimetype,
+        fileSize: file.size
+      };
+      console.log('File attached:', fileData);
+    } else if (req.body && req.body.fileName) {
+      // Handle case where file info is sent in request body (fallback)
+      fileData = {
+        fileName: req.body.fileName,
+        filePath: req.body.filePath || null,
+        fileType: req.body.fileType || null,
+        fileSize: req.body.fileSize ? parseInt(req.body.fileSize) : null
+      };
+      console.log('File data from body:', fileData);
+    } else {
+      console.log('No file attached - text-only message');
+    }
+
+    // Generate default content for file-only messages
+    let finalContent;
+    if (content && content.trim()) {
+      // Use provided content
+      finalContent = content.trim();
+    } else if (fileData.fileName) {
+      // Generate default content for file-only messages
+      finalContent = `📎 ${fileData.fileName}`;
+    } else {
+      finalContent = null;
+    }
+    
     const messageData = {
-      content,
+      content: finalContent,
       sender,
-      userId: parsedUserId
+      userId: parsedUserId,
+      ...fileData
     };
     
     console.log('Creating message with data:', messageData);
 
-    // Create message directly - let database handle user existence check
+    // Create message with proper user relation
     const message = await prisma.message.create({
-      data: messageData,
+      data: {
+        content: finalContent,
+        sender,
+        fileName: fileData.fileName || null,
+        filePath: fileData.filePath || null,
+        fileType: fileData.fileType || null,
+        fileSize: fileData.fileSize || null,
+        user: {
+          connect: {
+            id: parsedUserId
+          }
+        }
+      },
       include: {
         user: {
           select: {

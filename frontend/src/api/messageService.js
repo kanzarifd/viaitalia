@@ -56,6 +56,22 @@ const messageService = {
     }
   },
 
+  // Create message with file attachment
+  createMessageWithFile: async (formData) => {
+    try {
+      const response = await axiosInstance.post('/messages', formData, {
+        // Don't set Content-Type header for FormData - let browser set it automatically
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error creating message with file:', error);
+      throw error;
+    }
+  },
+
   // Update message
   updateMessage: async (id, messageData) => {
     try {
