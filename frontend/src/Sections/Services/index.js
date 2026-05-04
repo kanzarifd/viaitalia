@@ -3,6 +3,14 @@ import { useEffect, useRef, useState } from "react";
 import styled, { keyframes } from "styled-components";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 
+// Import service icons
+import DocumentIcon from "../../assets/service/Folder-File--Streamline-Ultimate.png";
+import AcademicIcon from "../../assets/service/Online-Learning-Student-1--Streamline-Ultimate.png";
+import MoneyIcon from "../../assets/service/Money-Bags--Streamline-Ultimate.png";
+import TestIcon from "../../assets/service/Desktop-Computer-Pc--Streamline-Ultimate.png";
+import FolderIcon from "../../assets/service/Folder-Empty-1--Streamline-Ultimate.png";
+import VisaIcon from "../../assets/service/Visa-Logo--Streamline-Ultimate.png";
+
 gsap.registerPlugin(ScrollTrigger);
 
 /* ── Animations ── */
@@ -14,42 +22,42 @@ const shimmer = keyframes`
 /* ── Data ── */
 const SERVICES = [
   {
-    icon: "📄",
+    icon: DocumentIcon,
     title: "Traduction & Apostille",
     description: "Traduction certifiée et légalisation de vos documents officiels pour les universités italiennes.",
     features: ["Traduction certifiée", "Apostille La Haye", "Légalisation consulaire", "Délais rapides"],
     accent: "#00c864",
   },
   {
-    icon: "🎓",
+    icon: AcademicIcon,
     title: "Candidatures Universitaires",
     description: "Accompagnement complet pour votre admission dans les meilleures universités d'Italie.",
     features: ["Sélection d'universités", "Préparation du dossier", "Suivi de candidature", "Lettre de motivation"],
     accent: "#3b82f6",
   },
   {
-    icon: "💰",
+    icon: MoneyIcon,
     title: "Bourses & Logement",
     description: "Recherche de bourses jusqu'à 7 000 € et aide à la recherche de logement étudiant.",
     features: ["Bourses d'études", "Logement étudiant", "Aides financières", "Conseils budgétaires"],
     accent: "#f59e0b",
   },
   {
-    icon: "💻",
+    icon: TestIcon,
     title: "Tests en Ligne",
     description: "Préparation et passage des tests d'admission en ligne pour les universités italiennes.",
     features: ["Tests de langue", "Examens académiques", "Simulation en ligne", "Résultats instantanés"],
     accent: "#a855f7",
   },
   {
-    icon: "📁",
+    icon: FolderIcon,
     title: "Dossier Académique",
     description: "Préparation complète de votre dossier académique et financier pour maximiser vos chances.",
     features: ["Vérification des documents", "Compilation académique", "Traduction officielle", "Validation finale"],
     accent: "#ec4899",
   },
   {
-    icon: "🛂",
+    icon: VisaIcon,
     title: "Visa Étudiant",
     description: "Dépôt et suivi complet de votre demande de visa étudiant auprès des autorités consulaires.",
     features: ["Préparation du visa", "Dépôt en ligne", "Suivi du dossier", "Assistance consulaire"],
@@ -175,12 +183,22 @@ const IconBox = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1.6rem;
   margin-bottom: 1.25rem;
   transition: transform 0.3s ease;
 
+  img {
+    width: 28px;
+    height: 28px;
+    filter: brightness(0) invert(1);
+    transition: transform 0.3s ease;
+  }
+
   ${Card}:hover & {
     transform: scale(1.1) rotate(-4deg);
+    
+    img {
+      transform: scale(1.1);
+    }
   }
 `;
 
@@ -282,7 +300,9 @@ const Services = () => {
       <Grid>
         {SERVICES.map((s, i) => (
           <Card key={i} ref={addCard} $accent={s.accent}>
-            <IconBox $accent={s.accent}>{s.icon}</IconBox>
+            <IconBox $accent={s.accent}>
+              <img src={s.icon} alt={s.title} />
+            </IconBox>
             <CardTitle>{s.title}</CardTitle>
             <CardDesc>{s.description}</CardDesc>
             <FeatureList>

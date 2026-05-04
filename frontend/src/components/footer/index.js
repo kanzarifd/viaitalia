@@ -242,10 +242,9 @@ const Footer = () => {
               +216 22 552 722
             </ContactItem>
           
-            <ContactItem href="mailto:viaitaliaagency@gmail.com">
+            <ContactItem href="mailto:contact@viaitalia-agency.com">
               <img src={Mail} alt="" />
-                            viaitaliaagency@gmail.com
-
+contact@viaitalia-agency.com
             </ContactItem>
            
           </Col>
@@ -253,7 +252,7 @@ const Footer = () => {
 
         <BottomBar>
           <div>
-            <Copy> 2026 Viaitalia. Tous droits réservés.</Copy>
+            <Copy> 2026 Viaitalia. Tous droits réservés.kn.</Copy>
             <BottomLinks>
               <a href="#privacy">Confidentialité</a>
               <a href="#terms">Conditions</a>

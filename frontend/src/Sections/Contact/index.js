@@ -142,8 +142,8 @@ const CirclesRow = styled.div`
 `;
 
 const SocialCircle = styled.a`
-  width: 80px;              /* ← was 110px */
-  height: 80px;             /* ← was 110px */
+  width: 70px;              /* ← was 110px */
+  height: 70px;             /* ← was 110px */
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -155,8 +155,8 @@ const SocialCircle = styled.a`
   animation-delay: ${p => p.delay || '0s'};
 
   img {
-    width: 54px;             /* ← was 44px */
-    height: 54px;
+    width: 44px;             /* ← was 44px */
+    height: 44px;
     filter: invert(1);
   }
 
@@ -447,7 +447,7 @@ const [showToast, setShowToast] = useState(false);
           `Message:\n${formData.message}`
         );
         
-        window.location.href = `mailto:viaitaliaagency@gmail.com?subject=${subject}&body=${body}`;
+        window.location.href = `mailto:contact@viaitalia-agency.com?subject=${subject}&body=${body}`;
         
         // Show success message for fallback
 // 3. Replace the alert() line with this
@@ -470,7 +470,7 @@ setTimeout(() => setShowToast(false), 4000);
         `Message:\n${formData.message}`
       );
       
-      window.location.href = `mailto:viaitaliaagency@gmail.com?subject=${subject}&body=${body}`;
+      window.location.href = `mailto:contact@viaitalia-agency.com?subject=${subject}&body=${body}`;
       alert('✓ Message envoyé avec succès! Nous vous répondrons dans les plus brefs délais.');
       
       setIsError(true);
@@ -539,11 +539,13 @@ setTimeout(() => setShowToast(false), 4000);
         <ContactInfoValue>+216 22 552 722</ContactInfoValue>
       </ContactInfoText>
     </ContactInfoItem>
-    <ContactInfoItem href="mailto:viaitaliaagency@gmail.com">
+    <ContactInfoItem href="mailto:contact@viaitalia-agency.com
+">
       <ContactInfoIcon>✉️</ContactInfoIcon>
       <ContactInfoText>
         <ContactInfoLabel>Email</ContactInfoLabel>
-        <ContactInfoValue>viaitaliaagency@gmail.com</ContactInfoValue>
+        <ContactInfoValue>contact@viaitalia-agency.com
+</ContactInfoValue>
       </ContactInfoText>
     </ContactInfoItem>
   </ContactInfoBlock>
