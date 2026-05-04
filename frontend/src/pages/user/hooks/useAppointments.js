@@ -3,13 +3,14 @@ import appointmentService from '../../../api/appointmentService';
 
 export const useAppointments = (userId) => {
   const [appointments, setAppointments] = useState([]);
+  const [timeSlots, setTimeSlots] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [newAppointment, setNewAppointment] = useState({
     date: '',
     time: '',
     type: '',
-    etat: 'PRESENTIEL',
+    etat: 'EN_LIGNE',
     notes: ''
   });
   const [error, setError] = useState(null);
@@ -101,27 +102,99 @@ export const useAppointments = (userId) => {
       date: '',
       time: '',
       type: '',
-      etat: 'PRESENTIEL',
+      etat: 'EN_LIGNE',
       notes: ''
     });
   };
 
+  // Time slot functions
+  const fetchTimeSlots = async () => {
+    try {
+      const response = await appointmentService.getAvailableSlots();
+      if (response.success && response.data) {
+        setTimeSlots(response.data);
+      }
+    } catch (err) {
+      console.error('Error fetching time slots:', err);
+      setError('Erreur lors de la récupération des créneaux horaires');
+    }
+  };
+
+  const bookTimeSlot = async (slotId) => {
+    if (!userId) return;
+    
+    setIsCreating(true);
+    setError(null);
+    
+    try {
+      // Find the slot to get its date
+      const slotsResponse = await appointmentService.getAvailableSlots();
+      let slotDate = new Date();
+      
+      console.log('=== BOOKING TIME SLOT DEBUG ===');
+      console.log('Slot ID:', slotId);
+      console.log('Slots response:', slotsResponse);
+      
+      if (slotsResponse.success && slotsResponse.data) {
+        const slot = slotsResponse.data.find(s => s.id === slotId);
+        console.log('Found slot:', slot);
+        if (slot) {
+          slotDate = new Date(slot.date);
+          console.log('Slot date:', slotDate);
+        } else {
+          console.error('Slot not found with ID:', slotId);
+          setError('Créneau horaire non trouvé');
+          return;
+        }
+      } else {
+        console.error('Failed to fetch slots');
+        setError('Impossible de récupérer les créneaux horaires');
+        return;
+      }
+      
+      console.log('Creating appointment with date:', slotDate.toISOString());
+      
+      const response = await appointmentService.createAppointment({
+        slotId,
+        userId,
+        type: 'CONSULTATION',
+        etat: 'EN_LIGNE',
+        date: slotDate.toISOString() // Add the date from the slot
+      });
+      
+      if (response.success && response.data) {
+        setAppointments(prev => [...prev, response.data]);
+        // Refresh time slots to update availability
+        fetchTimeSlots();
+        return response.data;
+      }
+    } catch (err) {
+      console.error('Error booking time slot:', err);
+      setError('Erreur lors de la réservation du créneau horaire');
+      throw err;
+    } finally {
+      setIsCreating(false);
+    }
+  };
+
   useEffect(() => {
     fetchAppointments();
+    fetchTimeSlots();
   }, [userId]);
 
   return {
     appointments,
+    timeSlots,
     isLoading,
     isCreating,
     newAppointment,
     error,
-    fetchAppointments,
     createAppointment,
-    deleteAppointment,
     updateAppointmentStatus,
-    setNewAppointment,
+    deleteAppointment,
     handleInputChange,
-    resetNewAppointment
+    resetNewAppointment,
+    fetchTimeSlots,
+    bookTimeSlot
   };
 };

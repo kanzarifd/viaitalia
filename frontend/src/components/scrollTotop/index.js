@@ -1,42 +1,41 @@
-import SvgIcon from "../../assets/arrow-up.svg";
-
 import styled from "styled-components";
 import { useEffect, useRef } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
+import { ReactComponent as SvgIcon } from "../../assets/arrow-up.svg";
 
 export const Up = styled.div`
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  color: rgba(0, 0, 0, 0.65);
-  font-size: 14px;
-  line-height: 1.5715;
-  list-style: none;
   position: fixed;
-  right: 100px;
-  bottom: 80px;
-  z-index: 10;
-  width: 40px;
-  height: 40px;
+  right: 30px;
+  bottom: 30px;
+  width: 50px;
+  height: 50px;
   cursor: pointer;
-  @media screen and (max-width: 48em) {
-    display: none;
+  z-index: 1000;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.3s ease;
+
+  @media screen and (max-width: 768px) {
+    right: 20px;
+    bottom: 20px;
+    width: 45px;
+    height: 45px;
   }
-  img {
-    width: 3rem;
-    height: 3rem;
-    border: 2px solid var(--white);
-    border-radius: 50%;
-    background-color: var(--white);
-    transition: transform 0.3s;
-    display: none;
-    &:hover {
-      transform: scale(1.2);
-    }
-    &:active {
-      transform: scale(0.9);
-    }
+
+  &.visible {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  &:hover {
+    transform: translateY(-5px);
+  }
+
+  svg {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 4px 12px rgba(239, 68, 68, 0.4));
   }
 `;
 
@@ -45,29 +44,35 @@ const ScrollToTop = () => {
   gsap.registerPlugin(ScrollTrigger);
 
   const scrollUp = () => {
-    const element = document.getElementById("home");
-    element.scrollIntoView({
+    window.scrollTo({
+      top: 0,
       behavior: "smooth",
-      block: "end",
-      inline: "nearest",
     });
   };
 
   useEffect(() => {
     const element = ref.current;
-    gsap.to(element, {
-      display: "block",
-      scrollTrigger: {
-        trigger: element,
-        start: "top top",
-        scrub: true,
-      },
-    });
+    
+    // Show/hide based on scroll position
+    const handleScroll = () => {
+      if (window.scrollY > 300) {
+        element.classList.add('visible');
+      } else {
+        element.classList.remove('visible');
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    handleScroll();
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
   }, []);
 
   return (
-    <Up onClick={scrollUp}>
-      <img ref={ref} src={SvgIcon} alt="to top" />
+    <Up onClick={scrollUp} ref={ref}>
+      <SvgIcon />
     </Up>
   );
 };

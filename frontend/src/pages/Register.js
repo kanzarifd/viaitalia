@@ -5,230 +5,184 @@ import styled from "styled-components";
 import axiosInstance from "../api/axiosInstance";
 import logoSvg from "../assets/logo.svg";
 
-// Register GSAP
 gsap.registerPlugin();
 
-// Styled Components
+/* ───────── CONTAINER ───────── */
 const RegisterContainer = styled.div`
   min-height: 100vh;
-  width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow-x: hidden;
   background: linear-gradient(135deg, #006400, #8B0000);
 `;
 
+/* ───────── CARD ───────── */
 const RegisterCard = styled.div`
-  background: rgba(28, 28, 35, 0.8);
+  background: rgba(28, 28, 35, 0.85);
   backdrop-filter: blur(20px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
   border-radius: 20px;
   padding: 3rem;
   width: 100%;
-  max-width: 450px;
-  box-shadow: 0 25px 50px rgba(0, 0, 0, 0.5);
+  max-width: 480px;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6);
+
   opacity: 0;
-  transform: translateY(50px) scale(0.9);
-  
+  transform: translateY(40px) scale(0.95);
+
   @media (max-width: 768px) {
     padding: 2rem;
     margin: 1rem;
-    max-width: none;
   }
 `;
 
+/* ───────── LOGO ───────── */
 const LogoContainer = styled.div`
   display: flex;
-  align-items: center;
   justify-content: center;
-  margin-bottom: 2rem;
-  
+  margin-bottom: 1.8rem;
+
   img {
-    height: 60px;
-    width: 150px;
-    filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.3));
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    height: 55px;
+    transition: 0.3s;
   }
-  
+
   &:hover img {
-    transform: translateY(-2px) scale(1.05);
-    filter: drop-shadow(0 8px 12px rgba(0, 255, 51, 0.3));
+    transform: scale(1.05);
   }
 `;
 
+/* ───────── TEXT ───────── */
 const Title = styled.h1`
+  text-align: center;
   font-size: 2rem;
   font-weight: 800;
+  margin-bottom: 0.3rem;
+
   background: linear-gradient(90deg, var(--green), var(--red));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-align: center;
-  margin-bottom: 0.5rem;
-  opacity: 0;
-  transform: translateY(20px);
 `;
 
 const Subtitle = styled.p`
-  color: rgba(255, 255, 255, 0.7);
   text-align: center;
+  color: rgba(255,255,255,0.6);
   margin-bottom: 2rem;
-  font-size: 0.95rem;
-  opacity: 0;
-  transform: translateY(20px);
 `;
 
-const ErrorMessage = styled.div`
-  background: linear-gradient(135deg, rgba(20, 20, 25, 0.8), rgba(239, 68, 68, 0.1));
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  color: #ff6b6b;
-  padding: 1rem;
-  border-radius: 12px;
-  margin-bottom: 1.5rem;
-  text-align: center;
-  backdrop-filter: blur(10px);
-  opacity: 0;
-  transform: translateY(-10px);
-`;
-
-const Form = styled.form`
-  space-y: 1.5rem;
-`;
-
+/* ───────── FORM ───────── */
 const FormGroup = styled.div`
-  margin-bottom: 1.5rem;
-  opacity: 0;
-  transform: translateY(20px);
+  margin-bottom: 1.3rem;
 `;
 
 const Label = styled.label`
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.8);
+  margin-bottom: 0.4rem;
   display: block;
-  color: rgba(255, 255, 255, 0.9);
-  margin-bottom: 0.5rem;
-  font-weight: 500;
-  font-size: 0.9rem;
 `;
 
 const Input = styled.input`
   width: 100%;
-  padding: 1rem;
-  background: rgba(20, 20, 25, 0.8);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.9rem;
   border-radius: 12px;
-  color: var(--white);
-  font-size: 1rem;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  backdrop-filter: blur(10px);
-  
-  &::placeholder {
-    color: rgba(255, 255, 255, 0.4);
-  }
-  
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(20,20,25,0.9);
+  color: white;
+
   &:focus {
     outline: none;
     border-color: var(--green);
-    background: rgba(20, 20, 25, 0.9);
-    box-shadow: 0 0 20px rgba(0, 255, 51, 0.3);
-    transform: translateY(-2px);
+    box-shadow: 0 0 12px rgba(0,255,51,0.3);
   }
 `;
 
+/* ───────── BUTTON ───────── */
 const SubmitButton = styled.button`
   width: 100%;
+  margin-top: 1rem;
   padding: 1rem;
-  background: linear-gradient(135deg, var(--green), rgba(0, 255, 51, 0.8));
-  border: 1px solid rgba(0, 255, 51, 0.3);
   border-radius: 25px;
-  color: var(--white);
   font-weight: 600;
-  font-size: 1rem;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  backdrop-filter: blur(10px);
-  box-shadow: 0 4px 12px rgba(0, 255, 51, 0.2);
-  position: relative;
-  overflow: hidden;
-  opacity: 0;
-  transform: translateY(20px);
-  
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: -100%;
-    width: 100%;
-    height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(0, 255, 51, 0.3), transparent);
-    transition: left 0.5s;
+
+  background: linear-gradient(135deg, var(--green), rgba(0,255,51,0.8));
+  border: none;
+  color: white;
+
+  transition: 0.3s;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(0,255,51,0.4);
   }
-  
-  &:hover:not(:disabled) {
-    background: linear-gradient(135deg, rgba(0, 255, 51, 0.9), var(--green));
-    transform: translateY(-2px) scale(1.02);
-    box-shadow: 0 8px 20px rgba(0, 255, 51, 0.4);
-    border-color: rgba(0, 255, 51, 0.5);
-    
-    &::before {
-      left: 100%;
-    }
-  }
-  
-  &:active:not(:disabled) {
-    transform: translateY(0) scale(0.98);
-  }
-  
+
   &:disabled {
-    background: linear-gradient(135deg, rgba(20, 20, 25, 0.6), rgba(20, 20, 25, 0.4));
-    border-color: rgba(255, 255, 255, 0.05);
+    opacity: 0.5;
     cursor: not-allowed;
-    transform: none;
   }
 `;
 
+/* ───────── MESSAGE ───────── */
+const Message = styled.div`
+  margin-bottom: 1rem;
+  padding: 0.8rem;
+  border-radius: 10px;
+  text-align: center;
+
+  background: rgba(239,68,68,0.1);
+  color: #ff6b6b;
+`;
+
+/* ───────── FOOTER ───────── */
 const SwitchText = styled.p`
   text-align: center;
-  color: rgba(255, 255, 255, 0.7);
-  margin-top: 2rem;
-  font-size: 0.9rem;
-  opacity: 0;
-  transform: translateY(20px);
-  
+  margin-top: 1.5rem;
+  color: rgba(255,255,255,0.6);
+
   span {
     color: var(--green);
-    font-weight: 600;
     cursor: pointer;
-    transition: all 0.3s ease;
-    
-    &:hover {
-      color: rgba(0, 255, 51, 0.8);
-      text-shadow: 0 0 10px rgba(0, 255, 51, 0.5);
-    }
+    font-weight: 600;
   }
 `;
 
+/* ───────── COMPONENT ───────── */
 const Register = () => {
   const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
     email: "",
     password: "",
-    confirmPassword: ""
+    confirmPassword: "",
+    passport: "",
+    address: "",
+    phoneNumber: ""
   });
+
   const [message, setMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // GSAP refs
   const cardRef = useRef(null);
-  const logoRef = useRef(null);
-  const titleRef = useRef(null);
-  const subtitleRef = useRef(null);
-  const formRef = useRef(null);
 
+  /* ───────── ANIMATION ───────── */
+  useEffect(() => {
+    gsap.to(cardRef.current, {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      duration: 1,
+      ease: "power3.out"
+    });
+  }, []);
+
+  /* ───────── HANDLERS ───────── */
   const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
+    setFormData(prev => ({
+      ...prev,
+      [e.target.name]: e.target.value
+    }));
   };
 
   const handleSubmit = async (e) => {
@@ -236,229 +190,97 @@ const Register = () => {
     setIsSubmitting(true);
     setMessage("");
 
+    if (formData.password !== formData.confirmPassword) {
+      setMessage("Passwords do not match");
+      setIsSubmitting(false);
+      return;
+    }
+
     try {
-      const response = await axiosInstance.post("/auth/register", {
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
-        password: formData.password,
-        role: "USER",
+      await axiosInstance.post("/auth/register", {
+        ...formData,
+        role: "USER"
       });
 
-      if (response.data && response.data.userId) {
-        alert("User registered successfully! Please login.");
+      // smooth success animation
+      gsap.to(cardRef.current, {
+        scale: 0.9,
+        opacity: 0,
+        duration: 0.5
+      });
+
+      setTimeout(() => {
         navigate("/login");
-      } else {
-        setMessage(response.data?.message || "Registration failed");
-      }
+      }, 500);
+
     } catch (err) {
-      console.error("Registration error:", err);
-      if (err.response?.data?.message) {
-        setMessage(err.response.data.message);
-      } else {
-        setMessage("Registration failed. Please try again.");
-      }
+      setMessage(err.response?.data?.message || "Registration failed");
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // GSAP animations on component mount
-  useEffect(() => {
-    // Animate card entrance
-    gsap.fromTo(cardRef.current, {
-      scale: 0.9,
-      opacity: 0,
-      y: 50
-    }, {
-      scale: 1,
-      opacity: 1,
-      y: 0,
-      duration: 1.2,
-      ease: "power3.out",
-      delay: 0.2
-    });
-
-    // Animate logo
-    gsap.fromTo(logoRef.current, {
-      scale: 0,
-      rotation: -180,
-      opacity: 0
-    }, {
-      scale: 1,
-      rotation: 0,
-      opacity: 1,
-      duration: 1,
-      ease: "back.out(1.7)",
-      delay: 0.6
-    });
-
-    // Animate title and subtitle
-    gsap.fromTo(titleRef.current, {
-      y: 20,
-      opacity: 0
-    }, {
-      y: 0,
-      opacity: 1,
-      duration: 0.8,
-      ease: "power3.out",
-      delay: 0.8
-    });
-
-    gsap.fromTo(subtitleRef.current, {
-      y: 20,
-      opacity: 0
-    }, {
-      y: 0,
-      opacity: 1,
-      duration: 0.8,
-      ease: "power3.out",
-      delay: 0.9
-    });
-
-    // Animate form elements with stagger
-    gsap.fromTo('.form-group', {
-      y: 20,
-      opacity: 0
-    }, {
-      y: 0,
-      opacity: 1,
-      duration: 0.6,
-      ease: "power3.out",
-      stagger: 0.1,
-      delay: 1.1
-    });
-
-    // Animate submit button
-    gsap.fromTo('.submit-btn', {
-      y: 20,
-      opacity: 0
-    }, {
-      y: 0,
-      opacity: 1,
-      duration: 0.8,
-      ease: "power3.out",
-      delay: 1.5
-    });
-
-    // Animate switch text
-    gsap.fromTo('.switch-text', {
-      y: 20,
-      opacity: 0
-    }, {
-      y: 0,
-      opacity: 1,
-      duration: 0.6,
-      ease: "power3.out",
-      delay: 1.7
-    });
-
-    // Dynamic background animation
-    gsap.to('.register-container', {
-      background: 'linear-gradient(135deg, rgba(0, 255, 51, 0.05) 0%, rgba(239, 68, 68, 0.05) 50%, rgba(0, 255, 51, 0.02) 100%)',
-      duration: 4,
-      ease: "power2.inOut",
-      repeat: -1,
-      yoyo: true
-    });
-  }, []);
-
   return (
-    <RegisterContainer className="register-container">
+    <RegisterContainer>
       <RegisterCard ref={cardRef}>
-        <LogoContainer ref={logoRef}>
-          <img src={logoSvg} alt="Via Italia" />
+        <LogoContainer>
+          <img src={logoSvg} alt="logo" />
         </LogoContainer>
-        
-        <Title ref={titleRef}>
-          Create Account
-        </Title>
-        
-        <Subtitle ref={subtitleRef}>
-          Fill in your details to get started
-        </Subtitle>
 
-        {message && (
-          <ErrorMessage className="error-message">
-            {message}
-          </ErrorMessage>
-        )}
+        <Title>Create Account</Title>
+        <Subtitle>Start your journey to Italy 🇮🇹</Subtitle>
 
-        <Form ref={formRef} onSubmit={handleSubmit}>
-          <FormGroup className="form-group">
+        {message && <Message>{message}</Message>}
+
+        <form onSubmit={handleSubmit}>
+          <FormGroup>
             <Label>First Name</Label>
-            <Input
-              type="text"
-              name="firstName"
-              value={formData.firstName}
-              onChange={handleChange}
-              placeholder="Enter your first name"
-              required
-            />
+            <Input name="firstName" onChange={handleChange} required />
           </FormGroup>
 
-          <FormGroup className="form-group">
+          <FormGroup>
             <Label>Last Name</Label>
-            <Input
-              type="text"
-              name="lastName"
-              value={formData.lastName}
-              onChange={handleChange}
-              placeholder="Enter your last name"
-              required
-            />
+            <Input name="lastName" onChange={handleChange} required />
           </FormGroup>
 
-          <FormGroup className="form-group">
+          <FormGroup>
             <Label>Email</Label>
-            <Input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Enter your email"
-              required
-            />
+            <Input type="email" name="email" onChange={handleChange} required />
           </FormGroup>
 
-          <FormGroup className="form-group">
+          <FormGroup>
             <Label>Password</Label>
-            <Input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              placeholder="Create a password"
-              required
-            />
+            <Input type="password" name="password" onChange={handleChange} required />
           </FormGroup>
 
-          <FormGroup className="form-group">
+          <FormGroup>
             <Label>Confirm Password</Label>
-            <Input
-              type="password"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              placeholder="Confirm your password"
-              required
-            />
+            <Input type="password" name="confirmPassword" onChange={handleChange} required />
           </FormGroup>
 
-          <SubmitButton
-            type="submit"
-            disabled={isSubmitting}
-            className="submit-btn"
-          >
-            {isSubmitting ? "Creating Account..." : "Register"}
-          </SubmitButton>
-        </Form>
+          <FormGroup>
+            <Label>Passport</Label>
+            <Input name="passport" onChange={handleChange} required />
+          </FormGroup>
 
-        <SwitchText className="switch-text">
+          <FormGroup>
+            <Label>Address</Label>
+            <Input name="address" onChange={handleChange} required />
+          </FormGroup>
+
+          <FormGroup>
+            <Label>Phone</Label>
+            <Input name="phoneNumber" onChange={handleChange} required />
+          </FormGroup>
+
+          <SubmitButton disabled={isSubmitting}>
+            {isSubmitting ? "Creating..." : "Register"}
+          </SubmitButton>
+        </form>
+
+        <SwitchText>
           Already have an account?{" "}
-          <span onClick={() => navigate("/login")}>
-            Sign In
-          </span>
+          <span onClick={() => navigate("/login")}>Login</span>
         </SwitchText>
       </RegisterCard>
     </RegisterContainer>

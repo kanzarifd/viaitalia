@@ -2,24 +2,26 @@ import styled from 'styled-components';
 
 export const SidebarContainer = styled.aside`
   position: fixed;
-  left: 0;
-  top: 80px;
+  left: 10px;
+  top: 110px;
   width: 280px;
-  height: calc(100vh - 80px);
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(20px);
-  border-right: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 2rem 0;
+  height: calc(100vh - 120px);
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(25px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 20px;
+  padding: 1.5rem;
   overflow-y: auto;
   z-index: 999;
   transition: all 0.3s ease;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
   
   &::-webkit-scrollbar {
     width: 6px;
   }
   
   &::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
   }
   
   &::-webkit-scrollbar-thumb {
@@ -29,6 +31,8 @@ export const SidebarContainer = styled.aside`
   
   @media (max-width: 1024px) {
     width: 240px;
+    padding: 1.25rem;
+    border-radius: 16px;
   }
   
   @media (max-width: 768px) {
@@ -48,49 +52,40 @@ export const SidebarItem = styled.li`
 
 export const SidebarButton = styled.button`
   width: 100%;
-  background: ${props => props.isActive ? 'rgba(102, 126, 234, 0.2)' : 'transparent'};
-  border: ${props => props.isActive ? '1px solid rgba(102, 126, 234, 0.3)' : '1px solid transparent'};
-  color: white;
-  padding: 1rem 2rem;
-  font-size: 0.95rem;
+  background: ${props => props.isActive ? 'rgba(96, 165, 250, 0.2)' : 'transparent'};
+  border: ${props => props.isActive ? '1px solid rgba(96, 165, 250, 0.3)' : '1px solid transparent'};
+  border-radius: 12px;
+  color: rgba(255, 255, 255, 0.9);
+  padding: 0.875rem 1.25rem;
+  font-size: 0.9rem;
   font-weight: ${props => props.isActive ? '600' : '500'};
   cursor: pointer;
   transition: all 0.3s ease;
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.875rem;
   text-align: left;
   position: relative;
   overflow: hidden;
-  
-  &::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    height: 100%;
-    width: 3px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
-    transform: translateX(${props => props.isActive ? '0' : '-100%'});
-    transition: transform 0.3s ease;
-  }
+  margin-bottom: 0.5rem;
   
   &:hover {
     background: rgba(255, 255, 255, 0.1);
     border-color: rgba(255, 255, 255, 0.2);
-    
-    &::before {
-      transform: translateX(0);
-    }
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
   }
   
   &:active {
-    transform: scale(0.98);
+    transform: translateY(0);
   }
   
   @media (max-width: 1024px) {
-    padding: 0.875rem 1.5rem;
-    font-size: 0.9rem;
+    padding: 0.75rem 1rem;
+    font-size: 0.85rem;
+    gap: 0.75rem;
+    border-radius: 10px;
   }
 `;
 
@@ -114,20 +109,22 @@ export const SidebarText = styled.span`
 `;
 
 export const SidebarBadge = styled.span`
-  background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+  background: linear-gradient(135deg, #f59e0b, #d97706);
   color: white;
   font-size: 0.7rem;
   font-weight: 600;
-  padding: 0.2rem 0.5rem;
-  border-radius: 10px;
+  padding: 0.25rem 0.5rem;
+  border-radius: 8px;
   min-width: 20px;
   text-align: center;
   flex-shrink: 0;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
   
   @media (max-width: 1024px) {
     font-size: 0.65rem;
-    padding: 0.15rem 0.4rem;
+    padding: 0.2rem 0.4rem;
     min-width: 18px;
+    border-radius: 6px;
   }
 `;
 
@@ -188,7 +185,7 @@ export const SidebarUserInfo = styled.div`
 export const SidebarUserAvatar = styled.div`
   width: 36px;
   height: 36px;
-  background: linear-gradient(135deg, #667eea, #764ba2);
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%);
   border-radius: 50%;
   display: flex;
   align-items: center;

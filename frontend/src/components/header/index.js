@@ -1,587 +1,317 @@
-import { gsap } from "gsap";
-
-import { ScrollTrigger } from "gsap/ScrollTrigger";
-
 import { useEffect, useRef, useState } from "react";
-
 import styled from "styled-components";
-
+import { gsap } from "gsap";
 import logo from "../../assets/logo.svg";
 
+/* ── Container ── */
+const HeaderWrap = styled.header`
+  position: fixed;
+  top: 4rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: calc(100% - 4rem);
+  max-width: 1200px;
+  z-index: 999;
 
+  background: #14141a;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 30px;
 
-const Headers = styled.header`
+  padding: 0.8rem 1.6rem;
 
   display: flex;
-
+  align-items: center;
   justify-content: space-between;
 
-  align-items: center;
+  box-shadow: 
+    0 4px 20px rgba(0, 0, 0, 0.3),
+    0 0 0 1px rgba(255,255,255,0.1);
 
-  padding: 1rem 5rem;
+  transition: all 0.3s ease;
 
-  background-color: var(--nav);
-
-  color: var(--white);
-
-  position: relative;
-
-  z-index: 500;
-
-  @media only Screen and (max-width: 64em) {
-
-    padding: 0.5rem 3rem;
-
+  &.scrolled {
+    top: 1rem;
+    background: rgba(20, 20, 26, 0.98);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255,255,255,0.2);
+    box-shadow: 
+      0 8px 32px rgba(0, 0, 0, 0.4),
+      0 0 0 1px rgba(255,255,255,0.15) inset;
   }
 
-  @media only Screen and (max-width: 40em) {
+  @media (max-width: 768px) {
+    width: calc(100% - 2rem);
+    top: 1.2rem;
+    padding: 0.6rem 1rem;
 
-    padding: 0.5rem 1.5rem;
-
+    &.scrolled {
+      top: 0.5rem;
+    }
   }
-
 `;
 
-
-
-const Logo = styled.a`
-
+/* ── Logo ── */
+export const LogoContainer = styled.div`
   display: flex;
-
   align-items: center;
-
-  width: 4rem;
-
-  height: auto;
-
+  justify-content: center;
   cursor: pointer;
-
-  img {
-
-    margin-right: 0.5rem;
-
+  transition: all 0.3s ease;
+  
+  &:hover { 
+    transform: scale(1.02);
   }
-
-  h1 {
-
-    font-weight: 600;
-
-    line-height: 1.5;
-
-    color: var(--white);
-
-    font-size: 1.5rem;
-
-    margin: 0;
-
-    padding: 0;
-
-  }
-
 `;
 
+export const Logo = styled.img`
+  width: 70px;
+  height: 70px;
+  object-fit: contain;
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: scale(1.05);
+  }
+  
+  @media (max-width: 768px) {
+    width: 80px;
+    height: 80px;
+  }
+  
+  @media (max-width: 480px) {
+    width: 60px;
+    height: 55px;
+  }
+`;
 
-
+/* ── Nav Center ── */
 const Nav = styled.nav`
-
-  width: 25rem;
-
-  max-width: 40rem;
-
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
+  gap: 2rem;
 
-  align-items: center;
-
-  justify-content: space-between;
-
-  transition: all 0.3s;
-
-  @media only Screen and (max-width: 48em) {
-
+  @media (max-width: 768px) {
     display: none;
-
   }
-
-  a {
-
-    font-weight: 600;
-
-    line-height: 1.5;
-
-    color: var(--white);
-
-    &::after {
-
-      content: "";
-
-      display: block;
-
-      height: 3px;
-
-      width: 0;
-
-      background: transparent;
-
-      transition: width 0.5s;
-
-    }
-
-    &:not(:last-child):hover::after {
-
-      width: 100%;
-
-      background: var(--red);
-
-    }
-
-    /* &:not(:last-child) {
-
-      margin-right: 2rem;
-
-    } */
-
-    /* @media only Screen and (max-width: 48em) {
-
-      &:not(:last-child) {
-
-        margin-right: 1rem;
-
-      }
-
-    } */
-
-  }
-
 `;
 
-
-
-const Button = styled.button`
-
-  background-color: var(--green);
-
-  padding: 0.5rem 1rem;
-
-  border-radius: 20px;
-
-  color: var(--white);
-
-  font-weight: 600;
-
+const NavItem = styled.button`
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  font-weight: 700;
   cursor: pointer;
+  position: relative;
+  transition: all 0.3s ease;
 
-  transition: all 0.2s;
+  color: ${({ $active }) =>
+    $active ? "#ffffff" : "rgba(255,255,255,0.25)"};
 
   &:hover {
-
-    transform: scale(1.1);
-
+    color: #fff;
   }
 
-  &:focus {
-
-    transform: scale(0.9);
-
+  &::after {
+    content: "";
+    position: absolute;
+    bottom: -6px;
+    left: 0;
+    height: 2px;
+    width: ${({ $active }) => ($active ? "100%" : "0%")};
+    background: linear-gradient(90deg, #00c864, #ef4444);
+    transition: width 0.3s ease;
   }
-
-  @media only Screen and (max-width: 40em) {
-
-    font-size: 1.2rem;
-
-    &:hover {
-
-      transform: none;
-
-    }
-
-    &:focus {
-
-      transform: none;
-
-    }
-
-  }
-
 `;
 
-const HamburgerBtn = styled.button`
+/* ── Left Button ── */
+const LoginBtn = styled.button`
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.15);
+  color: white;
+  padding: 0.5rem 1.2rem;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
 
-  display: none;
-
-  @media only Screen and (max-width: 48em) {
-
-    display: inline-block;
-
+  &:hover {
+    background: rgba(0,200,100,0.1);
+    border-color: rgba(0,200,100,0.4);
+    transform: translateY(-2px);
   }
+`;
 
-  position: relative;
-
-  background-color: transparent;
-
-  width: 2rem;
-
-  height: 2px;
-
-  margin-top: 0rem;
-
-  transition: all 0.3s;
-
+/* ── Burger ── */
+const Burger = styled.div`
+  display: none;
   cursor: pointer;
 
-  &::before,
-
-  &::after {
-
-    content: "";
-
-    background-color: var(--white);
-
-    width: 2rem;
-
-    height: 2px;
-
-    display: inline-block;
-
-    position: absolute;
-
-    left: 0;
-
-    cursor: pointer;
-
-
-
-    transition: all 0.3s;
-
+  @media (max-width: 768px) {
+    display: block;
   }
-
-  &::before {
-
-    top: ${(props) => (props.clicked ? "0" : "-0.5rem")};
-
-    transform: ${(props) => (props.clicked ? "rotate(135deg)" : "rotate(0)")};
-
-  }
-
-  &::after {
-
-    top: ${(props) => (props.clicked ? "0" : "0.5rem")};
-
-    transform: ${(props) => (props.clicked ? "rotate(-135deg)" : "rotate(0)")};
-
-  }
-
 `;
 
-
-
-const MobileMenu = styled.nav`
-
-  display: none;
-
-  @media only Screen and (max-width: 48em) {
-
-    display: flex;
-
-  }
-
-  flex-direction: column;
-
-  align-items: center;
-
-  justify-content: center;
-
-  padding: 2rem 0;
-
-  overflow-x: hidden;
-
+/* ── Mobile Menu ── */
+const MobileMenu = styled.div`
   position: absolute;
-
-  top: 100%;
-
+  top: 110%;
   left: 0;
-
   right: 0;
 
-  opacity: ${(props) => (props.clicked ? "1" : 0)};
+  background: #14141a;
+  border: 1px solid rgba(255,255,255,0.15);
+  border-radius: 14px;
+  padding: 2rem;
 
-  visibility: ${(props) => (props.clicked ? "visible" : "hidden")};
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
 
-  transition: all 0.5s;
+  opacity: 0.5;
+  pointer-events: none;
 
-  z-index: -10;
-
-  background-color: rgb(53 53 63 / 95%);
-
-  border-radius: 20px;
-
-  margin: 0.5rem;
-
-  a {
-
-    color: var(--white);
-
+  button {
+    background: none;
+    border: none;
+    color: rgba(255,255,255,0.8);
+    font-size: 1rem;
     font-weight: 600;
-
-    font-size: 1.5rem;
-
-    margin: 1.5rem;
-
     cursor: pointer;
+    transition: all 0.3s ease;
 
+    &:hover {
+      color: #fff;
+    }
   }
-
 `;
 
 const Header = () => {
+  const [active, setActive] = useState("home");
+  const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
 
-  const [click, setClick] = useState(false);
+  const headerRef = useRef(null);
+  const menuRef = useRef(null);
 
-  //const handleClick = () => setClick(!click);
+  const sections = [
+    { id: "home", label: "Home" },
+    { id: "about", label: "About" },
+        { id: "how-it-works", label: "How It Works" },
 
-  const ref = useRef(null);
+    { id: "services", label: "Services" },
+    { id: "contact", label: "Contact" },
+  ];
 
-
-
-  gsap.registerPlugin(ScrollTrigger);
-
-
-
-  const scrollUp = (id, e) => {
-
-    e.preventDefault();
-
-    const element = document.getElementById(id);
-
-    element.scrollIntoView({
-
-      behavior: "smooth",
-
-      block: "end",
-
-      inline: "nearest",
-
-    });
-
-  };
-
-
-
-  const navigateToLogin = (e) => {
-
-    e.preventDefault();
-
-    // Navigate to login page - adjust the path as needed
-
-    window.location.href = '/login';
-
-    // Or if using React Router:
-
-    // navigate('/login');
-
-  };
-
-
-
-  const handleClick = (id, e) => {
-
-    setClick(!click);
-
-    if (id === 'contact') {
-
-      navigateToLogin(e);
-
-    } else {
-
-      scrollUp(id, e);
-
-    }
-
-  };
-
-
-
+  /* ── Scroll Detection ── */
   useEffect(() => {
+    const handleScroll = () => {
+      // Header scroll effect
+      if (window.scrollY > 100) {
+        setScrolled(true);
+      } else {
+        setScrolled(false);
+      }
 
-    const element = ref.current;
-
-
-
-    const mq = window.matchMedia("(max-width: 40em)");
-
-    // console.log("mq", mq);
-
-    if (mq.matches) {
-
-      gsap.to(element, {
-
-        position: "fixed",
-
-        top: "0",
-
-        left: "0",
-
-        right: "0",
-
-        padding: "1rem 2.5rem",
-
-
-
-        borderRadius: "0 0 50px 50px",
-
-
-
-        border: "2px solid var(--white)",
-
-
-
-        duration: 1,
-
-        ease: "power1.out",
-
-
-
-        scrollTrigger: {
-
-          trigger: element,
-
-          start: "bottom+=200 top",
-
-          end: "+=100",
-
-          scrub: true,
-
-        },
-
+      // Scroll spy for active section
+      let current = "home";
+      sections.forEach(({ id }) => {
+        const section = document.getElementById(id);
+        if (section) {
+          const rect = section.getBoundingClientRect();
+          if (rect.top <= 150 && rect.bottom >= 150) {
+            current = id;
+          }
+        }
       });
+      setActive(current);
+    };
 
-    } else {
-
-      gsap.to(element, {
-
-        position: "fixed",
-
-        top: "1rem",
-
-        left: "3rem",
-
-        right: "3rem",
-
-        padding: "1.5rem 2rem",
-
-
-
-        borderRadius: "50px",
-
-
-
-        border: "3px solid var(--white)",
-
-
-
-        duration: 1,
-
-        ease: "power1.out",
-
-
-
-        scrollTrigger: {
-
-          trigger: element,
-
-          start: "bottom+=300 top",
-
-          end: "+=250",
-
-          scrub: true,
-
-        },
-
-      });
-
-    }
-
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  /* ── Smooth Scroll ── */
+  const scrollTo = (id) => {
+    document.getElementById(id)?.scrollIntoView({ behavior: "smooth" });
+    setOpen(false);
+  };
 
+  /* ── Mobile Menu Animation ── */
+  useEffect(() => {
+    if (!menuRef.current) return;
+
+    if (open) {
+      gsap.to(menuRef.current, {
+        opacity: 1,
+        y: 0,
+        duration: 0.3,
+        pointerEvents: "auto",
+      });
+    } else {
+      gsap.to(menuRef.current, {
+        opacity: 0,
+        y: -10,
+        duration: 0.3,
+        pointerEvents: "none",
+      });
+    }
+  }, [open]);
+
+  /* ── Header Entrance ── */
+  useEffect(() => {
+    gsap.from(headerRef.current, {
+      y: -50,
+      opacity: 0,
+      duration: 0.8,
+      ease: "power3.out",
+    });
+  }, []);
 
   return (
+    <HeaderWrap className={scrolled ? "scrolled" : ""}>
+      
+      {/* LEFT */}
+      <LogoContainer>
+        <Logo src={logo} alt="ViaItalia Logo" />
+      </LogoContainer>
 
-    <Headers ref={ref}>
-
-      <Logo>
-
-        <img src={logo} alt="CodeBucks" />
-
-      </Logo>
-
+      {/* CENTER */}
       <Nav>
-
-        <a href="#home" onClick={(e) => scrollUp("home", e)}>
-
-          Home
-
-        </a>
-
-        <a href="#about" onClick={(e) => scrollUp("about", e)}>
-
-          About Us
-
-        </a>
-
-        <a href="#services" onClick={(e) => scrollUp("services", e)}>
-
-          Services
-
-        </a>
-
-        <a href="/login" onClick={(e) => navigateToLogin(e)}>
-
-          <Button>Login</Button>
-
-        </a>
-
+        {sections.map((item) => (
+          <NavItem
+            key={item.id}
+            $active={active === item.id}
+            onClick={() => scrollTo(item.id)}
+          >
+            {item.label}
+          </NavItem>
+        ))}
       </Nav>
 
-      <HamburgerBtn clicked={+click} onClick={() => setClick(!click)}>
+      {/* RIGHT */}
+      <LoginBtn onClick={() => (window.location.href = "/login")}>
+        Login
+      </LoginBtn>
 
-        <span></span>
+      {/* MOBILE */}
+      <Burger onClick={() => setOpen(!open)}>☰</Burger>
 
-      </HamburgerBtn>
-
-      <MobileMenu clicked={+click}>
-
-        <a href="#home" onClick={(e) => handleClick("home", e)}>
-
-          Home
-
-        </a>
-
-        <a href="#about" onClick={(e) => handleClick("about", e)}>
-
-          About Us
-
-        </a>
-
-        <a href="#services" onClick={(e) => handleClick("services", e)}>
-
-          Services
-
-        </a>
-
-        <a href="#contact" onClick={(e) => handleClick("contact", e)}>
-
-          <Button>Login</Button>
-
-        </a>
-
+      <MobileMenu ref={menuRef}>
+        {sections.map((item) => (
+          <button key={item.id} onClick={() => scrollTo(item.id)}>
+            {item.label}
+          </button>
+        ))}
+        <LoginBtn onClick={() => (window.location.href = "/login")}>
+          Login
+        </LoginBtn>
       </MobileMenu>
 
-    </Headers>
-
+    </HeaderWrap>
   );
-
 };
-
-
 
 export default Header;

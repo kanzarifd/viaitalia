@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from '../../../../../context/AuthContext';
 import { useContracts } from '../../../hooks/useContracts';
+import { ContractContainer, ContractHeader, ContractTitle } from './Contract.styles';
 
 const ContractSection = () => {
   const { user } = useAuth();
@@ -15,6 +16,48 @@ const ContractSection = () => {
     handleContractFileChange,
     setContractFile
   } = useContracts(user?.id);
+
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      /* Hide all scrollbars completely */
+      html, body, * {
+        -ms-overflow-style: none !important;
+        scrollbar-width: none !important;
+      }
+      
+      html::-webkit-scrollbar,
+      body::-webkit-scrollbar,
+      *::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+      }
+      
+      /* Force hide any remaining scrollbars */
+      ::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
 
   const handleFileInputChange = (e) => {
     const file = e.target.files[0];
@@ -31,18 +74,340 @@ const ContractSection = () => {
     }
   };
 
+  const handleDownloadContract = () => {
+    const userName = user?.name || user?.firstName + ' ' + user?.lastName || 'Client';
+    
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank');
+    
+    const contractContent = `
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Contrat de Services - IA Italia</title>
+        <style>
+            @page {
+                margin: 2cm;
+                size: A4;
+            }
+            
+            body {
+                font-family: 'Georgia', serif;
+                line-height: 1.8;
+                color: #1a1a1a;
+                background: white;
+            }
+            
+            .header {
+                text-align: center;
+                margin-bottom: 40px;
+                border-bottom: 3px solid #2c3e50;
+                padding-bottom: 20px;
+            }
+            
+            .header h1 {
+                font-size: 28px;
+                color: #2c3e50;
+                margin: 0;
+                font-weight: bold;
+                text-transform: uppercase;
+                letter-spacing: 2px;
+            }
+            
+            .header h2 {
+                font-size: 24px;
+                color: #34495e;
+                margin: 10px 0;
+                font-weight: bold;
+            }
+            
+            .company-name {
+                font-size: 32px;
+                color: #2980b9;
+                font-weight: bold;
+                margin: 15px 0;
+                text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+            }
+            
+            .section {
+                margin: 30px 0;
+                padding: 20px;
+                background: #f8f9fa;
+                border-left: 5px solid #3498db;
+                border-radius: 5px;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            }
+            
+            .section h3 {
+                font-size: 20px;
+                color: #2c3e50;
+                margin: 0 0 15px 0;
+                font-weight: bold;
+                display: flex;
+                align-items: center;
+            }
+            
+            .section-number {
+                background: #3498db;
+                color: white;
+                width: 30px;
+                height: 30px;
+                border-radius: 50%;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                margin-right: 15px;
+                font-weight: bold;
+            }
+            
+            .section p {
+                margin: 10px 0;
+                text-align: justify;
+            }
+            
+            .section ul {
+                margin: 15px 0;
+                padding-left: 25px;
+            }
+            
+            .section li {
+                margin: 8px 0;
+                position: relative;
+                list-style-type: none;
+            }
+            
+            .section li:before {
+                content: "•";
+                color: #3498db;
+                font-weight: bold;
+                position: absolute;
+                left: -15px;
+            }
+            
+            .client-info {
+                margin: 30px 0;
+                padding: 25px;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                color: white;
+                border-radius: 10px;
+                box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+            }
+            
+            .client-info h3 {
+                color: white;
+                margin: 0 0 15px 0;
+                font-size: 20px;
+                text-align: center;
+            }
+            
+            .client-info p {
+                margin: 10px 0;
+                font-size: 16px;
+            }
+            
+            .client-info strong {
+                color: #ffd700;
+                font-weight: bold;
+            }
+            
+            .signatures {
+                margin-top: 60px;
+                display: flex;
+                justify-content: space-between;
+                gap: 40px;
+            }
+            
+            .signature-box {
+                flex: 1;
+                text-align: center;
+                padding: 20px;
+                border: 2px solid #bdc3c7;
+                border-radius: 10px;
+                background: #ecf0f1;
+            }
+            
+            .signature-box p {
+                margin: 0 0 20px 0;
+                font-weight: bold;
+                color: #2c3e50;
+            }
+            
+            .signature-line {
+                border-bottom: 2px solid #2c3e50;
+                height: 40px;
+                margin-top: 20px;
+                position: relative;
+            }
+            
+            .date-location {
+                text-align: center;
+                margin: 40px 0;
+                font-size: 16px;
+                font-weight: bold;
+                color: #2c3e50;
+            }
+            
+            .highlight {
+                background: #fff3cd;
+                padding: 3px 6px;
+                border-radius: 3px;
+                border-left: 3px solid #ffc107;
+            }
+            
+            @media print {
+                body { 
+                    margin: 0;
+                    background: white;
+                }
+                .section {
+                    background: white;
+                    border: 1px solid #ddd;
+                }
+                .client-info {
+                    background: #f0f0f0 !important;
+                    color: black !important;
+                }
+                .client-info h3,
+                .client-info strong {
+                    color: black !important;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <div class="header">
+            <h1>Conditions Générales du</h1>
+            <h2>Contrat de Services</h2>
+            <div class="company-name">IA ITALIA</div>
+        </div>
+        
+        <div class="section">
+            <h3><span class="section-number">1</span>Accompagnement et prestations fournies</h3>
+            <p>Le Prestataire a pour rôle d'accompagner le Client dans la préparation complète de son dossier d'études et de mobilité à l'étranger.</p>
+            <p>Les prestations commandées comprennent notamment :</p>
+            <ul>
+                <li>Traduction officielle et apostille des documents requis</li>
+                <li>Préinscription auprès des établissements concernés</li>
+                <li>Préparation et accompagnement aux tests en ligne (si requis)</li>
+                <li>Dépôt et suivi de la demande de bourse et de foyer universitaire</li>
+                <li>Préparation complète du dossier de visa (hors décision consulaire)</li>
+            </ul>
+            <p class="highlight">Le Prestataire s'engage à fournir un accompagnement administratif et organisationnel. Aucune garantie d'acceptation universitaire, de bourse, de logement ou de visa n'est donnée, ces décisions relevant exclusivement des autorités et organismes compétents.</p>
+            <p>Le coût total de la prestation est fixé à : DT. Le paiement s'effectue en plusieurs tranches, selon l'échéancier communiqué au Client et accepté par ce dernier.</p>
+        </div>
+        
+        <div class="section">
+            <h3><span class="section-number">2</span>Paiement – Modalités financières</h3>
+            <p><strong>Conditions essentielles :</strong></p>
+            <ul>
+                <li>Le dossier complet du Client ne sera remis qu'après paiement intégral de la totalité du montant convenu.</li>
+                <li>Tout retard ou non-paiement d'une tranche suspend automatiquement les prestations en cours.</li>
+                <li>Les montants versés sont strictement non remboursables, quelle que soit l'issue du dossier (refus, abandon, retard ou changement de projet).</li>
+            </ul>
+            <p><strong>Les tarifs du Prestataire n'incluent pas notamment :</strong></p>
+            <ul>
+                <li>Frais universitaires</li>
+                <li>Frais de tests officiels de langue</li>
+                <li>Frais consulaires et de visa</li>
+                <li>Frais liés aux administrations étrangères</li>
+            </ul>
+            <p>Ces frais restent entièrement à la charge du Client.</p>
+        </div>
+        
+        <div class="section">
+            <h3><span class="section-number">3</span>Frais non inclus</h3>
+            <p>Les frais mentionnés à l'article 2 restent entièrement à la charge du Client et ne sont pas inclus dans la prestation du Prestataire.</p>
+        </div>
+        
+        <div class="section">
+            <h3><span class="section-number">4</span>Obligations du Client</h3>
+            <p>Le Client s'engage à :</p>
+            <ul>
+                <li>Fournir des documents authentiques, complets et exacts</li>
+                <li>Respecter les délais de transmission des informations demandées</li>
+                <li>Être joignable par téléphone et email valides</li>
+                <li>Suivre les consignes administratives communiquées par le Prestataire</li>
+            </ul>
+            <p class="highlight">Tout manquement du Client pouvant entraîner un retard ou un refus ne saurait engager la responsabilité du Prestataire.</p>
+        </div>
+        
+        <div class="section">
+            <h3><span class="section-number">5</span>Durée du contrat</h3>
+            <p>Le présent contrat prend effet à compter de sa signature et prend fin après l'exécution complète des prestations commandées ou en cas de rupture selon les conditions ci-après.</p>
+        </div>
+        
+        <div class="section">
+            <h3><span class="section-number">6</span>Rupture du contrat</h3>
+            <p>En cas de résiliation du contrat par le Client :</p>
+            <ul>
+                <li>Aucun montant versé ne sera remboursé</li>
+                <li>Les prestations déjà réalisées ou en cours restent dues</li>
+            </ul>
+            <p>Si la rupture intervient avant l'exécution totale des prestations, le Client peut, sous réserve d'accord écrit, reporter le service à une date ultérieure ou le transférer à une autre personne.</p>
+        </div>
+        
+        <div class="client-info">
+            <h3>Informations du Client</h3>
+            <p><strong>Client :</strong> ${userName}</p>
+            <p><strong>Passeport :</strong> [À compléter]</p>
+        </div>
+        
+        <div class="section">
+            <h3><span class="section-number">8</span>Acceptation des conditions</h3>
+            <p>La signature du présent contrat vaut reconnaissance et acceptation sans réserve de l'ensemble des conditions générales ci-dessus.</p>
+        </div>
+        
+        <div class="date-location">
+            <p>Fait à Tunis Le / /</p>
+        </div>
+        
+        <div class="signatures">
+            <div class="signature-box">
+                <p>Cachet et Signature du Prestataire</p>
+                <div class="signature-line"></div>
+            </div>
+            <div class="signature-box">
+                <p>Signature du Client</p>
+                <div class="signature-line"></div>
+            </div>
+        </div>
+    </body>
+    </html>
+    `;
+    
+    printWindow.document.write(contractContent);
+    printWindow.document.close();
+    
+    // Wait for content to load, then trigger print
+    printWindow.onload = function() {
+      printWindow.print();
+      // Optional: close window after printing
+      setTimeout(() => {
+        printWindow.close();
+      }, 1000);
+    };
+  };
+
   return (
+    <ContractContainer>
+    
     <div className="min-h-screen w-full space-y-6 py-6 px-0">
+     <div style={{ textAlign: 'center' }}>
+                 <ContractTitle>Gestion du Contrat</ContractTitle>
+                 <p style={{ color: '#d1d5db', fontSize: '1.125rem', marginTop: '0.5rem' }}>
+Vous pouvez consulter votre contrat modèle ci-dessous et le télécharger pour le signer.
+
+                 </p>
+               </div>
+      
       {/* PDF Viewing Section */}
-      <div className>
+      <div className style={{ marginTop: '3rem' }}>
         <div className>
           <h3 className="text-lg font-semibold text-white mb-4">
             📄 Voir et Télécharger le Contrat
           </h3>
           <div className="space-y-6">
-            <p className="text-gray-300 text-sm">
-              Vous pouvez consulter votre contrat modèle ci-dessous et le télécharger pour le signer.
-            </p>
+            
             
             <div className="flex flex-col sm:flex-row gap-4">
               <button
@@ -56,16 +421,15 @@ const ContractSection = () => {
                 Voir le Contrat
               </button>
               
-              <a
-                href="/contrat.pdf"
-                download="contrat.pdf"
+              <button
+                onClick={handleDownloadContract}
                 className="px-6 py-3 bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white font-semibold rounded-xl transition-all duration-300 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 text-center"
               >
                 <svg className="w-5 h-5 mr-2 inline-block" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
                 Télécharger le Contrat
-              </a>
+              </button>
             </div>
             
             <div className>
@@ -221,6 +585,7 @@ const ContractSection = () => {
         </div>
       )}
     </div>
+    </ContractContainer>
   );
 };
 

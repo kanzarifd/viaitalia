@@ -41,6 +41,31 @@ export const appointmentService = {
   deleteAppointment: async (id) => {
     const response = await axiosInstance.delete(`/appointments/${id}`);
     return response.data;
+  },
+
+  // Time Slot Management
+  // Get all available time slots
+  getAvailableSlots: async () => {
+    const response = await axiosInstance.get("/appointments/slots/available");
+    return response.data;
+  },
+
+  // Create new time slot (admin only)
+  createTimeSlot: async (slotData) => {
+    const response = await axiosInstance.post("/appointments/slots", slotData);
+    return response.data;
+  },
+
+  // Delete time slot (admin only)
+  deleteTimeSlot: async (id) => {
+    const response = await axiosInstance.delete(`/appointments/slots/${id}`);
+    return response.data;
+  },
+
+  // Get time slots by date
+  getSlotsByDate: async (date) => {
+    const response = await axiosInstance.get(`/appointments/slots/date/${date}`);
+    return response.data;
   }
 };
 

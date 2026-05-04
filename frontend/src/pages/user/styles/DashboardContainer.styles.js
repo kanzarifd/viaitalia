@@ -5,36 +5,26 @@ export const DashboardContainer = styled.div`
   position: relative;
   overflow-x: hidden;
 
-  /* base gradient */
-  background: linear-gradient(
-    90deg,
-    #0b3d2c 0%,     /* deep green */
-    #0a2a1f 25%,    /* darker green */
-    #1a1a1a 50%,    /* dark center */
-    #3a0f0f 75%,    /* brown/red blend */
-    #4a2a2a 100%    /* muted red - less deep and lower saturation */
-  );
-
-  /* soft lighting + vignette */
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-
-    background:
-      radial-gradient(circle at 15% 50%, rgba(0, 255, 150, 0.1), transparent 40%),
-      radial-gradient(circle at 85% 50%, rgba(255, 80, 80, 0.1), transparent 40%),
-      radial-gradient(circle at center, rgba(0,0,0,0.4), transparent 70%);
-
-    pointer-events: none;
-  }
+  background:
+    /* soft lighting layer (was ::before) */
+    radial-gradient(circle at 15% 50%, rgba(0, 255, 150, 0.12), transparent 40%),
+    radial-gradient(circle at 85% 50%, rgba(255, 80, 80, 0.12), transparent 40%),
+    radial-gradient(circle at center, rgba(0,0,0,0.3), transparent 70%),
+    /* base gradient */
+    linear-gradient(
+      90deg,
+      #0b3d2c 0%,
+      #0a2a1f 25%,
+      #1a1a1a 50%,
+      #3a0f0f 75%,
+      #4a2a2a 100%
+    );
 
   /* star / particle effect */
   &::after {
     content: '';
     position: absolute;
     inset: 0;
-
     background-image:
       radial-gradient(2px 2px at 20% 30%, rgba(255,255,255,0.2), transparent),
       radial-gradient(1.5px 1.5px at 70% 60%, rgba(255,255,255,0.15), transparent),
@@ -44,11 +34,9 @@ export const DashboardContainer = styled.div`
       radial-gradient(2px 2px at 85% 85%, rgba(255,255,255,0.18), transparent),
       radial-gradient(1.2px 1.2px at 55% 25%, rgba(255,255,255,0.14), transparent),
       radial-gradient(0.8px 0.8px at 30% 90%, rgba(255,255,255,0.16), transparent);
-
     background-repeat: repeat;
-    background-size: 350px 350px;
-
-    opacity: 0.6;
+    background-size: 500px 500px;
+    opacity: 0.9;
     pointer-events: none;
   }
 `;

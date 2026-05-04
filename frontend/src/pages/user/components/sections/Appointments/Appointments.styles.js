@@ -1,12 +1,61 @@
 import styled from 'styled-components';
 
+export const AppointmentsTitle = styled.h1`
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #ec4899 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin-bottom: 0.5rem;
+  letter-spacing: -0.5px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    filter: brightness(1.1);
+  }
+
+  @media (max-width: 768px) {
+    font-size: 1.875rem;
+    margin-bottom: 0.375rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 1.5rem;
+    margin-bottom: 0.25rem;
+  }
+`;
+
+export const AppointmentsHeader = styled.div`
+  text-align: center;
+  margin-bottom: 3rem;
+  
+  @media (max-width: 768px) {
+    margin-bottom: 2rem;
+  }
+  
+  @media (max-width: 480px) {
+    margin-bottom: 1.5rem;
+  }
+`;
+
 export const AppointmentsContainer = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1.5rem;
+  
+  @media (max-width: 768px) {
+    gap: 50px;
+    padding-left: -20px;
+    margin-right: 40px;
+  }
+  
+  @media (max-width: 480px) {
+    gap: 20px;
+  }
 `;
 
-export const AppointmentsHeader = styled.div`
+export const AppointmentsSubHeader = styled.div`
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -16,14 +65,28 @@ export const AppointmentsHeader = styled.div`
     flex-direction: column;
     align-items: flex-start;
     gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+  
+  @media (max-width: 480px) {
+    gap: 0.75rem;
+    margin-bottom: 1rem;
   }
 `;
 
-export const AppointmentsTitle = styled.h3`
+export const AppointmentsSubTitle = styled.h3`
   font-size: 1.125rem;
   font-weight: 600;
   color: white;
   margin: 0;
+  
+  @media (max-width: 768px) {
+    font-size: 1rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 0.875rem;
+  }
 `;
 
 export const ToggleButton = styled.button`
@@ -45,6 +108,13 @@ export const ToggleButton = styled.button`
   @media (max-width: 768px) {
     padding: 0.625rem 1.25rem;
     font-size: 0.85rem;
+    border-radius: 6px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+    border-radius: 6px;
   }
 `;
 
@@ -74,6 +144,15 @@ export const BookingForm = styled.form`
   @media (max-width: 768px) {
     padding: 1rem;
     gap: 0.75rem;
+    margin-bottom: 1.25rem;
+    border-radius: 10px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 0.75rem;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    border-radius: 8px;
   }
 `;
 
@@ -86,18 +165,34 @@ export const FormGrid = styled.div`
     grid-template-columns: 1fr;
     gap: 0.75rem;
   }
+  
+  @media (max-width: 480px) {
+    gap: 0.5rem;
+  }
 `;
 
 export const FormGroup = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  
+  @media (max-width: 480px) {
+    gap: 0.375rem;
+  }
 `;
 
 export const FormLabel = styled.label`
   font-size: 0.875rem;
   font-weight: 500;
   color: rgba(255, 255, 255, 0.9);
+  
+  @media (max-width: 768px) {
+    font-size: 0.8rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 0.75rem;
+  }
 `;
 
 export const FormInput = styled.input`
@@ -128,6 +223,13 @@ export const FormInput = styled.input`
   @media (max-width: 768px) {
     padding: 0.625rem 0.875rem;
     font-size: 0.85rem;
+    border-radius: 6px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    border-radius: 6px;
   }
 `;
 
@@ -156,6 +258,13 @@ export const FormSelect = styled.select`
   @media (max-width: 768px) {
     padding: 0.625rem 0.875rem;
     font-size: 0.85rem;
+    border-radius: 6px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    border-radius: 6px;
   }
 `;
 
@@ -186,6 +295,14 @@ export const FormTextarea = styled.textarea`
     padding: 0.625rem 0.875rem;
     font-size: 0.85rem;
     min-height: 70px;
+    border-radius: 6px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    min-height: 60px;
+    border-radius: 6px;
   }
 `;
 
@@ -222,6 +339,14 @@ export const SubmitButton = styled.button`
   @media (max-width: 768px) {
     padding: 0.625rem 1.25rem;
     font-size: 0.9rem;
+    border-radius: 10px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 0.5rem 1rem;
+    font-size: 0.8rem;
+    border-radius: 8px;
+    gap: 0.375rem;
   }
 `;
 
@@ -240,6 +365,14 @@ export const AppointmentsList = styled.div`
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  
+  @media (max-width: 768px) {
+    gap: 0.75rem;
+  }
+  
+  @media (max-width: 480px) {
+    gap: 0.5rem;
+  }
 `;
 
 export const AppointmentsListHeader = styled.h3`
@@ -247,6 +380,16 @@ export const AppointmentsListHeader = styled.h3`
   font-weight: 600;
   color: white;
   margin: 0 0 1rem 0;
+  
+  @media (max-width: 768px) {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+  }
 `;
 
 export const AppointmentCard = styled.div`
@@ -276,6 +419,12 @@ export const AppointmentCard = styled.div`
   
   @media (max-width: 768px) {
     padding: 0.875rem;
+    border-radius: 10px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 0.75rem;
+    border-radius: 8px;
   }
 `;
 
@@ -284,16 +433,35 @@ export const AppointmentHeader = styled.div`
   justify-content: space-between;
   align-items: flex-start;
   gap: 1rem;
+  
+  @media (max-width: 768px) {
+    gap: 0.75rem;
+  }
+  
+  @media (max-width: 480px) {
+    gap: 0.5rem;
+    flex-direction: column;
+    align-items: stretch;
+  }
 `;
 
 export const AppointmentContent = styled.div`
   flex: 1;
+  
+  @media (max-width: 480px) {
+    flex: none;
+  }
 `;
 
 export const AppointmentActions = styled.div`
   display: flex;
   gap: 0.5rem;
   flex-shrink: 0;
+  
+  @media (max-width: 480px) {
+    justify-content: flex-end;
+    margin-top: 0.5rem;
+  }
 `;
 
 export const StatusBadge = styled.span`
@@ -331,12 +499,25 @@ export const AppointmentTitle = styled.h4`
   font-weight: 600;
   color: white;
   margin: 0 0 0.25rem 0;
+  
+  @media (max-width: 768px) {
+    font-size: 0.9rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 0.875rem;
+    margin-bottom: 0.1875rem;
+  }
 `;
 
 export const AppointmentDetails = styled.div`
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
+  
+  @media (max-width: 480px) {
+    gap: 0.1875rem;
+  }
 `;
 
 export const AppointmentDetail = styled.p`
@@ -346,10 +527,28 @@ export const AppointmentDetail = styled.p`
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  
+  @media (max-width: 768px) {
+    font-size: 0.8rem;
+    gap: 0.375rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 0.75rem;
+    gap: 0.25rem;
+  }
 `;
 
 export const DetailIcon = styled.span`
   font-size: 0.875rem;
+  
+  @media (max-width: 768px) {
+    font-size: 0.8rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 0.75rem;
+  }
 `;
 
 export const CancelButton = styled.button`
@@ -371,6 +570,18 @@ export const CancelButton = styled.button`
   &:active {
     transform: translateY(0);
   }
+  
+  @media (max-width: 768px) {
+    padding: 0.3125rem 0.625rem;
+    font-size: 0.75rem;
+    border-radius: 5px;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 0.25rem 0.5rem;
+    font-size: 0.7rem;
+    border-radius: 4px;
+  }
 `;
 
 export const StatusText = styled.span`
@@ -388,18 +599,44 @@ export const StatusText = styled.span`
         return `color: #f59e0b;`;
     }
   }}
+  
+  @media (max-width: 768px) {
+    font-size: 0.75rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 0.7rem;
+  }
 `;
 
 export const EmptyState = styled.div`
   text-align: center;
   padding: 2rem;
   color: rgba(255, 255, 255, 0.8);
+  
+  @media (max-width: 768px) {
+    padding: 1.5rem;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 1rem;
+  }
 `;
 
 export const EmptyStateIcon = styled.div`
   font-size: 3rem;
   margin-bottom: 1rem;
   opacity: 0.6;
+  
+  @media (max-width: 768px) {
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+  }
 `;
 
 export const EmptyStateText = styled.p`
@@ -408,6 +645,22 @@ export const EmptyStateText = styled.p`
   
   &:not(:last-child) {
     margin-bottom: 0.5rem;
+  }
+  
+  @media (max-width: 768px) {
+    font-size: 0.9rem;
+    
+    &:not(:last-child) {
+      margin-bottom: 0.375rem;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    font-size: 0.8rem;
+    
+    &:not(:last-child) {
+      margin-bottom: 0.25rem;
+    }
   }
 `;
 
@@ -461,5 +714,15 @@ export const NotificationMessage = styled.div`
     right: 0.5rem;
     left: 0.5rem;
     padding: 0.625rem 1rem;
+    font-size: 0.9rem;
+  }
+  
+  @media (max-width: 480px) {
+    top: 0.25rem;
+    right: 0.25rem;
+    left: 0.25rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8rem;
+    gap: 0.375rem;
   }
 `;

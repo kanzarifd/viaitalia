@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { useAuth } from '../../../../context/AuthContext';
 import { animateSidebarSlide, animateSidebarItem } from '../../utils/animations';
+
 import {
   SidebarContainer,
   SidebarList,
@@ -18,7 +19,8 @@ import {
   SidebarUserDetails,
   SidebarUserName,
   SidebarUserEmail,
-  SidebarVersion
+  SidebarVersion,
+  SidebarBackdrop
 } from './Sidebar.styles';
 
 const Sidebar = ({ activeMenu, menuItems, onMenuClick, isCollapsed = false }) => {
@@ -127,7 +129,6 @@ const Sidebar = ({ activeMenu, menuItems, onMenuClick, isCollapsed = false }) =>
             </SidebarUserEmail>
           </SidebarUserDetails>
         </SidebarUserInfo>
-        <SidebarVersion>v1.0.0</SidebarVersion>
       </SidebarFooter>
     </SidebarContainer>
   );

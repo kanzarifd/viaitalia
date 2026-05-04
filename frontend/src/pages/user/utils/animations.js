@@ -53,18 +53,6 @@ export const animateSidebarItem = (element, delay = 0) => {
   });
 };
 
-// Bottom navigation animations
-export const animateBottomNavSlide = (element) => {
-  gsap.fromTo(element, {
-    y: 100,
-    opacity: 0
-  }, {
-    y: 0,
-    opacity: 1,
-    duration: 0.5,
-    ease: "power2.out"
-  });
-};
 
 // Content area animations
 export const animateContentCards = (elements) => {

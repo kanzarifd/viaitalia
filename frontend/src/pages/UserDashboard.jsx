@@ -1,11 +1,10 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import { AuthContext } from "../context/AuthContext";
 import { DashboardContainer, MainContent } from "./user/styles/DashboardContainer.styles";
 
 // Import new components
 import { Header } from "./user/components/Header";
 import { Sidebar } from "./user/components/Sidebar";
-import { BottomNav } from "./user/components/BottomNav";
 import { ContentArea } from "./user/components/ContentArea";
 
 // Import section components
@@ -16,10 +15,57 @@ import ContractSection from "./user/components/sections/Contract/ContractSection
 import DossierSection from "./user/components/sections/Dossier/DossierSection";
 import ProfileSection from "./user/components/sections/Profile/ProfileSection";
 import DashboardSection from "./user/components/sections/Dashboard/DashboardSection";
+import { PaymentSection } from "./user/components/sections/Payment";
+import AnnouncementsSection from "./user/components/sections/Announcements/AnnouncementsSection";
 
 const UserDashboard = () => {
   const { user, logoutUser } = useContext(AuthContext);
   const [activeMenu, setActiveMenu] = useState('dashboard');
+
+  // Hide all scrollbars completely for the entire dashboard
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      /* Hide all scrollbars completely */
+      html, body, * {
+        -ms-overflow-style: none !important;
+        scrollbar-width: none !important;
+      }
+      
+      html::-webkit-scrollbar,
+      body::-webkit-scrollbar,
+      *::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+      }
+      
+      /* Force hide any remaining scrollbars */
+      ::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      if (document.head.contains(style)) {
+        document.head.removeChild(style);
+      }
+    };
+  }, []);
 
   const menuItems = [
     { id: 'dashboard', icon: '🏠', text: 'Tableau de Bord' },
@@ -28,6 +74,7 @@ const UserDashboard = () => {
     { id: 'profile', icon: '👤', text: 'Profil' },
     { id: 'parcours', icon: '📄', text: 'Contrat' },
     { id: 'dossier', icon: '📁', text: 'Dossier' },
+    { id: 'paiement', icon: '💳', text: 'Paiement' },
     { id: 'annonces', icon: '📢', text: 'Annonces' }
   ];
 
@@ -44,8 +91,7 @@ const UserDashboard = () => {
       case 'dashboard':
         return (
           <ContentArea 
-            title="Tableau de Bord"
-            subtitle="Bienvenue sur votre espace personnel"
+         
           >
             <DashboardSection />
           </ContentArea>
@@ -53,16 +99,13 @@ const UserDashboard = () => {
       
       case 'rendezvous':
         return (
-          <ContentArea 
-            title="Prendre un Rendez-vous"
-            subtitle="Gérez vos rendez-vous avec nos conseillers"
-          >
+           
             <AppointmentsSection />
-          </ContentArea>
         );
       
       case 'messagerie':
         return (
+          
             <MessagingSection />
         );
       
@@ -75,7 +118,7 @@ const UserDashboard = () => {
           </ContentArea>
         );
       
-      case 'universite':
+   
         return (
           <ContentArea 
             title="Informations Universitaires"
@@ -90,29 +133,15 @@ const UserDashboard = () => {
       
       case 'dossier':
         return (
-          <ContentArea 
-            title="Dossier"
-            subtitle="Suivez l'évolution de votre dossier d'admission"
-          >
+        
             <DossierSection />
-          </ContentArea>
         );
       
+      case 'paiement':
+        return <PaymentSection />;
+      
       case 'annonces':
-        return (
-          <ContentArea 
-            title="Annonces"
-            subtitle="Restez informé des dernières nouvelles"
-          >
-            <div className="text-white text-center py-12">
-              <div className="text-4xl mb-4">📢</div>
-              <h3 className="text-xl font-semibold mb-2">Section Annonces</h3>
-              <p className="text-gray-400">
-                La section Annonces sera bientôt disponible avec les composants refactored.
-              </p>
-            </div>
-          </ContentArea>
-        );
+        return <AnnouncementsSection />;
       
       default:
         return (
@@ -134,7 +163,12 @@ const UserDashboard = () => {
 
   return (
     <DashboardContainer>
-      <Header onLogout={handleLogout} />
+      <Header 
+        onLogout={handleLogout}
+        activeMenu={activeMenu}
+        menuItems={menuItems}
+        onMenuClick={handleMenuClick}
+      />
       <MainContent>
         <Sidebar 
           activeMenu={activeMenu}
@@ -145,11 +179,6 @@ const UserDashboard = () => {
           {renderContent()}
         </ContentArea>
       </MainContent>
-      <BottomNav 
-        activeMenu={activeMenu}
-        menuItems={menuItems}
-        onMenuClick={handleMenuClick}
-      />
     </DashboardContainer>
   );
 };

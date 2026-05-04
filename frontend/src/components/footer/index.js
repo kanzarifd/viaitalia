@@ -6,456 +6,264 @@ import Instagram from "../../assets/instagram-square-brands.svg";
 import Facebook from "../../assets/facebook-square-brands.svg";
 import Mail from "../../assets/envelope-open-solid.svg";
 import Mobile from "../../assets/mobile.svg";
-import CTAButton from '../CTAButton'; // added import for CTAButton
+import ScrollToTop from "../scrollTotop";
 
 gsap.registerPlugin(ScrollTrigger);
 
 const FOOTER = styled.footer`
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-  padding: 5rem 0;
+  background:
+    radial-gradient(circle at 15% 50%, rgba(0, 255, 150, 0.06), transparent 40%),
+    radial-gradient(circle at 85% 50%, rgba(255, 80, 80, 0.06), transparent 40%),
+    linear-gradient(170deg, #080f0a 0%, #0d0d0d 50%, #100808 100%);
+  padding: 5rem 0 0 0;
   position: relative;
   overflow: hidden;
-
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: 
-      radial-gradient(circle at 20% 50%, rgba(0, 255, 51, 0.1) 0%, transparent 50%),
-      radial-gradient(circle at 80% 50%, rgba(239, 68, 68, 0.1) 0%, transparent 50%);
-    pointer-events: none;
-    z-index: 1;
-  }
 `;
 
-const FooterContainer = styled.div`
+const TopLine = styled.div`
+  width: 90%;
+  max-width: 1200px;
+  margin: 0 auto 4rem;
+  height: 1px;
+  background: linear-gradient(90deg,
+    transparent,
+    rgba(0,200,100,0.5) 30%,
+    rgba(255,80,80,0.5) 70%,
+    transparent
+  );
+`;
+
+const Grid = styled.div`
   display: grid;
-  grid-template-columns: 1fr 1fr 1fr;
+  grid-template-columns: 2fr 1fr 1fr;
   gap: 4rem;
   width: 90%;
   max-width: 1200px;
-  position: relative;
-  z-index: 2;
+  margin: 0 auto 4rem;
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
-    gap: 3rem;
-    text-align: center;
+    gap: 2.5rem;
   }
 `;
 
-const FooterSection = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  opacity: 0;
-  transform: translateY(50px);
+const Col = styled.div``;
+
+const Brand = styled.h2`
+  font-size: 1.8rem;
+  font-weight: 900;
+  background: linear-gradient(135deg, #00c864, #ef4444);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  margin: 0 0 1rem;
+  letter-spacing: -0.02em;
 `;
 
-const SectionTitle = styled.h3`
-  color: var(--green);
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin-bottom: 1rem;
-  position: relative;
-
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: -8px;
-    left: 0;
-    width: 50px;
-    height: 3px;
-    background: linear-gradient(90deg, var(--green), var(--red));
-    border-radius: 2px;
-
-    @media (max-width: 768px) {
-      left: 50%;
-      transform: translateX(-50%);
-    }
-  }
-`;
-
-const FooterText = styled.p`
-  color: var(--white);
-  font-size: 1rem;
-  line-height: 1.6;
-  opacity: 0.9;
-  margin: 0;
-`;
-
-const ContactInfo = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-`;
-
-const ContactItem = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  transition: all 0.3s ease;
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(0, 255, 51, 0.3);
-    transform: translateX(5px) scale(1.02);
-    box-shadow: 
-      0 10px 20px rgba(0, 255, 51, 0.2),
-      0 5px 10px rgba(239, 68, 68, 0.1);
-  }
-
-  img {
-    width: 1.5rem;
-    height: 1.5rem;
-    filter: invert(1);
-    transition: all 0.3s ease;
-  }
-
-  &:hover img {
-    filter: invert(1) brightness(1.5) drop-shadow(0 0 8px rgba(0, 255, 51, 0.5));
-  }
-`;
-
-const ContactText = styled.span`
-  color: var(--white);
+const About = styled.p`
   font-size: 0.9rem;
-  opacity: 0.9;
+  color: rgba(255,255,255,0.5);
+  line-height: 1.7;
+  margin: 0 0 1.5rem;
 `;
 
-const SocialIcons = styled.div`
+const Socials = styled.div`
   display: flex;
-  gap: 1rem;
-  margin-top: 1rem;
+  gap: 0.75rem;
 `;
 
-const SocialIcon = styled.a`
-  width: 45px;
-  height: 45px;
+const SocialBtn = styled.a`
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.04);
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 50%;
-  transition: all 0.3s ease;
-  opacity: 0;
-  transform: scale(0);
+  transition: all 0.25s ease;
+  cursor: pointer;
 
   img {
-    width: 1.2rem;
-    height: 1.2rem;
+    width: 1rem;
     filter: invert(1);
-    transition: all 0.3s ease;
+    opacity: 0.6;
+    transition: opacity 0.25s;
   }
 
   &:hover {
-    background: rgba(0, 255, 51, 0.2);
-    border-color: rgba(0, 255, 51, 0.5);
-    transform: scale(1.1) rotate(360deg);
-
-    img {
-      filter: invert(1) brightness(1.5) drop-shadow(0 0 8px rgba(0, 255, 51, 0.8));
-    }
+    border-color: rgba(0,200,100,0.4);
+    background: rgba(0,200,100,0.08);
+    transform: translateY(-3px);
+    img { opacity: 1; }
   }
 `;
 
-const QuickLinks = styled.div`
+const ColTitle = styled.h4`
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
+  margin: 0 0 1.25rem;
+`;
+
+const LinkList = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 0.8rem;
+  gap: 0.6rem;
 `;
 
 const FooterLink = styled.a`
-  color: var(--white);
-  font-size: 1rem;
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.5);
   text-decoration: none;
-  opacity: 0.8;
-  transition: all 0.3s ease;
-  position: relative;
-  padding-left: 1rem;
+  transition: color 0.2s;
 
-  &::before {
-    content: '→';
-    position: absolute;
-    left: 0;
-    opacity: 0;
-    transform: translateX(-10px);
-    transition: all 0.3s ease;
-    color: var(--green);
+  &:hover { color: #00c864; }
+`;
+
+const ContactItem = styled.a`
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.88rem;
+  color: rgba(255,255,255,0.5);
+  text-decoration: none;
+  margin-bottom: 0.75rem;
+  transition: color 0.2s;
+
+  img {
+    width: 1rem;
+    filter: invert(1);
+    opacity: 0.5;
   }
 
-  &:hover {
-    color: var(--green);
-    opacity: 1;
-    padding-left: 1.5rem;
+  &:hover { color: rgba(255,255,255,0.9); }
+`;
 
-    &::before {
-      opacity: 1;
-      transform: translateX(0);
+const BottomBar = styled.div`
+  border-top: 1px solid rgba(255,255,255,0.07);
+  padding: 1.75rem 0;
+
+  > div {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+
+    @media (max-width: 600px) {
+      flex-direction: column;
+      text-align: center;
     }
   }
 `;
 
-const NewsletterForm = styled.form`
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-`;
-
-const NewsletterInput = styled.input`
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  color: var(--white);
-  font-size: 0.9rem;
-  transition: all 0.3s ease;
-
-  &::placeholder {
-    color: rgba(255, 255, 255, 0.5);
-  }
-
-  &:focus {
-    outline: none;
-    border-color: rgba(0, 255, 51, 0.5);
-    background: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 0 15px rgba(0, 255, 51, 0.2);
-  }
-`;
-
-const NewsletterButton = styled.button`
-  padding: 1rem;
-  background: linear-gradient(90deg, var(--green), var(--red));
-  border: none;
-  border-radius: 10px;
-  color: var(--white);
-  font-size: 1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-
-  &:hover {
-    transform: translateY(-2px) scale(1.02);
-    box-shadow: 
-      0 15px 30px rgba(0, 255, 51, 0.3),
-      0 8px 15px rgba(239, 68, 68, 0.2);
-  }
-
-  &:active {
-    transform: translateY(0) scale(0.98);
-  }
-`;
-
-const BottomBar = styled.div`
-  width: 100%;
-  padding: 2rem 0;
-  background: rgba(0, 0, 0, 0.3);
-  backdrop-filter: blur(10px);
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  position: relative;
-  z-index: 2;
-  margin-top: 4rem;
-`;
-
-const BottomContent = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  width: 90%;
-  max-width: 1200px;
-  margin: 0 auto;
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-    gap: 1rem;
-    text-align: center;
-  }
-`;
-
-const Copyright = styled.p`
-  color: var(--white);
-  font-size: 0.9rem;
-  opacity: 0.7;
+const Copy = styled.p`
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.25);
   margin: 0;
 `;
 
 const BottomLinks = styled.div`
   display: flex;
-  gap: 2rem;
+  gap: 1.5rem;
 
-  @media (max-width: 768px) {
-    gap: 1rem;
-  }
-`;
-
-const BottomLink = styled.a`
-  color: var(--white);
-  font-size: 0.9rem;
-  text-decoration: none;
-  opacity: 0.7;
-  transition: all 0.3s ease;
-
-  &:hover {
-    color: var(--green);
-    opacity: 1;
+  a {
+    font-size: 0.8rem;
+    color: rgba(255,255,255,0.25);
+    text-decoration: none;
+    transition: color 0.2s;
+    &:hover { color: rgba(255,255,255,0.6); }
   }
 `;
 
 const Footer = () => {
   const footerRef = useRef(null);
-  const sectionsRef = useRef([]);
-  const socialIconsRef = useRef([]);
-  const bottomBarRef = useRef(null);
-  const appointmentBtnRef = useRef(null);
 
   useEffect(() => {
-    // Footer sections animation
-    gsap.fromTo(sectionsRef.current, {
-      opacity: 0,
-      y: 50
-    }, {
-      opacity: 1,
-      y: 0,
-      duration: 1.5,
-      stagger: 0.3,
-      ease: "power3.inOut",
-      scrollTrigger: {
-        trigger: footerRef.current,
-        start: "top 60%",
-        toggleActions: "play none none reverse"
+    gsap.fromTo(
+      footerRef.current.querySelectorAll('.anim'),
+      { opacity: 0, y: 30 },
+      {
+        opacity: 1, y: 0,
+        duration: 0.9,
+        stagger: 0.15,
+        ease: "power3.out",
+        scrollTrigger: {
+          trigger: footerRef.current,
+          start: "top 80%",
+        }
       }
-    });
-
-    // Social icons animation
-    gsap.fromTo(socialIconsRef.current, {
-      opacity: 0,
-      scale: 0
-    }, {
-      opacity: 1,
-      scale: 1,
-      duration: 1.5,
-      stagger: 0.1,
-      ease: "back.out(1.7)",
-      scrollTrigger: {
-        trigger: footerRef.current,
-        start: "top 60%",
-        toggleActions: "play none none reverse"
-      }
-    });
-
-    // Bottom bar animation
-    gsap.fromTo(bottomBarRef.current, {
-      opacity: 0,
-      y: 30
-    }, {
-      opacity: 1,
-      y: 0,
-      duration: 1.5,
-      ease: "power3.inOut",
-      scrollTrigger: {
-        trigger: footerRef.current,
-        start: "top 60%",
-        toggleActions: "play none none reverse"
-      }
-    });
+    );
   }, []);
 
-  const addToSectionsRef = (el) => {
-    if (el && !sectionsRef.current.includes(el)) {
-      sectionsRef.current.push(el);
-    }
-  };
-
-  const addToSocialIconsRef = (el) => {
-    if (el && !socialIconsRef.current.includes(el)) {
-      socialIconsRef.current.push(el);
-    }
-  };
-
-  const handleNewsletterSubmit = (e) => {
-    e.preventDefault();
-    // Handle newsletter submission
-    console.log('Newsletter submitted');
-  };
-
   return (
-    <FOOTER ref={footerRef}>
-      <FooterContainer>
-        <FooterSection ref={addToSectionsRef}>
-          <SectionTitle>À Propos de Viaitalia</SectionTitle>
-          <FooterText>
-            Vialtalia is your trusted partner for enrolling in Italian universities. We simplify your academic journey with clear, secure, and personalized support 
-            from the first application to your arrival in Italy.
-          </FooterText>
-          <SocialIcons>
-            <SocialIcon ref={addToSocialIconsRef} href="https://www.facebook.com/share/18gE6aiDxC/?mibextid=wwXIfr">
-              <img src={Facebook} alt="Facebook" />
-            </SocialIcon>
-            <SocialIcon ref={addToSocialIconsRef} href="https://www.instagram.com/via_italiaconsulting?igsh=cW96NWZ4czBnOXZh">
-              <img src={Instagram} alt="Instagram" />
-            </SocialIcon>
-          </SocialIcons>
-        </FooterSection>
+    <>
+      <FOOTER ref={footerRef}>
+        <TopLine />
 
-        <FooterSection ref={addToSectionsRef}>
-          <SectionTitle>Contact Rapide</SectionTitle>
-          <ContactInfo>
-         
-            <ContactItem>
-              <img src={Mobile} alt="Phone" />
-              <ContactText>+216 22 552 722</ContactText>
+        <Grid>
+          {/* Brand col */}
+          <Col className="anim">
+            <Brand>Viaitalia</Brand>
+            <About>
+              Votre partenaire de confiance pour l'inscription dans les universités
+              italiennes. Un accompagnement clair et personnalisé, du premier dossier
+              jusqu'à votre arrivée en Italie.
+            </About>
+            <Socials>
+              <SocialBtn href="https://www.facebook.com/share/18gE6aiDxC/" target="_blank">
+                <img src={Facebook} alt="Facebook" />
+              </SocialBtn>
+              <SocialBtn href="https://www.instagram.com/via_italiaconsulting" target="_blank">
+                <img src={Instagram} alt="Instagram" />
+              </SocialBtn>
+            </Socials>
+          </Col>
+
+          {/* Links col */}
+          <Col className="anim">
+            <ColTitle>Navigation</ColTitle>
+            <LinkList>
+              {['Home', 'About Us', 'Services'].map(l => (
+                <FooterLink key={l} href={`#${l.toLowerCase().replace(/\s+/g, '-')}`}>{l}</FooterLink>
+              ))}
+            </LinkList>
+          </Col>
+
+          {/* Contact col */}
+          <Col className="anim">
+            <ColTitle>Contact</ColTitle>
+            <ContactItem href="tel:+21622552722">
+              <img src={Mobile} alt="" />
+              +216 22 552 722
             </ContactItem>
-            <ContactItem>
-              <img src={Mail} alt="Email" />
-              <ContactText>viaitaliaagency@gmail.com</ContactText>
+          
+            <ContactItem href="mailto:viaitaliaagency@gmail.com">
+              <img src={Mail} alt="" />
+                            viaitaliaagency@gmail.com
+
             </ContactItem>
-          </ContactInfo>
-        </FooterSection>
+           
+          </Col>
+        </Grid>
 
-        <FooterSection ref={addToSectionsRef}>
-          <SectionTitle>Liens Utiles</SectionTitle>
-          <QuickLinks>
-            <FooterLink href="#services">Nos Services</FooterLink>
-            <FooterLink href="#testimonials">Témoignages</FooterLink>
-            <FooterLink href="#contact">Contact</FooterLink>
-            <FooterLink href="#about">À Propos</FooterLink>
-          </QuickLinks>
-                     <CTAButton ref={appointmentBtnRef} primary onClick={() => window.open('https://calendly.com/viaitaliaagency/30min', '_blank')}>
-              Book free consultation
-              <span style={{ marginLeft: '0.6rem', fontSize: '1.2rem', filter: 'brightness(0.7)' }}>📅</span>
-            </CTAButton>
-        </FooterSection>
-      </FooterContainer>
-
-      <BottomBar ref={bottomBarRef}>
-        <BottomContent>
-          <Copyright>
-            &copy; 2026 Viaitalia. Tous droits réservés.
-          </Copyright>
-          <BottomLinks>
-            <BottomLink href="#privacy">Politique de Confidentialité</BottomLink>
-            <BottomLink href="#terms">Conditions d'Utilisation</BottomLink>
-            <BottomLink href="#cookies">Politique de Cookies</BottomLink>
-          </BottomLinks>
-        </BottomContent>
-      </BottomBar>
-    </FOOTER>
+        <BottomBar>
+          <div>
+            <Copy> 2026 Viaitalia. Tous droits réservés.</Copy>
+            <BottomLinks>
+              <a href="#privacy">Confidentialité</a>
+              <a href="#terms">Conditions</a>
+              <a href="#cookies">Cookies</a>
+            </BottomLinks>
+          </div>
+        </BottomBar>
+      </FOOTER>
+      <ScrollToTop />
+    </>
   );
 };
 

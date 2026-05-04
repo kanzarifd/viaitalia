@@ -29,16 +29,18 @@ export const MessagingContainer = styled.div`
   }
   
   @media (max-width: 768px) {
-    height: calc(100vh - 60px);
-    margin: 0 auto;
+    height: calc(90vh - 100px );
+    margin: 10px 0;
+    margin-left: -25px;
+    margin-right: -10px;
     padding: 10px;
     max-width: calc(100vw - 60px);
   }
-`;
+`; 
 
 /* CHAT CONTAINER - PROFESSIONAL */
 export const ChatContainer = styled.div`
-  background: ${props => props.isDarkMode ? '#2d2d2d' : '#ffffff'};
+  background: linear-gradient(#1a1f2e);
   height: 100%;
   width: 100%;
   display: flex;
@@ -53,7 +55,7 @@ export const ChatContainer = styled.div`
 /* CHAT HEADER */
 export const ChatHeader = styled.div`
   padding: 1.5rem;
-  background: linear-gradient(135deg, #2d5a3d 0%, #8b0000 100%);
+  background: linear-gradient(135deg, #2d5a3d 50%, #8b0000 100%);
   color: white;
   border-bottom: 1px solid rgba(255,255,255,0.1);
 `;
@@ -102,6 +104,28 @@ export const MessagesContainer = styled.div`
     
     &:hover {
       background: ${props => props.isDarkMode ? 'rgba(102, 126, 234, 0.6)' : 'rgba(102, 126, 234, 0.5)'};
+    }
+  }
+  
+  @media (max-width: 768px) {
+    padding: 1.5rem 1rem;
+    gap: 0.75rem;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 1rem 0.75rem;
+    gap: 0.5rem;
+    
+    &::-webkit-scrollbar {
+      width: 6px;
+    }
+    
+    &::-webkit-scrollbar-track {
+      border-radius: 3px;
+    }
+    
+    &::-webkit-scrollbar-thumb {
+      border-radius: 3px;
     }
   }
 `;
@@ -485,5 +509,77 @@ export const LoadingSpinner = styled.div`
   @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+  }
+`;
+
+/* MOBILE DARK MODE TOGGLE */
+export const MobileDarkModeContainer = styled.div`
+  display: none;
+  padding: 1rem;
+  background: ${props => props.isDarkMode ? 'rgba(45, 45, 45, 0.95)' : 'rgba(255, 255, 255, 0.95)'};
+  backdrop-filter: blur(10px);
+  align-items: center;
+  justify-content: space-between;
+  
+  @media (max-width: 1023px) {
+    display: flex;
+  }
+  
+  @media (max-width: 480px) {
+    padding: 0.75rem;
+  }
+`;
+
+export const MobileDarkModeLabel = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: ${props => props.isDarkMode ? '#ffffff' : '#333333'};
+  font-size: 0.875rem;
+  font-weight: 500;
+  
+  @media (max-width: 480px) {
+    font-size: 0.75rem;
+    gap: 0.375rem;
+  }
+`;
+
+export const MobileDarkModeToggle = styled.button`
+  width: 50px;
+  height: 26px;
+  background: ${props => props.isDarkMode ? '#667eea' : '#ccc'};
+  border: none;
+  border-radius: 13px;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.3s ease;
+  
+  &:hover {
+    background: ${props => props.isDarkMode ? '#764ba2' : '#999'};
+  }
+  
+  @media (max-width: 480px) {
+    width: 40px;
+    height: 22px;
+    border-radius: 11px;
+  }
+`;
+
+export const MobileDarkModeToggleThumb = styled.div`
+  position: absolute;
+  top: 3px;
+  left: ${props => props.isDarkMode ? '27px' : '3px'};
+  width: 20px;
+  height: 20px;
+  background: white;
+  border-radius: 50%;
+  transition: left 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  
+  @media (max-width: 480px) {
+    top: 2px;
+    left: ${props => props.isDarkMode ? '19px' : '2px'};
+    width: 18px;
+    height: 18px;
   }
 `;

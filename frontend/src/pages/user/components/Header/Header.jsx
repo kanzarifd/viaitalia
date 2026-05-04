@@ -2,6 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../../../../context/AuthContext';
 import { useNotifications } from '../../hooks/useNotifications';
 import { animateNotification, animateHeaderFadeDown } from '../../utils/animations';
+import { gsap } from 'gsap';
+import { ScrollTrigger } from 'gsap/ScrollTrigger';
+import logo from '../../../../assets/logo.svg';
 import {
   HeaderContainer,
   LogoContainer,
@@ -25,13 +28,20 @@ import {
   NotificationEmpty,
   NotificationLoading,
   NotificationSpinner,
-  LogoutButton,
+  UserDropdown,
+  UserInfoHeader,
+  UserInfoName,
+  UserMenuItems,
+  UserMenuItem,
+  UserMenuItemIcon,
   UserAvatar,
   UserInfo,
-  UserName
+  MobileMenuButton,
+  MobileMenu,
+  MobileMenuItem,
 } from './Header.styles';
 
-const Header = ({ onLogout }) => {
+const Header = ({ onLogout, activeMenu, menuItems = [], onMenuClick }) => {
   const { user } = useAuth();
   const { 
     notifications, 
@@ -41,18 +51,60 @@ const Header = ({ onLogout }) => {
     markAsRead, 
     deleteNotification,
     getNotificationIcon,
+    getNotificationTypeLabel,
     formatNotificationTime
   } = useNotifications(user?.id);
   
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [isUserDropdownOpen, setIsUserDropdownOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const dropdownRef = useRef(null);
+  const userDropdownRef = useRef(null);
   const headerRef = useRef(null);
 
-  // Handle click outside to close dropdown
+  // Register GSAP plugins
+  useEffect(() => {
+    gsap.registerPlugin(ScrollTrigger);
+  }, []);
+
+  // Animate header on scroll
+  useEffect(() => {
+    const element = headerRef.current;
+    
+    if (element) {
+      ScrollTrigger.create({
+        trigger: element,
+        start: "top top",
+        end: "bottom top",
+        scrub: true,
+        onUpdate: self => {
+          const progress = self.progress;
+          if (progress > 0.1) {
+            gsap.to(element, {
+              background: `rgba(255, 255, 255, ${0.08 + (progress * 0.12)})`,
+              backdropFilter: `blur(${25 + (progress * 10)}px)`,
+            });
+          }
+        }
+      });
+    }
+  }, []);
+
+  // Animate header on mount
+  useEffect(() => {
+    if (headerRef.current) {
+      animateHeaderFadeDown(headerRef.current);
+    }
+  }, []);
+
+  // Handle click outside to close dropdowns
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setIsDropdownOpen(false);
+      }
+      if (userDropdownRef.current && !userDropdownRef.current.contains(event.target)) {
+        setIsUserDropdownOpen(false);
       }
     };
 
@@ -69,6 +121,14 @@ const Header = ({ onLogout }) => {
 
   const toggleDropdown = () => {
     setIsDropdownOpen(!isDropdownOpen);
+  };
+
+  const toggleUserDropdown = () => {
+    setIsUserDropdownOpen(!isUserDropdownOpen);
+  };
+
+  const toggleMobileMenu = () => {
+    setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
   const handleMarkAllAsRead = async () => {
@@ -116,13 +176,39 @@ const Header = ({ onLogout }) => {
   return (
     <HeaderContainer ref={headerRef}>
       <LogoContainer>
-        <Logo>V</Logo>
-        <LogoText>ViaItalia</LogoText>
+        <Logo src={logo} alt="ViaItalia Logo" />
       </LogoContainer>
+
+      {/* Mobile Menu Button */}
+      <MobileMenuButton 
+        onClick={toggleMobileMenu}
+        isMobileMenuOpen={isMobileMenuOpen}
+      >
+        <span></span>
+      </MobileMenuButton>
+
+      {/* Mobile Menu */}
+      <MobileMenu isVisible={isMobileMenuOpen}>
+        {menuItems.map((item) => (
+          <MobileMenuItem 
+            key={item.id}
+            onClick={() => {
+              if (onMenuClick) {
+                onMenuClick(item.id);
+              }
+              setIsMobileMenuOpen(false);
+            }}
+            isActive={activeMenu === item.id}
+          >
+            <span>{item.icon}</span>
+            {item.text}
+          </MobileMenuItem>
+        ))}
+      </MobileMenu>
 
       <HeaderActions>
         <NotificationContainer ref={dropdownRef}>
-          <NotificationButton onClick={toggleDropdown}>
+          <NotificationButton onClick={toggleDropdown} hasUnread={unreadCount > 0}>
             🔔
             {unreadCount > 0 && (
               <NotificationBadge>
@@ -160,12 +246,15 @@ const Header = ({ onLogout }) => {
                     isUnread={!notification.isRead}
                     onClick={() => handleNotificationClick(notification)}
                   >
-                    <NotificationIcon type={getNotificationType(notification)}>
+                    <NotificationIcon type={getNotificationType(notification)} isUnread={!notification.isRead}>
                       {getNotificationIcon(notification.type)}
                     </NotificationIcon>
                     <NotificationContent>
                       <NotificationMessage isUnread={!notification.isRead}>
-                        {notification.message || notification.title || 'Notification'}
+                        {notification.message || 
+                         notification.title || 
+                         notification.content || 
+                         getNotificationTypeLabel(notification.type)}
                       </NotificationMessage>
                       <NotificationTime>
                         {formatNotificationTime(notification.createdAt)}
@@ -178,21 +267,29 @@ const Header = ({ onLogout }) => {
           </NotificationDropdown>
         </NotificationContainer>
 
-        <UserInfo>
-          <UserName>
-            {user?.firstName && user?.lastName 
-              ? `${user.firstName} ${user.lastName}`
-              : user?.email || 'Utilisateur'
-            }
-          </UserName>
-          <UserAvatar>
+        <UserInfo ref={userDropdownRef}>
+          <UserAvatar onClick={toggleUserDropdown}>
             {user?.firstName?.[0] || user?.email?.[0] || 'U'}
           </UserAvatar>
+          
+          <UserDropdown isOpen={isUserDropdownOpen}>
+            <UserInfoHeader>
+              <UserInfoName>
+                {user?.firstName && user?.lastName 
+                  ? `${user.firstName} ${user.lastName}`
+                  : user?.email || 'Utilisateur'
+                }
+              </UserInfoName>
+            </UserInfoHeader>
+            
+            <UserMenuItems>
+              <UserMenuItem onClick={handleLogout}>
+                <UserMenuItemIcon>🚪</UserMenuItemIcon>
+                Déconnexion
+              </UserMenuItem>
+            </UserMenuItems>
+          </UserDropdown>
         </UserInfo>
-
-        <LogoutButton onClick={handleLogout}>
-          🚪 Déconnexion
-        </LogoutButton>
       </HeaderActions>
     </HeaderContainer>
   );

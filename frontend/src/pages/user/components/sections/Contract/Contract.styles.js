@@ -1,4 +1,4 @@
-import styled, { keyframes } from 'styled-components';
+import styled, { keyframes, css } from 'styled-components';
 
 const fadeIn = keyframes`
   from { opacity: 0; transform: translateY(20px); }
@@ -13,21 +13,18 @@ const slideUp = keyframes`
 export const ContractContainer = styled.div`
   min-height: 100vh;
   padding: 2rem;
-  padding-left: 300px;
-  padding-top: 100px;
-  width: 100%;
-  margin: 0;
-  box-sizing: border-box;
+
   position: relative;
   
   @media (max-width: 768px) {
-    padding-left: 1rem;
-    padding-top: 90px;
-    padding-bottom: 80px;
+    min-height: 100vh;
+
   }
   
   @media (max-width: 1024px) {
-    padding-left: 260px;
+    padding-left: 10px;
+    padding-right: 60px;
+
   }
 `;
 
@@ -35,11 +32,24 @@ export const ContractHeader = styled.div`
   margin-bottom: 2rem;
 `;
 
-export const ContractTitle = styled.h2`
-  font-size: 2rem;
-  font-weight: 600;
-  color: #ffffff;
+export const ContractTitle = styled.h1`
+  font-size: 2.5rem;
+  font-weight: 700;
+  background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 50%, #ec4899 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
   margin-bottom: 0.5rem;
+  letter-spacing: -0.5px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    filter: brightness(1.1);
+  }
+
+  @media (max-width: 768px) {
+    font-size: 1.875rem;
+  }
 `;
 
 export const ContractCard = styled.div`

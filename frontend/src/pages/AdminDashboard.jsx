@@ -372,6 +372,17 @@ function AdminDashboard() {
   // Appointment state
   const [appointments, setAppointments] = useState([]);
 
+  // Time slot management state
+  const [timeSlots, setTimeSlots] = useState([]);
+  const [showSlotForm, setShowSlotForm] = useState(false);
+  const [newSlot, setNewSlot] = useState({
+    date: '',
+    startTime: '',
+    endTime: '',
+    maxBookings: 1
+  });
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
+
   // Study forms state
   const [studyForms, setStudyForms] = useState([]);
   const [selectedStudyForm, setSelectedStudyForm] = useState(null);
@@ -613,6 +624,7 @@ function AdminDashboard() {
     fetchContracts(); // Fetch contracts
     fetchAnnouncements(); // Fetch announcements
     fetchAppointments(); // Fetch appointments
+    fetchTimeSlots(); // Fetch time slots
     fetchStudyForms(); // Fetch study forms
     fetchPayments(); // Fetch payments
     fetchPaymentStats(); // Fetch payment stats
@@ -974,6 +986,118 @@ function AdminDashboard() {
     } catch (error) {
       console.error('Error deleting appointment:', error);
       alert('Erreur lors de la suppression');
+    }
+  };
+
+  // Time Slot Management Functions
+  const fetchTimeSlots = async () => {
+    try {
+      const response = await appointmentService.getAvailableSlots();
+      if (response.success && response.data) {
+        setTimeSlots(response.data);
+        console.log('Time slots loaded:', response.data);
+      } else {
+        setTimeSlots([]);
+      }
+    } catch (error) {
+      console.error('Error fetching time slots:', error);
+      setTimeSlots([]);
+    }
+  };
+
+  const handleCreateSlot = async () => {
+    if (!newSlot.date || !newSlot.startTime || !newSlot.endTime) {
+      alert('Veuillez remplir tous les champs du créneau horaire');
+      return;
+    }
+
+    try {
+      const response = await appointmentService.createTimeSlot(newSlot);
+      if (response.success) {
+        // Reset form
+        setNewSlot({
+          date: '',
+          startTime: '',
+          endTime: '',
+          maxBookings: 1
+        });
+        setShowSlotForm(false);
+        
+        // Refresh time slots
+        fetchTimeSlots();
+        
+        // Show success notification
+        const successDiv = document.createElement('div');
+        successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center';
+        successDiv.innerHTML = `
+          <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+          <span>Créneau horaire créé!</span>
+        `;
+        document.body.appendChild(successDiv);
+        
+        gsap.fromTo(successDiv, {
+          scale: 0, opacity: 0, rotation: -180, x: -100
+        }, {
+          scale: 1, opacity: 1, rotation: 0, x: 0, duration: 0.6, ease: "back.out(1.7)",
+          onComplete: () => {
+            gsap.to(successDiv, {
+              scale: 0, opacity: 0, x: -100, duration: 0.3, delay: 2, ease: "power2.in"
+            });
+            setTimeout(() => {
+              if (document.body.contains(successDiv)) {
+                document.body.removeChild(successDiv);
+              }
+            }, 2300);
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error creating time slot:', error);
+      alert('Erreur lors de la création du créneau horaire');
+    }
+  };
+
+  const handleDeleteSlot = async (slotId) => {
+    if (!window.confirm('Êtes-vous sûr de vouloir supprimer ce créneau horaire?')) return;
+    
+    try {
+      const response = await appointmentService.deleteTimeSlot(slotId);
+      if (response.success) {
+        // Remove slot from list
+        setTimeSlots(timeSlots.filter(slot => slot.id !== slotId));
+        
+        // Show success notification
+        const successDiv = document.createElement('div');
+        successDiv.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center';
+        successDiv.innerHTML = `
+          <svg class="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+          </svg>
+          <span>Créneau horaire supprimé!</span>
+        `;
+        document.body.appendChild(successDiv);
+        
+        gsap.fromTo(successDiv, {
+          scale: 0, opacity: 0, rotation: -180, x: -100
+        }, {
+          scale: 1, opacity: 1, rotation: 0, x: 0, duration: 0.6, ease: "back.out(1.7)",
+          onComplete: () => {
+            gsap.to(successDiv, {
+              scale: 0, opacity: 0, x: -100, duration: 0.3, delay: 2, ease: "power2.in"
+            });
+            setTimeout(() => {
+              if (document.body.contains(successDiv)) {
+                document.body.removeChild(successDiv);
+              }
+            }, 2300);
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Error deleting time slot:', error);
+      alert('Erreur lors de la suppression du créneau horaire');
     }
   };
 
@@ -2313,105 +2437,240 @@ const menuItems = [
       case 'appointments':
         return (
           <ContentCard className="content-card">
-            <h2 className="text-2xl font-bold text-white mb-6">
-              📅 Tous les Rendez-vous
-            </h2>
-            
-            {appointments.length === 0 ? (
-              <div className="text-center py-12">
-                <p className="text-gray-400 text-lg">
-                  📅 Aucun rendez-vous trouvé
-                </p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="w-full text-white">
-                  <thead>
-                    <tr className="border-b border-white/20">
-                      <th className="text-left p-4">Étudiant</th>
-                      <th className="text-left p-4">Type</th>
-                      <th className="text-left p-4">Date</th>
-                      <th className="text-left p-4">Statut</th>
-                      <th className="text-left p-4">Mode</th>
-                      <th className="text-left p-4">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {appointments.map((appointment) => (
-                      <tr key={appointment.id} className="border-b border-white/10 hover:bg-white/5">
-                        <td className="p-4">
-                          <div>
-                            <p className="font-medium">
-                              {appointment.user?.firstName} {appointment.user?.lastName}
-                            </p>
-                            <p className="text-sm text-gray-400">
-                              {appointment.user?.email}
-                            </p>
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <span className="px-2 py-1 bg-blue-600/20 text-blue-400 rounded text-sm">
-                            {appointment.type}
-                          </span>
-                        </td>
-                        <td className="p-4">
-                          <div>
-                            <p className="text-sm">
-                              {new Date(appointment.date).toLocaleDateString('fr-FR')}
-                            </p>
-                            <p className="text-xs text-gray-400">
-                              {new Date(appointment.date).toLocaleTimeString('fr-FR', {
-                                hour: '2-digit',
-                                minute: '2-digit'
-                              })}
-                            </p>
-                          </div>
-                        </td>
-                        <td className="p-4">
-                          <select
-                            value={appointment.status}
-                            onChange={(e) => updateAppointmentStatus(appointment.id, e.target.value, appointment.etat)}
-                            className={`px-3 py-1 rounded text-sm font-medium ${
-                              appointment.status === 'CONFIRMED' 
-                                ? 'bg-green-600/20 text-green-400' 
-                                : appointment.status === 'CANCELLED'
-                                ? 'bg-red-600/20 text-red-400'
-                                : 'bg-yellow-600/20 text-yellow-400'
-                            }`}
-                          >
-                            <option value="PENDING">⏳ En Attente</option>
-                            <option value="CONFIRMED">✅ Confirmé</option>
-                            <option value="VALIDATED">✅ Validé</option>
-                          </select>
-                        </td>
-                        <td className="p-4">
-                          <select
-                            value={appointment.etat}
-                            onChange={(e) => updateAppointmentStatus(appointment.id, appointment.status, e.target.value)}
-                            className={`px-3 py-1 rounded text-sm font-medium ${
-                              appointment.etat === 'PRESENTIEL' 
-                                ? 'bg-green-600/20 text-green-400' 
-                                : 'bg-blue-600/20 text-blue-400'
-                            }`}
-                          >
-                            <option value="PRESENTIEL">🏢 Présentiel</option>
-                            <option value="EN_LIGNE">💻 En Ligne</option>
-                          </select>
-                        </td>
-                        <td className="p-4">
-                          <button
-                            onClick={() => deleteAppointment(appointment.id)}
-                            className="px-3 py-1 bg-red-600/20 text-red-400 rounded text-sm hover:bg-red-600/30 transition-colors"
-                          >
-                            🗑️ Supprimer
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            <div className="flex justify-between items-center mb-6">
+              <h2 className="text-2xl font-bold text-white">
+                📅 Gestion des Créneaux Horaires
+              </h2>
+              <button
+                onClick={() => setShowSlotForm(!showSlotForm)}
+                className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+              >
+                ➕ Ajouter un Créneau
+              </button>
+            </div>
+
+            {/* Time Slot Creation Form */}
+            {showSlotForm && (
+              <div className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-6 mb-6 border border-gray-700/50">
+                <h3 className="text-lg font-semibold text-white mb-4">Créer un Nouveau Créneau Horaire</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Date</label>
+                    <input
+                      type="date"
+                      value={newSlot.date}
+                      onChange={(e) => setNewSlot({...newSlot, date: e.target.value})}
+                      className="w-full px-4 py-2 bg-gray-700/50 border border-gray-600/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-white"
+                      min={new Date().toISOString().split('T')[0]}
+                      placeholder="mm/dd/yyyy"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Heure de Début</label>
+                    <input
+                      type="time"
+                      value={newSlot.startTime}
+                      onChange={(e) => setNewSlot({...newSlot, startTime: e.target.value})}
+                      className="w-full px-4 py-2 bg-gray-700/50 border border-gray-600/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Heure de Fin</label>
+                    <input
+                      type="time"
+                      value={newSlot.endTime}
+                      onChange={(e) => setNewSlot({...newSlot, endTime: e.target.value})}
+                      className="w-full px-4 py-2 bg-gray-700/50 border border-gray-600/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-white"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-2">Max Réservations</label>
+                    <input
+                      type="number"
+                      value={newSlot.maxBookings}
+                      onChange={(e) => setNewSlot({...newSlot, maxBookings: parseInt(e.target.value) || 1})}
+                      className="w-full px-4 py-2 bg-gray-700/50 border border-gray-600/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 text-white"
+                      min="1"
+                      max="20"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2 mt-4">
+                  <button
+                    onClick={handleCreateSlot}
+                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+                  >
+                    ✅ Créer le Créneau
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowSlotForm(false);
+                      setNewSlot({
+                        date: '',
+                        startTime: '',
+                        endTime: '',
+                        maxBookings: 1
+                      });
+                    }}
+                    className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg transition-colors duration-200 transform hover:scale-105 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+                  >
+                    ❌ Annuler
+                  </button>
+                </div>
               </div>
             )}
+
+            {/* Existing Appointments */}
+            <div className="mb-6">
+              <h3 className="text-lg font-semibold text-white mb-4">Rendez-vous Confirmés</h3>
+              {appointments.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-400 text-lg">
+                    📅 Aucun rendez-vous trouvé
+                  </p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full text-white">
+                    <thead>
+                      <tr className="border-b border-white/20">
+                        <th className="text-left p-4">Étudiant</th>
+                        <th className="text-left p-4">Type</th>
+                        <th className="text-left p-4">Date</th>
+                        <th className="text-left p-4">Statut</th>
+                        <th className="text-left p-4">Mode</th>
+                        <th className="text-left p-4">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {appointments.map((appointment) => (
+                        <tr key={appointment.id} className="border-b border-white/10 hover:bg-white/5">
+                          <td className="p-4">
+                            <div>
+                              <p className="font-medium">
+                                {appointment.user?.firstName} {appointment.user?.lastName}
+                              </p>
+                              <p className="text-sm text-gray-400">
+                                {appointment.user?.email}
+                              </p>
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <span className="px-2 py-1 bg-blue-600/20 text-blue-400 rounded text-sm">
+                              {appointment.type}
+                            </span>
+                          </td>
+                          <td className="p-4">
+                            <div>
+                              <p className="text-sm">
+                                {new Date(appointment.date).toLocaleDateString('fr-FR')}
+                              </p>
+                              <p className="text-xs text-gray-400">
+                                {new Date(appointment.date).toLocaleTimeString('fr-FR', {
+                                  hour: '2-digit',
+                                  minute: '2-digit'
+                                })}
+                              </p>
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <select
+                              value={appointment.status}
+                              onChange={(e) => updateAppointmentStatus(appointment.id, e.target.value, appointment.etat)}
+                              className={`px-3 py-1 rounded text-sm font-medium ${
+                                appointment.status === 'CONFIRMED' 
+                                  ? 'bg-green-600/20 text-green-400' 
+                                  : appointment.status === 'CANCELLED'
+                                  ? 'bg-red-600/20 text-red-400'
+                                  : 'bg-yellow-600/20 text-yellow-400'
+                              }`}
+                            >
+                              <option value="PENDING">⏳ En Attente</option>
+                              <option value="CONFIRMED">✅ Confirmé</option>
+                              <option value="VALIDATED">✅ Validé</option>
+                            </select>
+                          </td>
+                          <td className="p-4">
+                            <select
+                              value={appointment.etat}
+                              onChange={(e) => updateAppointmentStatus(appointment.id, appointment.status, e.target.value)}
+                              className={`px-3 py-1 rounded text-sm font-medium ${
+                                appointment.etat === 'PRESENTIEL' 
+                                  ? 'bg-green-600/20 text-green-400' 
+                                  : 'bg-blue-600/20 text-blue-400'
+                              }`}
+                            >
+                              <option value="PRESENTIEL">🏢 Présentiel</option>
+                              <option value="EN_LIGNE">💻 En Ligne</option>
+                            </select>
+                          </td>
+                          <td className="p-4">
+                            <button
+                              onClick={() => deleteAppointment(appointment.id)}
+                              className="px-3 py-1 bg-red-600/20 text-red-400 rounded text-sm hover:bg-red-600/30 transition-colors"
+                            >
+                              🗑️ Supprimer
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Available Time Slots */}
+            <div>
+              <h3 className="text-lg font-semibold text-white mb-4">Créneaux Disponibles</h3>
+              {timeSlots.length === 0 ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-400 text-lg">
+                    🕐 Aucun créneau horaire disponible
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {timeSlots.map((slot) => (
+                    <div key={slot.id} className="bg-gray-800/50 backdrop-blur-sm rounded-lg p-4 border border-gray-700/50 hover:border-green-500/50 transition-colors">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <p className="text-white font-medium">
+                            {new Date(slot.date).toLocaleDateString('fr-FR', {
+                              weekday: 'long',
+                              year: 'numeric',
+                              month: 'long',
+                              day: 'numeric'
+                            })}
+                          </p>
+                          <p className="text-gray-300 text-sm">
+                            {slot.startTime} - {slot.endTime}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => handleDeleteSlot(slot.id)}
+                          className="text-red-400 hover:text-red-300 transition-colors"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <span className="text-gray-400 text-sm">
+                          Max: {slot.maxBookings} réservation{slot.maxBookings > 1 ? 's' : ''}
+                        </span>
+                        <span className={`px-2 py-1 rounded text-xs font-medium ${
+                          slot.isAvailable 
+                            ? 'bg-green-600/20 text-green-400' 
+                            : 'bg-red-600/20 text-red-400'
+                        }`}>
+                          {slot.isAvailable ? '✅ Disponible' : '❌ Complet'}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </ContentCard>
         );
       

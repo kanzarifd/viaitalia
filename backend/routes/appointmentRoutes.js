@@ -7,7 +7,12 @@ const {
   getAppointmentById,
   getAppointmentsByUserId,
   updateAppointment,
-  deleteAppointment
+  deleteAppointment,
+  // Time slot functions
+  createTimeSlot,
+  getAvailableSlots,
+  deleteTimeSlot,
+  getSlotsByDate
 } = require("../controllers/appointmentController");
 
 // Apply auth middleware to all routes
@@ -30,5 +35,18 @@ router.put("/:id", updateAppointment);
 
 // Delete appointment
 router.delete("/:id", deleteAppointment);
+
+// Time slot management routes
+// Get all available time slots
+router.get("/slots/available", getAvailableSlots);
+
+// Create new time slot (admin only)
+router.post("/slots", createTimeSlot);
+
+// Delete time slot (admin only)
+router.delete("/slots/:id", deleteTimeSlot);
+
+// Get time slots by date
+router.get("/slots/date/:date", getSlotsByDate);
 
 module.exports = router;

@@ -1,182 +1,384 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useAuth } from '../../../../../context/AuthContext';
 import { useDossier } from '../../../hooks/useDossier';
+import {
+  DossierOverviewContainer,
+  DossierContainer,
+  HeaderSection,
+  DossierTitle,
+  MainCard,
+  StepsGrid,
+  StepCircle,
+  StepStatus,
+  DossierProgress,
+  ProgressText,
+  ProgressBar,
+  ProgressFill,
+  DossierDetailsCard,
+  DossierDetailRow,
+  DossierDetailLabel,
+  DossierDetailValue,
+  LoadingSpinner,
+  EmptyState,
+  EmptyStateIcon,
+  EmptyStateText
+} from './Dossier.styles';
 
+/**
+ * Status configuration constants
+ * Maps status values to colors, icons, and display text
+ */
+const STATUS_CONFIG = {
+  VALIDE: {
+    color: 'success',
+    icon: '✓',
+    text: 'Validé',
+    bgGradient: 'from-green-500 to-green-600'
+  },
+  EN_COURS: {
+    color: 'warning',
+    icon: '⟳',
+    text: 'En cours',
+    bgGradient: 'from-blue-500 to-blue-600'
+  },
+  EN_ATTENTE: {
+    color: 'default',
+    icon: '○',
+    text: 'En attente',
+    bgGradient: 'from-gray-500 to-gray-600'
+  }
+};
+
+/**
+ * Step configuration for the dossier progression
+ */
+const STEPS_CONFIG = [
+  {
+    id: 'traduction',
+    title: 'Documents',
+    emoji: '📄',
+    description: 'Traduction et validation des documents',
+    statusKey: 'traductionStatus',
+    canProceed: () => true
+  },
+  {
+    id: 'inscription',
+    title: 'Application',
+    emoji: '📝',
+    description: 'Inscription académique et demande d\'admission',
+    statusKey: 'inscriptionStatus',
+    canProceed: (dossier) => dossier.traductionStatus === 'VALIDE'
+  },
+  {
+    id: 'acceptation',
+    title: 'Acceptation',
+    emoji: '✅',
+    description: 'Acceptation de l\'institution',
+    statusKey: 'visaStatus',
+    canProceed: (dossier) => dossier.inscriptionStatus === 'VALIDE'
+  },
+  {
+    id: 'visa',
+    title: 'Visa',
+    emoji: '🛂',
+    description: 'Demande et approbation du visa',
+    statusKey: 'visaStatus',
+    canProceed: (dossier) => dossier.visaStatus === 'VALIDE'
+  }
+];
+
+/**
+ * DossierSection Component
+ * Displays administrative dossier progress with multi-step tracking
+ */
 const DossierSection = () => {
   const { user } = useAuth();
-  const {
-    dossier,
-    isLoading,
-    error
-  } = useDossier(user?.id);
+  const { dossier, isLoading, error } = useDossier(user?.id);
 
-  const loadingDossier = isLoading;
-  const dossierData = dossier;
-
-  return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white mb-6">
-        Mon Dossier Administratif
-      </h2>
+  /**
+   * Make scrollbar completely invisible
+   */
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      /* Hide all scrollbars completely */
+      html, body, * {
+        -ms-overflow-style: none !important;
+        scrollbar-width: none !important;
+      }
       
-      {loadingDossier ? (
-        <div className="flex justify-center items-center py-12">
-          <div className="animate-spin rounded-full h-12 w-12 border-4 border-blue-400 border-t-transparent"></div>
-        </div>
-      ) : !dossierData ? (
-        <div className="text-center py-12">
-          <p className="text-gray-400 text-lg">
-            📁 Vous n'avez pas encore de dossier
+      html::-webkit-scrollbar,
+      body::-webkit-scrollbar,
+      *::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+      }
+      
+      /* Force hide any remaining scrollbars */
+      ::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      if (document.head.contains(style)) {
+        document.head.removeChild(style);
+      }
+    };
+  }, []);
+
+  /**
+   * Calculate overall progress percentage
+   */
+  const calculateProgress = () => {
+    if (!dossier) return 0;
+    const completedSteps = [
+      dossier.traductionStatus === 'VALIDE',
+      dossier.inscriptionStatus === 'VALIDE',
+      dossier.visaStatus === 'VALIDE'
+    ].filter(Boolean).length;
+    return Math.round((completedSteps / 3) * 100);
+  };
+
+  /**
+   * Get the next required step
+   */
+  const getNextStep = () => {
+    if (!dossier) return null;
+    
+    if (dossier.traductionStatus !== 'VALIDE') return 'Traduction des documents';
+    if (dossier.inscriptionStatus !== 'VALIDE') return 'Inscription académique';
+    if (dossier.visaStatus !== 'VALIDE') return 'Dossier de visa';
+    return 'Processus terminé';
+  };
+
+  /**
+   * Get status configuration for a given status value
+   */
+  const getStatusConfig = (status) => {
+    return STATUS_CONFIG[status] || STATUS_CONFIG.EN_ATTENTE;
+  };
+
+  /**
+   * Determine if a step is locked based on dependencies
+   */
+  const isStepLocked = (step) => {
+    return !step.canProceed(dossier);
+  };
+
+  if (isLoading) {
+    return (
+      <DossierOverviewContainer>
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          height: '60vh',
+          gap: '1.5rem'
+        }}>
+          <LoadingSpinner viewBox="0 0 50 50" width="80" height="80">
+            <circle
+              cx="25"
+              cy="25"
+              r="20"
+              fill="none"
+              stroke="rgba(59, 130, 246, 0.6)"
+              strokeWidth="4"
+            />
+          </LoadingSpinner>
+          <p style={{ color: '#9ca3af', fontSize: '1.125rem' }}>
+            Chargement de votre dossier...
           </p>
         </div>
-      ) : (
-        <div className="space-y-6">
-          {/* Dossier Title */}
-          <div className="bg-white/10 border border-white/20 rounded-lg p-4">
-            <h3 className="text-lg font-semibold text-white mb-2">
-              {dossierData.title}
-            </h3>
-            <p className="text-gray-300 text-sm">
-              Créé le {new Date(dossierData.createdAt).toLocaleDateString('fr-FR')}
+      </DossierOverviewContainer>
+    );
+  }
+
+  if (!dossier) {
+    return (
+      <DossierOverviewContainer>
+        <EmptyState>
+          <EmptyStateIcon>📁</EmptyStateIcon>
+          <EmptyStateText>
+            <h3>Aucun dossier trouvé</h3>
+            <p>Vous n'avez pas encore de dossier administratif</p>
+          </EmptyStateText>
+        </EmptyState>
+      </DossierOverviewContainer>
+    );
+  }
+
+  const progress = calculateProgress();
+
+  return (
+    <DossierOverviewContainer>
+      <DossierContainer>
+        {/* Header Section */}
+        <HeaderSection>
+          <div style={{ textAlign: 'center' }}>
+            <DossierTitle>Mon Dossier Administratif</DossierTitle>
+            <p style={{ color: '#d1d5db', fontSize: '1.125rem', marginTop: '0.5rem' }}>
+              Suivez l'évolution de votre dossier d'admission
             </p>
           </div>
+        </HeaderSection>
 
-          {/* Timeline */}
-          <div className="relative">
-            <div className="absolute left-8 top-0 bottom-0 w-0.5 bg-gray-600"></div>
-            
-            {/* Traduction Step */}
-            <div className="relative flex items-center mb-8">
-              <div className={`w-16 h-16 rounded-full flex items-center justify-center z-10 ${
-                dossierData.traductionStatus === 'VALIDE' ? 'bg-green-500' :
-                dossierData.traductionStatus === 'EN_COURS' ? 'bg-blue-500' : 'bg-gray-500'
-              }`}>
-                <span className="text-white text-2xl">📝</span>
-              </div>
-              <div className="ml-6 flex-1">
-                <div className="bg-white/10 border border-white/20 rounded-lg p-4">
-                  <h4 className="text-lg font-semibold text-white mb-1">
-                    Traduction
-                  </h4>
-                  <p className="text-gray-300 text-sm mb-2">
-                    Statut: {
-                      dossierData.traductionStatus === 'VALIDE' ? '✅ Validé' :
-                      dossierData.traductionStatus === 'EN_COURS' ? '🔄 En cours' : '⏳ En attente'
-                    }
-                  </p>
-                  {dossierData.traductionStatus === 'VALIDE' && (
-                    <p className="text-green-400 text-sm">
-                      Étape terminée avec succès
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
+        {/* Progress Card */}
+        <MainCard>
+          <div style={{ marginBottom: '2rem' }}>
+            <h2 style={{
+              fontSize: '1.875rem',
+              fontWeight: 'bold',
+              color: '#ffffff',
+              textAlign: 'center',
+              marginBottom: '2rem'
+            }}>
+              Progression du Dossier
+            </h2>
 
-            {/* Inscription Step */}
-            <div className="relative flex items-center mb-8">
-              <div className={`w-16 h-16 rounded-full flex items-center justify-center z-10 ${
-                dossierData.inscriptionStatus === 'VALIDE' ? 'bg-green-500' :
-                dossierData.inscriptionStatus === 'EN_COURS' ? 'bg-blue-500' : 'bg-gray-500'
-              }`}>
-                <span className="text-white text-2xl">📋</span>
-              </div>
-              <div className="ml-6 flex-1">
-                <div className={`bg-white/10 border border-white/20 rounded-lg p-4 ${
-                  dossierData.traductionStatus !== 'VALIDE' ? 'opacity-50' : ''
-                }`}>
-                  <h4 className="text-lg font-semibold text-white mb-1">
-                    Inscription
-                  </h4>
-                  <p className="text-gray-300 text-sm mb-2">
-                    Statut: {
-                      dossierData.inscriptionStatus === 'VALIDE' ? '✅ Validé' :
-                      dossierData.inscriptionStatus === 'EN_COURS' ? '🔄 En cours' : '⏳ En attente'
-                    }
-                  </p>
-                  {dossierData.traductionStatus !== 'VALIDE' && (
-                    <p className="text-yellow-400 text-sm">
-                      ⚠️ Disponible après validation de la traduction
-                    </p>
-                  )}
-                  {dossierData.inscriptionStatus === 'VALIDE' && (
-                    <p className="text-green-400 text-sm">
-                      Étape terminée avec succès
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
+            {/* Steps Grid */}
+            <StepsGrid>
+              {STEPS_CONFIG.map((step, index) => {
+                const status = dossier[step.statusKey];
+                const statusConfig = getStatusConfig(status);
+                const locked = isStepLocked(step) && step.id !== 'traduction';
 
-            {/* Dossier Visa Step */}
-            <div className="relative flex items-center">
-              <div className={`w-16 h-16 rounded-full flex items-center justify-center z-10 ${
-                dossierData.visaStatus === 'VALIDE' ? 'bg-green-500' :
-                dossierData.visaStatus === 'EN_COURS' ? 'bg-blue-500' : 'bg-gray-500'
-              }`}>
-                <span className="text-white text-2xl">🛂</span>
-              </div>
-              <div className="ml-6 flex-1">
-                <div className={`bg-white/10 border border-white/20 rounded-lg p-4 ${
-                  dossierData.inscriptionStatus !== 'VALIDE' ? 'opacity-50' : ''
-                }`}>
-                  <h4 className="text-lg font-semibold text-white mb-1">
-                    Dossier Visa
-                  </h4>
-                  <p className="text-gray-300 text-sm mb-2">
-                    Statut: {
-                      dossierData.visaStatus === 'VALIDE' ? '✅ Validé' :
-                      dossierData.visaStatus === 'EN_COURS' ? '🔄 En cours' : '⏳ En attente'
-                    }
-                  </p>
-                  {dossierData.inscriptionStatus !== 'VALIDE' && (
-                    <p className="text-yellow-400 text-sm">
-                      ⚠️ Disponible après validation de l'inscription
-                    </p>
-                  )}
-                  {dossierData.visaStatus === 'VALIDE' && (
-                    <p className="text-green-400 text-sm">
-                      Étape terminée avec succès
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
+                return (
+                  <div
+                    key={step.id}
+                    style={{
+                      textAlign: 'center',
+                      animation: `fadeInUp 0.6s ease-out ${index * 0.1}s both`
+                    }}
+                  >
+                    <StepCircle
+                      locked={locked}
+                      status={statusConfig.color}
+                      style={{
+                        marginBottom: '1rem'
+                      }}
+                    >
+                      <span style={{ fontSize: '1.875rem' }}>{step.emoji}</span>
+                    </StepCircle>
+                    <h3 style={{
+                      color: '#ffffff',
+                      fontWeight: 'bold',
+                      fontSize: '1.125rem',
+                      marginBottom: '0.5rem'
+                    }}>
+                      {step.title}
+                    </h3>
+                    <StepStatus status={statusConfig.color}>
+                      {statusConfig.text}
+                    </StepStatus>
+                  </div>
+                );
+              })}
+            </StepsGrid>
           </div>
 
-          {/* Overall Progress */}
-          <div className="bg-white/10 border border-white/20 rounded-lg p-4">
-            <h4 className="text-lg font-semibold text-white mb-3">
-              Progression Générale
-            </h4>
-            <div className="space-y-2">
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-300">Étapes complétées</span>
-                <span className="text-white font-medium">
-                  {[
-                    dossierData.traductionStatus === 'VALIDE',
-                    dossierData.inscriptionStatus === 'VALIDE', 
-                    dossierData.visaStatus === 'VALIDE'
-                  ].filter(Boolean).length} / 3
-                </span>
-              </div>
-              <div className="w-full bg-gray-700 rounded-full h-2">
-                <div 
-                  className="bg-gradient-to-r from-blue-500 to-green-500 h-2 rounded-full transition-all duration-300"
-                  style={{
-                    width: `${([
-                      dossierData.traductionStatus === 'VALIDE',
-                      dossierData.inscriptionStatus === 'VALIDE', 
-                      dossierData.visaStatus === 'VALIDE'
-                    ].filter(Boolean).length / 3) * 100}%`
-                  }}
-                ></div>
-              </div>
+          {/* Progress Bar */}
+          <DossierProgress>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              marginBottom: '1rem'
+            }}>
+              <ProgressText>Progression générale</ProgressText>
+              <span style={{
+                color: '#ffffff',
+                fontSize: '1.5rem',
+                fontWeight: 'bold'
+              }}>
+                {progress}%
+              </span>
             </div>
+            <ProgressBar>
+              <ProgressFill percentage={progress} />
+            </ProgressBar>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              marginTop: '0.75rem',
+              fontSize: '0.875rem',
+              color: '#9ca3af'
+            }}>
+              <span>
+                Étapes complétées: {[
+                  dossier.traductionStatus === 'VALIDE',
+                  dossier.inscriptionStatus === 'VALIDE',
+                  dossier.visaStatus === 'VALIDE'
+                ].filter(Boolean).length} / 3
+              </span>
+              <span>Statut: Actif</span>
+            </div>
+          </DossierProgress>
+        </MainCard>
+
+        {/* Dossier Details Card */}
+        <DossierDetailsCard>
+          <h3 style={{
+            fontSize: '1.5rem',
+            fontWeight: 'bold',
+            color: '#ffffff',
+            marginBottom: '1.5rem'
+          }}>
+            Informations du Dossier
+          </h3>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))',
+            gap: '1.5rem'
+          }}>
+            <DossierDetailRow>
+              <DossierDetailLabel>Titre du dossier</DossierDetailLabel>
+              <DossierDetailValue>{dossier.title}</DossierDetailValue>
+            </DossierDetailRow>
+
+            <DossierDetailRow>
+              <DossierDetailLabel>Date de création</DossierDetailLabel>
+              <DossierDetailValue>
+                {new Date(dossier.createdAt).toLocaleDateString('fr-FR', {
+                  day: 'numeric',
+                  month: 'long',
+                  year: 'numeric'
+                })}
+              </DossierDetailValue>
+            </DossierDetailRow>
+
+            <DossierDetailRow>
+              <DossierDetailLabel>Statut actuel</DossierDetailLabel>
+              <StepStatus status="warning" style={{ width: 'fit-content' }}>
+                Actif
+              </StepStatus>
+            </DossierDetailRow>
+
+            <DossierDetailRow>
+              <DossierDetailLabel>Prochaine étape</DossierDetailLabel>
+              <DossierDetailValue>{getNextStep()}</DossierDetailValue>
+            </DossierDetailRow>
           </div>
-        </div>
-      )}
-    </div>
+        </DossierDetailsCard>
+      </DossierContainer>
+    </DossierOverviewContainer>
   );
 };
 

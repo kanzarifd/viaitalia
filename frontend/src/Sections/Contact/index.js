@@ -1,411 +1,590 @@
-import React, { useRef, useEffect } from "react";
-import styled from "styled-components";
+import React, { useRef, useEffect, useState } from "react";
+import styled, { keyframes } from "styled-components";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Facebook from "../../assets/facebook-square-brands.svg";
 import Instagram from "../../assets/instagram-square-brands.svg";
-import Mail from "../../assets/envelope-open-solid.svg";
-import Mobile from "../../assets/mobile.svg";
+import TikTok from "../../assets/tik-tok.svg";
+import emailjs from '@emailjs/browser';
 
 gsap.registerPlugin(ScrollTrigger);
 
+const float = keyframes`
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-8px); }
+`;
+
+const shimmer = keyframes`
+  0% { background-position: 200% center; }
+  100% { background-position: -200% center; }
+`;
+
+/* ── Section ── */
 const ContactSection = styled.section`
   min-height: 100vh;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  width: 100%;
-  padding: 5rem 0;
+  justify-content: center;
+  padding: 2rem 5%;          /* ← was 6rem, reduced */
   position: relative;
   overflow: hidden;
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
- 
-    pointer-events: none;
-    z-index: 1;
-  }
+
+  `;
+
+
+
+
+
+// 1. Add this styled component
+const Toast = styled.div`
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  background: linear-gradient(135deg, #00c864, #009944);
+  color: #fff;
+  padding: 1rem 1.5rem;
+  border-radius: 14px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  box-shadow: 0 8px 32px rgba(0,200,100,0.4);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  animation: ${float} 0.4s ease;
+  max-width: 360px;
+  line-height: 1.5;
 `;
 
-const Title = styled.h1`
-  color: var(--white);
-  font-size: calc(2rem + 2vw);
-  font-weight: 700;
-  margin-bottom: 3rem;
+
+/* ── Header ── */
+const Header = styled.div`
   text-align: center;
-  position: relative;
-  z-index: 2;
+  margin-bottom: 2.5rem;     /* ← was 4rem */
   opacity: 0;
-  transform: translateY(50px);
-  text-shadow: 0 0 20px rgba(0, 255, 51, 0.3);
+`;
 
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: -15px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 120px;
-    height: 4px;
-    background: linear-gradient(90deg, var(--green), var(--red));
-    border-radius: 2px;
+const Eyebrow = styled.span`
+  display: inline-block;
+  font-size: 0.72rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #00c864;
+  margin-bottom: 1rem;
+`;
+
+const Title = styled.h2`
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 800;
+  color: #fff;
+  margin: 1rem 0;
+
+  span {
+    background: linear-gradient(90deg, #00c864, #ef4444);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: ${shimmer} 4s linear infinite;
   }
 `;
 
-const ContactContainer = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4rem;
-  width: 90%;
-  max-width: 1200px;
-  position: relative;
-  z-index: 2;
+const Subtitle = styled.p`
+  font-size: 1rem;
+  color: rgba(255,255,255,0.45);
+  margin: 0;
+  max-width: 400px;
+  margin: 0 auto;
+  line-height: 1.6;
+`;
 
-  @media (max-width: 768px) {
+/* ── Layout ── */
+const Layout = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1.6fr;
+  gap: 5rem;
+  width: 100%;
+  max-width: 1100px;
+  align-items: stretch;      /* ← was center, now stretch so both cols same height */
+
+  @media (max-width: 900px) {
     grid-template-columns: 1fr;
     gap: 3rem;
   }
 `;
 
-const ContactInfo = styled.div`
+/* ── Left: social circles ── */
+const SocialSide = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 2rem;
-`;
-
-const ContactItem = styled.div`
-  display: flex;
   align-items: center;
-  gap: 1rem;
-  padding: 1.5rem;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 15px;
+  justify-content: center;   /* ← add this */
+  gap: 2rem;
   opacity: 0;
-  transform: translateX(-50px);
-  transition: all 0.3s ease;
-
-  &:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(0, 255, 51, 0.3);
-    transform: translateX(0) scale(1.02);
-    box-shadow: 
-      0 20px 40px rgba(0, 255, 51, 0.2),
-      0 10px 20px rgba(239, 68, 68, 0.1);
-  }
-
-  img {
-    width: 2.5rem;
-    height: 2.5rem;
-    filter: invert(1);
-    transition: all 0.3s ease;
-  }
-
-  &:hover img {
-    filter: invert(1) brightness(1.5) drop-shadow(0 0 10px rgba(0, 255, 51, 0.5));
-  }
+  height: 100%;              /* ← add this */
 `;
 
-const ContactText = styled.div`
-  display: flex;
-  flex-direction: column;
-`;
-
-const ContactLabel = styled.h3`
-  color: var(--green);
-  font-size: 1.1rem;
-  font-weight: 600;
-  margin-bottom: 0.3rem;
-`;
-
-const ContactValue = styled.p`
-  color: var(--white);
-  font-size: 1rem;
-  opacity: 0.9;
+const SocialLabel = styled.p`
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.3);
   margin: 0;
+  text-align: center;
 `;
 
-const Form = styled.form`
+const CirclesRow = styled.div`
   display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-  opacity: 0;
-  transform: translateX(50px);
+  gap: 2rem;
+  align-items: center;
 `;
 
-const FormGroup = styled.div`
-  display: flex;
-  gap: 1rem;
-
-  @media (max-width: 768px) {
-    flex-direction: column;
-  }
-`;
-
-const Input = styled.input`
-  flex: 1;
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  color: var(--white);
-  font-size: 1rem;
-  transition: all 0.3s ease;
-
-  &::placeholder {
-    color: rgba(255, 255, 255, 0.5);
-  }
-
-  &:focus {
-    outline: none;
-    border-color: rgba(0, 255, 51, 0.5);
-    background: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 0 20px rgba(0, 255, 51, 0.2);
-  }
-`;
-
-const TextArea = styled.textarea`
-  padding: 1rem;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  color: var(--white);
-  font-size: 1rem;
-  min-height: 150px;
-  resize: vertical;
-  transition: all 0.3s ease;
-
-  &::placeholder {
-    color: rgba(255, 255, 255, 0.5);
-  }
-
-  &:focus {
-    outline: none;
-    border-color: rgba(0, 255, 51, 0.5);
-    background: rgba(255, 255, 255, 0.08);
-    box-shadow: 0 0 20px rgba(0, 255, 51, 0.2);
-  }
-`;
-
-const SubmitButton = styled.button`
-  padding: 1rem 2rem;
-  background: linear-gradient(90deg, var(--green), var(--red));
-  border: none;
-  border-radius: 25px;
-  color: var(--white);
-  font-size: 1.1rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  align-self: center;
-  min-width: 200px;
-
-  &:hover {
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 
-      0 20px 40px rgba(0, 255, 51, 0.3),
-      0 10px 20px rgba(239, 68, 68, 0.2);
-  }
-
-  &:active {
-    transform: translateY(0) scale(0.98);
-  }
-`;
-
-const SocialIcons = styled.div`
-  display: flex;
-  gap: 1.5rem;
-  margin-top: 2rem;
-`;
-
-const SocialIcon = styled.a`
-  width: 50px;
-  height: 50px;
+const SocialCircle = styled.a`
+  width: 130px;              /* ← was 110px */
+  height: 130px;             /* ← was 110px */
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 50%;
-  transition: all 0.3s ease;
-  opacity: 0;
-  transform: scale(0);
+  text-decoration: none;
+  cursor: pointer;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  animation: ${float} 4s ease-in-out infinite;
+  animation-delay: ${p => p.delay || '0s'};
 
   img {
-    width: 1.5rem;
-    height: 1.5rem;
+    width: 54px;             /* ← was 44px */
+    height: 54px;
     filter: invert(1);
-    transition: all 0.3s ease;
   }
 
   &:hover {
-    background: rgba(0, 255, 51, 0.2);
-    border-color: rgba(0, 255, 51, 0.5);
-    transform: scale(1.1) rotate(360deg);
+    transform: scale(1.1) translateY(-6px) !important;
+    animation-play-state: paused;
+  }
 
-    img {
-      filter: invert(1) brightness(1.5) drop-shadow(0 0 10px rgba(0, 255, 51, 0.8));
+  &.facebook {
+    background: #1877F2;
+    box-shadow:
+      0 12px 40px rgba(24,119,242,0.5),
+      0 0 0 6px rgba(24,119,242,0.12);
+    &:hover {
+      box-shadow:
+        0 20px 60px rgba(24,119,242,0.7),
+        0 0 0 10px rgba(24,119,242,0.15);
+    }
+  }
+
+  &.instagram {
+    background: radial-gradient(circle at 30% 110%,
+      #ffdb47 0%, #f76f3b 25%,
+      #c13584 55%, #7b2fbe 100%
+    );
+    box-shadow:
+      0 12px 40px rgba(193,53,132,0.5),
+      0 0 0 6px rgba(193,53,132,0.12);
+    &:hover {
+      box-shadow:
+        0 20px 60px rgba(193,53,132,0.7),
+        0 0 0 10px rgba(193,53,132,0.15);
+    }
+  }
+
+  &.tiktok {
+    background: #000000;
+    box-shadow:
+      0 12px 40px rgba(0,0,0,0.5),
+      0 0 0 6px rgba(0,0,0,0.12);
+    &:hover {
+      box-shadow:
+        0 20px 60px rgba(0,0,0,0.7),
+        0 0 0 10px rgba(0,0,0,0.15);
     }
   }
 `;
 
+const OrDivider = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  width: 100%;
+  color: rgba(255,255,255,0.2);
+  font-size: 0.78rem;
+  letter-spacing: 0.1em;
+
+  &::before, &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: rgba(255,255,255,0.08);
+  }
+`;
+const ContactInfoBlock = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  width: 100%;
+`;
+
+const ContactInfoItem = styled.a`
+  display: flex;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 0.9rem 1.1rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 12px;
+  text-decoration: none;
+  transition: all 0.25s ease;
+
+  &:hover {
+    border-color: rgba(0,200,100,0.35);
+    background: rgba(0,200,100,0.06);
+    transform: translateX(4px);
+  }
+`;
+
+const ContactInfoIcon = styled.span`
+  font-size: 1.2rem;
+  flex-shrink: 0;
+`;
+
+const ContactInfoText = styled.div`
+  display: flex;
+  flex-direction: column;
+`;
+
+const ContactInfoLabel = styled.span`
+  font-size: 0.65rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #00c864;
+  font-weight: 600;
+  margin-bottom: 0.15rem;
+`;
+
+const ContactInfoValue = styled.span`
+  font-size: 0.88rem;
+  color: rgba(255,255,255,0.8);
+  font-weight: 500;
+`;
+
+/* ── Right: form ── */
+const FormSide = styled.form`
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  opacity: 0;
+`;
+
+const FormRow = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+
+  @media (max-width: 500px) { grid-template-columns: 1fr; }
+`;
+
+const inputBase = `
+  width: 100%;
+  padding: 1rem 1.25rem;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  color: #fff;
+  font-size: 0.9rem;
+  font-family: inherit;
+  box-sizing: border-box;
+  outline: none;
+  transition: border-color 0.25s, background 0.25s, box-shadow 0.25s;
+
+  &::placeholder { color: rgba(255,255,255,0.28); }
+
+  &:focus {
+    border-color: rgba(0,200,100,0.45);
+    background: rgba(0,200,100,0.04);
+    box-shadow: 0 0 0 3px rgba(0,200,100,0.08);
+  }
+`;
+
+const Input = styled.input`${inputBase}`;
+
+const TextArea = styled.textarea`
+  ${inputBase}
+  min-height: 140px;
+  resize: none;
+`;
+
+const SubmitBtn = styled.button`
+  padding: 1.1rem;
+  background: linear-gradient(135deg, #00c864, #009944);
+  border: none;
+  border-radius: 14px;
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 4px 24px rgba(0,200,100,0.3);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 36px rgba(0,200,100,0.5);
+  }
+
+  &:active { transform: translateY(0); }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    
+    &:hover {
+      transform: none;
+      box-shadow: 0 4px 24px rgba(0,200,100,0.3);
+    }
+    
+    &:active {
+      transform: none;
+    }
+  }
+`;
+
+/* ── Component ── */
 const Contact = () => {
   const sectionRef = useRef(null);
-  const titleRef = useRef(null);
-  const contactItemsRef = useRef([]);
-  const formRef = useRef(null);
-  const socialIconsRef = useRef([]);
+  const headerRef = useRef(null);
+  const socialRef = useRef(null);
+  const formRef    = useRef(null);
+  // 2. Add toast state at the top of your component
+const [showToast, setShowToast] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    message: ''
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isError, setIsError] = useState(false);
 
   useEffect(() => {
-    // Title animation
-    gsap.fromTo(titleRef.current, {
-      opacity: 0,
-      y: 50
-    }, {
-      opacity: 1,
-      y: 0,
-      duration: 1.5,
-      ease: "power3.inOut",
-      scrollTrigger: {
+    const ctx = gsap.context(() => {
+      const trig = {
         trigger: sectionRef.current,
-        start: "top 60%",
-        toggleActions: "play none none reverse"
-      }
-    });
+        start: "top 70%",
+        toggleActions: "play none none reverse",
+      };
 
-    // Contact items animation
-    gsap.fromTo(contactItemsRef.current, {
-      opacity: 0,
-      x: -50
-    }, {
-      opacity: 1,
-      x: 0,
-      duration: 1.5,
-      stagger: 0.2,
-      ease: "power3.inOut",
-      scrollTrigger: {
-        trigger: sectionRef.current,
-        start: "top 60%",
-        toggleActions: "play none none reverse"
-      }
-    });
+      gsap.to(headerRef.current, {
+        opacity: 1, y: 0, duration: 1, ease: "power3.out",
+        scrollTrigger: trig,
+      });
 
-    // Form animation
-    gsap.fromTo(formRef.current, {
-      opacity: 0,
-      x: 50
-    }, {
-      opacity: 1,
-      x: 0,
-      duration: 1.5,
-      ease: "power3.inOut",
-      scrollTrigger: {
-        trigger: sectionRef.current,
-        start: "top 60%",
-        toggleActions: "play none none reverse"
-      }
-    });
+      gsap.to(socialRef.current, {
+        opacity: 1, x: 0, duration: 1, delay: 0.2, ease: "power3.out",
+        scrollTrigger: trig,
+      });
 
-    // Social icons animation
-    gsap.fromTo(socialIconsRef.current, {
-      opacity: 0,
-      scale: 0
-    }, {
-      opacity: 1,
-      scale: 1,
-      duration: 1.5,
-      stagger: 0.1,
-      ease: "back.out(1.7)",
-      scrollTrigger: {
-        trigger: sectionRef.current,
-        start: "top 60%",
-        toggleActions: "play none none reverse"
-      }
-    });
+      gsap.to(formRef.current, {
+        opacity: 1, x: 0, duration: 1, delay: 0.35, ease: "power3.out",
+        scrollTrigger: trig,
+      });
+    }, sectionRef);
+
+    return () => ctx.revert();
   }, []);
 
-  const addToContactItemsRef = (el) => {
-    if (el && !contactItemsRef.current.includes(el)) {
-      contactItemsRef.current.push(el);
-    }
-  };
-
-  const addToSocialIconsRef = (el) => {
-    if (el && !socialIconsRef.current.includes(el)) {
-      socialIconsRef.current.push(el);
-    }
-  };
-
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle form submission here
-    console.log('Form submitted');
+    
+    setIsLoading(true);
+    setIsError(false);
+    
+    try {
+      // Try EmailJS first, fallback to mailto if it fails
+      const result = await emailjs.send(
+        process.env.REACT_APP_EMAILJS_SERVICE_ID,
+        process.env.REACT_APP_EMAILJS_TEMPLATE_ID,
+        {
+          from_name: formData.name,
+          from_email: formData.email,
+          phone: formData.phone,
+          message: formData.message,
+          to_email: 'viaitaliaagency@gmail.com'
+        },
+        process.env.REACT_APP_EMAILJS_PUBLIC_KEY
+      );
+      
+      if (result.status === 200) {
+        setIsSubmitted(true);
+        setFormData({ name: '', email: '', phone: '', message: '' });
+        setTimeout(() => setIsSubmitted(false), 3000);
+      } else {
+        // Fallback to mailto if EmailJS fails
+        const subject = encodeURIComponent(`Message de ${formData.name} - Viaitalia`);
+        const body = encodeURIComponent(
+          `Nom: ${formData.name}\n` +
+          `Email: ${formData.email}\n` +
+          `Téléphone: ${formData.phone}\n\n` +
+          `Message:\n${formData.message}`
+        );
+        
+        window.location.href = `mailto:viaitaliaagency@gmail.com?subject=${subject}&body=${body}`;
+        
+        // Show success message for fallback
+// 3. Replace the alert() line with this
+setShowToast(true);
+setTimeout(() => setShowToast(false), 4000);
+
+        setIsSubmitted(true);
+        setFormData({ name: '', email: '', phone: '', message: '' });
+        setTimeout(() => setIsSubmitted(false), 3000);
+      }
+    } catch (error) {
+      console.error('Contact form error:', error);
+      
+      // Fallback handling
+      const subject = encodeURIComponent(`Message de ${formData.name} - Viaitalia`);
+      const body = encodeURIComponent(
+        `Nom: ${formData.name}\n` +
+        `Email: ${formData.email}\n` +
+        `Téléphone: ${formData.phone}\n\n` +
+        `Message:\n${formData.message}`
+      );
+      
+      window.location.href = `mailto:viaitaliaagency@gmail.com?subject=${subject}&body=${body}`;
+      alert('✓ Message envoyé avec succès! Nous vous répondrons dans les plus brefs délais.');
+      
+      setIsError(true);
+      setTimeout(() => setIsError(false), 3000);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <ContactSection ref={sectionRef} id="contact">
-      <Title ref={titleRef}>
-        Contactez-Nous
-      </Title>
+
+      <Header ref={headerRef}>
+        <Eyebrow>Restons en contact</Eyebrow>
+        <Title>Get In <span>Touch</span></Title>
+        <Subtitle>
+          Une question sur votre inscription ? Écrivez-nous ou rejoignez-nous sur les réseaux.
+        </Subtitle>
+      </Header>
+
+      <Layout>
+
+        {/* ── Social side ── */}
+   <SocialSide ref={socialRef} style={{ transform: 'translateX(-40px)' }}>
+  <SocialLabel>Suivez-nous</SocialLabel>
+
+  <CirclesRow>
+    <SocialCircle
+      className="facebook"
+      href="https://www.facebook.com/share/18gE6aiDxC/?mibextid=wwXIfr"
+      target="_blank" rel="noreferrer" delay="0s"
+    >
+      <img src={Facebook} alt="Facebook" />
+    </SocialCircle>
+    <SocialCircle
+      className="instagram"
+      href="https://www.instagram.com/via_italiaconsulting?igsh=cW96NWZ4czBnOXZh"
+      target="_blank" rel="noreferrer" delay="0.6s"
+    >
+      <img src={Instagram} alt="Instagram" />
+    </SocialCircle>
+    <SocialCircle
+      className="tiktok"
+      href="https://www.tiktok.com/@viaitaliaagency?_r=1&_t=ZS-964CWCWZO5A"
+      target="_blank" rel="noreferrer" delay="1.2s"
+    >
+      <img src={TikTok} alt="TikTok" />
+    </SocialCircle>
+  </CirclesRow>
+
+  <OrDivider>ou envoyez un message</OrDivider>
+
+  {/* ── Contact info ── */}
+  <ContactInfoBlock>
+    <ContactInfoItem href="tel:+21622552722">
+      <ContactInfoIcon>📞</ContactInfoIcon>
+      <ContactInfoText>
+        <ContactInfoLabel>Téléphone</ContactInfoLabel>
+        <ContactInfoValue>+216 22 552 722</ContactInfoValue>
+      </ContactInfoText>
+    </ContactInfoItem>
+    <ContactInfoItem href="mailto:viaitaliaagency@gmail.com">
+      <ContactInfoIcon>✉️</ContactInfoIcon>
+      <ContactInfoText>
+        <ContactInfoLabel>Email</ContactInfoLabel>
+        <ContactInfoValue>viaitaliaagency@gmail.com</ContactInfoValue>
+      </ContactInfoText>
+    </ContactInfoItem>
+  </ContactInfoBlock>
+
+</SocialSide>
+
+        {/* ── Form side ── */}
+        <FormSide
+          ref={formRef}
+          style={{ transform: 'translateX(40px)' }}
+          onSubmit={handleSubmit}
+        >
+          <FormRow>
+            <Input 
+              type="text" 
+              name="name"
+              placeholder="Nom complet" 
+              value={formData.name}
+              onChange={(e) => setFormData({...formData, name: e.target.value})}
+              required 
+            />
+            <Input 
+              type="email" 
+              name="email"
+              placeholder="Email" 
+              value={formData.email}
+              onChange={(e) => setFormData({...formData, email: e.target.value})}
+              required 
+            />
+          </FormRow>
+          <Input 
+            type="tel" 
+            name="phone"
+            placeholder="Téléphone" 
+            value={formData.phone}
+            onChange={(e) => setFormData({...formData, phone: e.target.value})}
+          />
+          <TextArea 
+            name="message"
+            placeholder="Votre message..." 
+            value={formData.message}
+            onChange={(e) => setFormData({...formData, message: e.target.value})}
+            required 
+          />
+          
+          <SubmitBtn 
+            type="submit" 
+            disabled={isLoading || isSubmitted}
+          >
+            {isLoading ? 'Envoi en cours...' : isSubmitted ? '✓ Message envoyé avec succès !' : 'Envoyer le message →'}
+          </SubmitBtn>
+        </FormSide>
+
+      </Layout>
+{showToast && (
+  <Toast>
+    ✓ Message envoyé avec succès !
+    Nous vous répondrons dans les plus brefs délais.
+  </Toast>
+)}
       
-      <ContactContainer>
-        <ContactInfo>
-          <ContactItem ref={addToContactItemsRef}>
-            <img src={Mobile} alt="Location" />
-            <ContactText>
-              <ContactLabel>Adresse</ContactLabel>
-              <ContactValue>Tunis, Tunisie</ContactValue>
-            </ContactText>
-          </ContactItem>
-          
-          <ContactItem ref={addToContactItemsRef}>
-            <img src={Mobile} alt="Phone" />
-            <ContactText>
-              <ContactLabel>Téléphone</ContactLabel>
-              <ContactValue>+216 22 552 722</ContactValue>
-            </ContactText>
-          </ContactItem>
-          
-          <ContactItem ref={addToContactItemsRef}>
-            <img src={Mail} alt="Email" />
-            <ContactText>
-              <ContactLabel>Email</ContactLabel>
-              <ContactValue>viaitaliaagency@gmail.com</ContactValue>
-            </ContactText>
-          </ContactItem>
-          
-          <SocialIcons>
-            <SocialIcon ref={addToSocialIconsRef} href="https://www.facebook.com/share/18gE6aiDxC/?mibextid=wwXIfr">
-              <img src={Facebook} alt="Facebook" />
-            </SocialIcon>
-            <SocialIcon ref={addToSocialIconsRef} href="https://www.instagram.com/via_italiaconsulting?igsh=cW96NWZ4czBnOXZh">
-              <img src={Instagram} alt="Instagram" />
-            </SocialIcon>
-          </SocialIcons>
-        </ContactInfo>
-        
-        <Form ref={formRef} onSubmit={handleSubmit}>
-          <FormGroup>
-            <Input type="text" placeholder="Nom complet" required />
-            <Input type="email" placeholder="Email" required />
-          </FormGroup>
-          <Input type="tel" placeholder="Téléphone" />
-          <TextArea placeholder="Votre message..." required />
-          <SubmitButton type="submit">
-            Envoyer le Message
-          </SubmitButton>
-        </Form>
-      </ContactContainer>
     </ContactSection>
   );
 };

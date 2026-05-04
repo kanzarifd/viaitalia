@@ -85,9 +85,10 @@ model User {
   lastName      String
   email         String    @unique
   password      String
-  passport      String?
-  studyType     String?
-  university    String?
+  passport      String
+  address       String
+  phoneNumber   String
+  image         String? @db.Text
   role          Role      @default(USER)
   createdAt     DateTime  @default(now())
 
@@ -107,9 +108,22 @@ model Appointment {
   date      DateTime
   status    AppointmentStatus  @default(PENDING)
   etat      AppointmentEtat    @default(PRESENTIEL)
+  slotId    Int?               // Optional field to link to time slot
   user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    Int
   createdAt DateTime           @default(now())
+}
+
+model TimeSlot {
+  id              Int      @id @default(autoincrement())
+  date            DateTime
+  startTime       String
+  endTime         String
+  maxBookings     Int      @default(1)
+  currentBookings Int      @default(0)
+  isAvailable    Boolean  @default(true)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model Dossier {

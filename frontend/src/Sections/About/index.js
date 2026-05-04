@@ -2,383 +2,229 @@ import React, { useRef, useEffect } from "react";
 import styled, { keyframes } from "styled-components";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import rocket from "../../assets/rocket image.png";
-import hand from "../../assets/hand.svg";
-import university from "../../assets/University-of-Pisa-Italy.png";
-import support from "../../assets/Support.svg";
 import checked from "../../assets/checked.png";
 
 gsap.registerPlugin(ScrollTrigger);
 
-const move = keyframes`
-0% { transform: translateY(-5px)         }
-    50% { transform: translateY(10px) translateX(10px)        }
-    100% { transform: translateY(-5px)         }
+/* ── Animations ── */
+const shimmer = keyframes`
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
 `;
 
-const AboutSection = styled.section`
+/* ── Section ── */
+const Section = styled.section`
+  min-height: 100vh;
+  padding: 6rem 5%;
   display: flex;
   flex-direction: column;
-  justify-content: center;
   align-items: center;
-  width: 100%;
-  padding: 8rem 0;
-  position: relative;
-  overflow: hidden;
+  justify-content: center;
+`;
 
-  &::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
- 
-    pointer-events: none;
-    z-index: 1;
+/* ── Header ── */
+const Header = styled.div`
+  text-align: center;
+  margin-bottom: 4rem;
+  opacity: 0;
+`;
+
+const Eyebrow = styled.span`
+  font-size: 0.7rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: #00c864;
+`;
+
+const Title = styled.h2`
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 800;
+  color: #fff;
+  margin: 1rem 0;
+
+  span {
+    background: linear-gradient(90deg, #00c864, #ef4444);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: ${shimmer} 4s linear infinite;
   }
 `;
 
-const FloatingParticle = styled.div`
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 1;
+const Subtitle = styled.p`
+  color: rgba(255,255,255,0.5);
+  max-width: 500px;
+  margin: auto;
+  line-height: 1.6;
 `;
 
-const MovingGradient = styled.div`
-  position: absolute;
-  border-radius: 50%;
-  pointer-events: none;
-  z-index: 1;
-  filter: blur(40px);
-`;
-
-const AboutContainer = styled.div`
+/* ── Grid ── */
+const Grid = styled.div`
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 4rem;
-  width: 90%;
-  max-width: 1200px;
-  position: relative;
-  z-index: 2;
+  gap: 3rem;
+  max-width: 1100px;
+  width: 100%;
 
   @media (max-width: 768px) {
     grid-template-columns: 1fr;
-    gap: 3rem;
   }
 `;
 
-const Title = styled.h1`
-  color: var(--white);
-  font-size: calc(2rem + 2vw);
-  font-weight: 700;
-  margin-bottom: 3rem;
-  text-align: center;
-  position: relative;
-  z-index: 2;
+/* ── Left Text ── */
+const TextBlock = styled.div`
   opacity: 0;
-  transform: translateY(50px);
-  text-shadow: 0 0 20px rgba(0, 255, 51, 0.3);
-
-  &::after {
-    content: '';
-    position: absolute;
-    bottom: -15px;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 120px;
-    height: 4px;
-    background: linear-gradient(90deg, var(--green), var(--red));
-    border-radius: 2px;
-  }
 `;
 
-const AboutContent = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-  opacity: 0;
-  transform: translateX(-50px);
-`;
-
-const AboutText = styled.p`
-  color: var(--white);
-  font-size: 1.5rem;
+const MainText = styled.p`
+  font-size: 1.1rem;
+  color: rgba(255,255,255,0.8);
   line-height: 1.8;
-  opacity: 0.9;
-  margin: 1rem ;
 `;
 
-const FeaturesList = styled.div`
+/* ── Features ── */
+const Features = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: 1.2rem;
 `;
 
-const FeatureItem = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+const Card = styled.div`
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
   padding: 1.5rem;
-  background: rgba(255, 255, 255, 0.05);
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 15px;
-  opacity: 0;
-  transform: translateX(50px);
+  border-radius: 18px;
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
   transition: all 0.3s ease;
+  opacity: 0;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.08);
-    border-color: rgba(0, 255, 51, 0.3);
-    transform: translateX(0) scale(1.02);
-    box-shadow: 
-      0 20px 40px rgba(0, 255, 51, 0.2),
-      0 10px 20px rgba(239, 68, 68, 0.1);
+    transform: translateY(-4px);
+    border-color: rgba(0,200,100,0.4);
+    background: rgba(0,200,100,0.06);
   }
 `;
 
-const FeatureIcon = styled.img`
-  width: 40px;
-  height: 40px;
-  object-fit: contain;
-  transition: all 0.3s ease;
-
-  ${FeatureItem}:hover & {
-    transform: scale(1.1) rotate(5deg);
-  }
+const Icon = styled.img`
+  width: 32px;
 `;
 
-const FeatureCircle = styled.div`
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background-color: ${props => props.color};
+const CardText = styled.div``;
+
+const CardTitle = styled.h4`
+  color: #00c864;
+  margin-bottom: 0.3rem;
 `;
 
-const FeatureText = styled.div`
-  flex: 1;
+const CardDesc = styled.p`
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.6);
 `;
 
-const FeatureTitle = styled.h3`
-  color: var(--green);
-  font-size: 1.2rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-`;
-
-const FeatureDescription = styled.p`
-  color: var(--white);
-  font-size: 1rem;
-  opacity: 0.8;
-  margin: 0;
-`;
-
-const RocketContainer = styled.div`
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  opacity: 0;
-  transform: scale(0.8);
-`;
-
-const RocketImage = styled.img`
-  width: 150px;
-  height: auto;
-  animation: ${move} 2.5s ease infinite;
-  filter: drop-shadow(0 0 20px rgba(0, 255, 51, 0.5));
-
-  @media (max-width: 768px) {
-    width: 100px;
-  }
-`;
-
-const HandContainer = styled.div`
-  position: absolute;
-  bottom: 2rem;
-  right: 2rem;
-  opacity: 0;
-  transform: translateX(50px);
-
-  @media (max-width: 768px) {
-    display: none;
-  }
-`;
-
-const HandImage = styled.img`
-  width: 200px;
-  height: auto;
-  filter: invert(1) drop-shadow(0 0 20px rgba(239, 68, 68, 0.5));
-
-  @media (max-width: 768px) {
-    width: 150px;
-  }
-`;
-
+/* ── Component ── */
 const About = () => {
   const sectionRef = useRef(null);
-  const titleRef = useRef(null);
-  const contentRef = useRef(null);
-  const featuresRef = useRef([]);
-  const rocketRef = useRef(null);
-  const handRef = useRef(null);
-  const particlesRef = useRef([]);
-  const gradientsRef = useRef([]);
+  const headerRef = useRef(null);
+  const textRef = useRef(null);
+  const cardsRef = useRef([]);
 
   useEffect(() => {
-    const section = sectionRef.current;
-    
- 
-    // Title animation
-    gsap.fromTo(titleRef.current, {
-      opacity: 0,
-      y: 50
-    }, {
-      opacity: 1,
-      y: 0,
-      duration: 1.5,
-      ease: "power3.inOut",
-      scrollTrigger: {
+    const ctx = gsap.context(() => {
+      const trig = {
         trigger: sectionRef.current,
-        start: "top 60%",
-        toggleActions: "play none none reverse"
-      }
-    });
+        start: "top 70%",
+      };
 
-    // Content animation
-    gsap.fromTo(contentRef.current, {
-      opacity: 0,
-      x: -50
-    }, {
-      opacity: 1,
-      x: 0,
-      duration: 1.5,
-      ease: "power3.inOut",
-      scrollTrigger: {
-        trigger: sectionRef.current,
-        start: "top 60%",
-        toggleActions: "play none none reverse"
-      }
-    });
+      gsap.to(headerRef.current, {
+        opacity: 1,
+        y: 0,
+        duration: 1,
+        ease: "power3.out",
+        scrollTrigger: trig,
+      });
 
-    // Features animation
-    gsap.fromTo(featuresRef.current, {
-      opacity: 0,
-      x: 50
-    }, {
-      opacity: 1,
-      x: 0,
-      duration: 1.5,
-      stagger: 0.2,
-      ease: "power3.inOut",
-      scrollTrigger: {
-        trigger: sectionRef.current,
-        start: "top 60%",
-        toggleActions: "play none none reverse"
-      }
-    });
+      gsap.to(textRef.current, {
+        opacity: 1,
+        x: 0,
+        duration: 1,
+        delay: 0.2,
+        ease: "power3.out",
+        scrollTrigger: trig,
+      });
 
-    // Rocket animation
-    gsap.fromTo(rocketRef.current, {
-      opacity: 0,
-      scale: 0.8
-    }, {
-      opacity: 1,
-      scale: 1,
-      duration: 1.5,
-      ease: "back.out(1.7)",
-      scrollTrigger: {
-        trigger: sectionRef.current,
-        start: "top 60%",
-        toggleActions: "play none none reverse"
-      }
-    });
+      gsap.to(cardsRef.current, {
+        opacity: 1,
+        y: 0,
+        duration: 1,
+        stagger: 0.2,
+        delay: 0.3,
+        ease: "power3.out",
+        scrollTrigger: trig,
+      });
+    }, sectionRef);
 
-    // Hand animation
-    gsap.fromTo(handRef.current, {
-      opacity: 0,
-      x: 50
-    }, {
-      opacity: 1,
-      x: 0,
-      duration: 1.5,
-      ease: "power3.inOut",
-      scrollTrigger: {
-        trigger: sectionRef.current,
-        start: "top 60%",
-        toggleActions: "play none none reverse"
-      }
-    });
-
-    // Cleanup
-    return () => {
-      particlesRef.current.forEach(particle => particle.remove());
-      gradientsRef.current.forEach(gradient => gradient.remove());
-    };
+    return () => ctx.revert();
   }, []);
-
-  const addToFeaturesRef = (el) => {
-    if (el && !featuresRef.current.includes(el)) {
-      featuresRef.current.push(el);
-    }
-  };
 
   const features = [
     {
       title: "Personalized Guidance",
-      description: "We guide you through each step of your journey to study in Italy",
-      color: "var(--red)",
-      icon: checked
+      desc: "We guide you step by step from application to arrival in Italy.",
     },
     {
       title: "University Expertise",
-      description: "In-depth knowledge of Italian universities and their requirements",
-      color: "var(--white)",
-      icon: checked
+      desc: "We know exactly what Italian universities expect from students.",
     },
     {
       title: "Full Support",
-      description: "From registration to installation, we are by your side",
-      color: "var(--green)",
-      icon: checked
-    }
+      desc: "From documents to visa, we stay with you until you're settled.",
+    },
   ];
 
-  return (
-    <AboutSection ref={sectionRef} id="about">
-      <Title ref={titleRef}>
-About Vialtalia       </Title>
-      
-      <AboutContainer>
-        <AboutContent ref={contentRef}>
-          <AboutText>
-            Vialtalia is your trusted partner for enrolling in Italian universities. We simplify your
-            academic journey with clear, secure, and personalized support from the first application to your arrival in Italy.
-          </AboutText>
-          
-        </AboutContent>
-        
-        <div>
-          <RocketContainer ref={rocketRef}>
-          </RocketContainer>
-          
-          <FeaturesList>
-            {features.map((feature, index) => (
-              <FeatureItem key={index} ref={addToFeaturesRef}>
-                <FeatureIcon src={feature.icon} alt={feature.title} />
-                <FeatureText>
-                  <FeatureTitle>{feature.title}</FeatureTitle>
-                  <FeatureDescription>{feature.description}</FeatureDescription>
-                </FeatureText>
-              </FeatureItem>
-            ))}
-          </FeaturesList>
-        </div>
-      </AboutContainer>
+  const addToRefs = (el) => {
+    if (el && !cardsRef.current.includes(el)) {
+      cardsRef.current.push(el);
+    }
+  };
 
-     
-    </AboutSection>
+  return (
+    <Section id="about" ref={sectionRef}>
+
+      <Header ref={headerRef}>
+        <Eyebrow>About Us</Eyebrow>
+        <Title>Why Choose <span>Viaitalia</span></Title>
+        <Subtitle>
+          We simplify your journey to study in Italy with clarity, trust, and real support.
+        </Subtitle>
+      </Header>
+
+      <Grid>
+        <TextBlock ref={textRef}>
+          <MainText>
+            Viaitalia helps students successfully enroll in Italian universities without stress.
+            We handle the complex process and guide you step by step — from choosing your program
+            to settling in Italy.
+            <br /><br />
+            Our mission is simple: make your dream real, faster and safer.
+          </MainText>
+        </TextBlock>
+
+        <Features>
+          {features.map((f, i) => (
+            <Card key={i} ref={addToRefs}>
+              <Icon src={checked} />
+              <CardText>
+                <CardTitle>{f.title}</CardTitle>
+                <CardDesc>{f.desc}</CardDesc>
+              </CardText>
+            </Card>
+          ))}
+        </Features>
+      </Grid>
+
+    </Section>
   );
 };
 

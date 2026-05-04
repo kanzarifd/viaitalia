@@ -36,7 +36,11 @@ import {
   LoadingSpinner,
   ChatHeader,
   ChatTitle,
-  ChatSubtitle
+  ChatSubtitle,
+  MobileDarkModeContainer,
+  MobileDarkModeLabel,
+  MobileDarkModeToggle,
+  MobileDarkModeToggleThumb
 } from './Messaging.styles';
 
 const MessagingSection = () => {
@@ -56,9 +60,52 @@ const MessagingSection = () => {
   } = useMessaging(user?.id);
 
   const [inputValue, setInputValue] = useState('');
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(window.innerWidth <= 1023 ? true : false);
   const messagesContainerRef = useRef(null);
   const fileInputRef = useRef(null);
+
+  // Remove scrollbars completely
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      /* Hide all scrollbars completely */
+      html, body, * {
+        -ms-overflow-style: none !important;
+        scrollbar-width: none !important;
+      }
+      
+      html::-webkit-scrollbar,
+      body::-webkit-scrollbar,
+      *::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+      }
+      
+      /* Force hide any remaining scrollbars */
+      ::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {

@@ -8,7 +8,6 @@ const AnnouncementCard = ({
   onShare 
 }) => {
   const [isHovered, setIsHovered] = useState(false);
-  const [isImageZoomed, setIsImageZoomed] = useState(false);
 
   const formatRelativeTime = (dateString) => {
     const date = new Date(dateString);
@@ -32,17 +31,17 @@ const AnnouncementCard = ({
   const getTypeColor = (type) => {
     switch(type) {
       case 'INFO':
-        return 'bg-gradient-to-br from-indigo-500 to-indigo-600';
+        return '#3B82F6';
       case 'SUCCESS':
-        return 'bg-gradient-to-br from-green-500 to-green-600';
+        return '#10B981';
       case 'WARNING':
-        return 'bg-gradient-to-br from-yellow-500 to-yellow-600';
+        return '#F59E0B';
       case 'URGENT':
-        return 'bg-gradient-to-br from-red-500 to-red-600';
+        return '#EF4444';
       case 'ACADEMIQUE':
-        return 'bg-gradient-to-br from-purple-500 to-purple-600';
+        return '#8B5CF6';
       default:
-        return 'bg-gradient-to-br from-gray-500 to-gray-600';
+        return '#6B7280';
     }
   };
 
@@ -65,131 +64,231 @@ const AnnouncementCard = ({
 
   const handleLinkClick = () => {
     if (announcement.link) {
-      // Handle link click
       if (announcement.link.startsWith('http://') || announcement.link.startsWith('https://')) {
-        // External link - open in new tab
         window.open(announcement.link, '_blank');
       } else {
-        // Internal link - navigate within app
         console.log('Navigate to:', announcement.link);
       }
     }
   };
 
   return (
-    <article className={`bg-white rounded-[3.5rem] border border-slate-100 overflow-hidden flex flex-col h-full hover:shadow-[0_40px_80px_-20px_rgba(0,0,0,0.12)] transition-all duration-500 group relative ${className}`}>
-      {/* Category Badge */}
-      <div className="absolute top-6 right-6 z-10 px-4 py-1.5 rounded-full text-[9px] font-black text-white uppercase tracking-widest shadow-lg bg-indigo-600">
-        {announcement.type}
-      </div>
-
-      {/* Image Section */}
-      <div className="h-72 overflow-hidden relative">
-        {announcement.image ? (
-          <>
-            <img
-              src={announcement.image}
-              alt={announcement.title}
-              className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000"
-            />
-            <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors"></div>
-          </>
-        ) : (
-          <div className={`w-full h-full ${getTypeColor(announcement.type)} flex items-center justify-center`}>
-            <span className="text-6xl text-white">
-              {getTypeIcon(announcement.type)}
-            </span>
+    <div 
+      className={`announcement-card ${className}`}
+      style={{
+        background: 'rgba(255, 255, 255, 0.1)',
+        backdropFilter: 'blur(20px)',
+        border: '1px solid rgba(255, 255, 255, 0.2)',
+        borderRadius: '20px',
+        padding: '20px',
+        position: 'relative',
+        overflow: 'hidden',
+        transition: 'all 0.3s ease',
+        cursor: 'pointer'
+      }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Background Blur Effect */}
+      <div 
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(255, 255, 255, 0.05)',
+          backdropFilter: 'blur(10px)',
+          zIndex: 0
+        }}
+      />
+      
+      {/* Content */}
+      <div style={{ position: 'relative', zIndex: 1 }}>
+        {/* Header with Icon and Date */}
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center',
+          marginBottom: '15px'
+        }}>
+          <div style={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '10px'
+          }}>
+            <div style={{
+              width: '60px',
+              height: '60px',
+              borderRadius: '50%',
+              background: getTypeColor(announcement.type),
+              backdropFilter: 'blur(15px)',
+              WebkitBackdropFilter: 'blur(15px)',
+              border: '2px solid rgba(255, 255, 255, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '24px',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.3)',
+              position: 'relative',
+              overflow: 'hidden'
+            }}>
+              {/* Additional blur layer */}
+              <div style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                background: 'rgba(255, 255, 255, 0.1)',
+                backdropFilter: 'blur(8px)',
+                WebkitBackdropFilter: 'blur(8px)',
+                borderRadius: '50%'
+              }} />
+              <span style={{ position: 'relative', zIndex: 1 }}>
+                {getTypeIcon(announcement.type)}
+              </span>
+            </div>
+            <div>
+              <div style={{
+                fontSize: '12px',
+                color: 'rgba(255, 255, 255, 0.6)',
+                textTransform: 'uppercase',
+                fontWeight: '600',
+                letterSpacing: '0.5px'
+              }}>
+                {announcement.type}
+              </div>
+              <div style={{
+                fontSize: '11px',
+                color: 'rgba(255, 255, 255, 0.5)',
+                marginTop: '2px'
+              }}>
+                {formatRelativeTime(announcement.createdAt)}
+              </div>
+            </div>
           </div>
-        )}
-      </div>
-
-      {/* Content Section */}
-      <div className="p-10 flex flex-col flex-grow">
-        {/* Date and Read Time */}
-        <div className="flex items-center gap-4 mb-4 text-slate-400 text-[9px] font-bold uppercase tracking-widest">
-          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-indigo-600">
-            <path d="M8 2v4"></path>
-            <path d="M16 2v4"></path>
-            <rect width="18" height="18" x="3" y="4" rx="2"></rect>
-            <path d="M3 10h18"></path>
-          </svg>
-          {new Date(announcement.createdAt).toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' })}
-          <div className="w-1 h-1 bg-slate-300 rounded-full"></div>
-          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-indigo-600">
-            <path d="M12 6v6l4 2"></path>
-            <circle cx="12" cy="12" r="10"></circle>
-          </svg>
-          {Math.ceil((new Date() - new Date(announcement.createdAt)) / (1000 * 60))} min
+          
+          {/* Status Badge */}
+          <div style={{
+            background: 'rgba(76, 175, 80, 0.2)',
+            color: '#4CAF50',
+            padding: '4px 8px',
+            borderRadius: '12px',
+            fontSize: '10px',
+            fontWeight: '600',
+            textTransform: 'uppercase',
+            letterSpacing: '0.5px',
+            border: '1px solid rgba(76, 175, 80, 0.3)'
+          }}>
+            Actif
+          </div>
         </div>
 
         {/* Title */}
-        <h3 className="text-2xl font-black text-slate-900 mb-4 leading-tight italic uppercase group-hover:text-indigo-600 transition-colors">
+        <h3 style={{
+          fontSize: '18px',
+          fontWeight: '700',
+          color: '#ffffff',
+          margin: '0 0 10px 0',
+          lineHeight: '1.4'
+        }}>
           {announcement.title}
         </h3>
 
         {/* Description */}
-        <p className="text-slate-500 text-sm leading-relaxed mb-10 line-clamp-3 font-medium">
+        <p style={{
+          fontSize: '14px',
+          color: 'rgba(255, 255, 255, 0.7)',
+          lineHeight: '1.5',
+          margin: '0 0 15px 0',
+          display: '-webkit-box',
+          WebkitLineClamp: 3,
+          WebkitBoxOrient: 'vertical',
+          overflow: 'hidden'
+        }}>
           {announcement.content}
         </p>
 
         {/* Footer */}
-        <div className="mt-auto pt-8 border-t border-slate-50 flex items-center justify-between">
-          {announcement.link && (
-            <a 
-              href={announcement.link}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 text-dark font-black text-[10px] uppercase tracking-widest hover:text-indigo-600 transition-all"
-            >
-              Consulter l'officiel 
-              <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="hover:translate-x-1 transition-transform">
-                <path d="M15 3h6v6"></path>
-                <path d="M10 14 21 3"></path>
-                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-              </svg>
-            </a>
-          )}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          paddingTop: '15px',
+          borderTop: '1px solid rgba(255, 255, 255, 0.1)'
+        }}>
+          {/* Author Info */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div style={{
+              width: '24px',
+              height: '24px',
+              borderRadius: '50%',
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '10px',
+              fontWeight: '700',
+              color: '#ffffff'
+            }}>
+              {announcement.author ? announcement.author.charAt(0).toUpperCase() : 'A'}
+            </div>
+            <div>
+              <div style={{
+                fontSize: '12px',
+                color: 'rgba(255, 255, 255, 0.8)',
+                fontWeight: '600'
+              }}>
+                {announcement.author || 'Admin'}
+              </div>
+              <div style={{
+                fontSize: '10px',
+                color: 'rgba(255, 255, 255, 0.5)'
+              }}>
+                {new Date(announcement.createdAt).toLocaleDateString('fr-FR', {
+                  day: '2-digit',
+                  month: 'short',
+                  year: 'numeric'
+                })}
+              </div>
+            </div>
+          </div>
 
-          <div className="flex gap-4 text-slate-200">
-            <button 
-              onClick={onLike}
-              className="hover:text-indigo-600 cursor-pointer"
-              title="J'aime"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="m19 21-7-4-7 4V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16z"></path>
-              </svg>
-            </button>
-            <button 
-              onClick={onComment}
-              className="hover:text-indigo-600 cursor-pointer"
-              title="Commenter"
-            >
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="18" cy="5" r="3"></circle>
-                <circle cx="6" cy="12" r="3"></circle>
-                <circle cx="18" cy="19" r="3"></circle>
-                <line x1="8.59" x2="15.42" y1="13.51" y2="17.49"></line>
-                <line x1="15.41" x2="8.59" y1="6.51" y2="10.49"></line>
-              </svg>
-            </button>
+          {/* Action Buttons */}
+          <div style={{ display: 'flex', gap: '8px' }}>
             {announcement.link && (
-              <button 
+              <button
                 onClick={handleLinkClick}
-                className="hover:text-indigo-600 cursor-pointer"
-                title="Visiter le lien"
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  background: 'rgba(255, 255, 255, 0.1)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  color: 'rgba(255, 255, 255, 0.7)'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.background = 'rgba(255, 255, 255, 0.2)';
+                  e.target.style.color = '#ffffff';
+                }}
+                onMouseOut={(e) => {
+                  e.target.style.background = 'rgba(255, 255, 255, 0.1)';
+                  e.target.style.color = 'rgba(255, 255, 255, 0.7)';
+                }}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M15 3h6v6"></path>
-                  <path d="M10 14 21 3"></path>
-                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-                </svg>
+                🔗
               </button>
             )}
           </div>
         </div>
       </div>
-    </article>
+    </div>
   );
 };
 

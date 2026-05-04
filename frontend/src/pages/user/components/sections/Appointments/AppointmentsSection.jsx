@@ -32,13 +32,16 @@ import {
   EmptyState,
   EmptyStateIcon,
   EmptyStateText,
-  NotificationMessage
+  NotificationMessage,
+  AppointmentsTitle as MainTitle,
+  AppointmentsHeader as MainHeader,
 } from './Appointments.styles';
 
 const AppointmentsSection = () => {
   const { user } = useAuth();
   const {
     appointments,
+    timeSlots,
     isLoading,
     isCreating,
     newAppointment,
@@ -46,11 +49,55 @@ const AppointmentsSection = () => {
     deleteAppointment,
     updateAppointmentStatus,
     handleInputChange,
-    resetNewAppointment
+    resetNewAppointment,
+    bookTimeSlot
   } = useAppointments(user?.id);
 
   const [showBookingForm, setShowBookingForm] = useState(false);
   const [notification, setNotification] = useState(null);
+
+  // Remove scrollbars completely
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      /* Hide all scrollbars completely */
+      html, body, * {
+        -ms-overflow-style: none !important;
+        scrollbar-width: none !important;
+      }
+      
+      html::-webkit-scrollbar,
+      body::-webkit-scrollbar,
+      *::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+      }
+      
+      /* Force hide any remaining scrollbars */
+      ::-webkit-scrollbar {
+        display: none !important;
+        width: 0 !important;
+        height: 0 !important;
+      }
+
+      @keyframes fadeInUp {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
 
   useEffect(() => {
     if (notification) {
@@ -89,6 +136,16 @@ const AppointmentsSection = () => {
     } catch (error) {
       console.error('Error cancelling appointment:', error);
       showNotification('Erreur lors de l\'annulation', 'error');
+    }
+  };
+
+  const handleBookTimeSlot = async (slotId) => {
+    try {
+      await bookTimeSlot(slotId);
+      showNotification('Créneau horaire réservé avec succès!', 'success');
+    } catch (error) {
+      console.error('Error booking time slot:', error);
+      showNotification('Erreur lors de la réservation du créneau', 'error');
     }
   };
 
@@ -179,99 +236,6 @@ const AppointmentsSection = () => {
     </AppointmentCard>
   );
 
-  const renderBookingForm = () => (
-    <BookingForm
-      ref={(el) => {
-        if (el) {
-          animateBookingForm(el);
-        }
-      }}
-      onSubmit={handleSubmit}
-    >
-      <FormGrid>
-        <FormGroup>
-          <FormLabel>Date</FormLabel>
-          <FormInput
-            type="date"
-            name="date"
-            value={newAppointment.date}
-            onChange={handleInputChange}
-            min={new Date().toISOString().split('T')[0]}
-            required
-          />
-        </FormGroup>
-        <FormGroup>
-          <FormLabel>Heure</FormLabel>
-          <FormInput
-            type="time"
-            name="time"
-            value={newAppointment.time}
-            onChange={handleInputChange}
-            required
-          />
-        </FormGroup>
-      </FormGrid>
-      
-      <FormGroup>
-        <FormLabel>Service</FormLabel>
-        <FormSelect
-          name="type"
-          value={newAppointment.type}
-          onChange={handleInputChange}
-          required
-        >
-          <option value="">Sélectionnez un service</option>
-          <option value="consultation">Consultation d'admission</option>
-          <option value="documents">Aide aux documents</option>
-          <option value="visa">Assistance visa</option>
-          <option value="logement">Recherche logement</option>
-          <option value="orientation">Orientation académique</option>
-        </FormSelect>
-      </FormGroup>
-      
-      <FormGroup>
-        <FormLabel>Mode de rendez-vous</FormLabel>
-        <FormSelect
-          name="etat"
-          value={newAppointment.etat}
-          onChange={handleInputChange}
-          required
-        >
-          <option value="PRESENTIEL">Présentiel</option>
-          <option value="EN_LIGNE">En ligne</option>
-        </FormSelect>
-      </FormGroup>
-      
-      <FormGroup>
-        <FormLabel>Notes (optionnel)</FormLabel>
-        <FormTextarea
-          name="notes"
-          value={newAppointment.notes}
-          onChange={handleInputChange}
-          placeholder="Ajoutez des notes supplémentaires..."
-        />
-      </FormGroup>
-      
-      <SubmitButton type="submit" disabled={isCreating}>
-        {isCreating ? (
-          <>
-            <LoadingSpinner viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" opacity="0.3" />
-              <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-            </LoadingSpinner>
-            Création en cours...
-          </>
-        ) : (
-          <>
-            <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2m0 0l2-2m-2 2l-2-2" />
-            </svg>
-            Confirmer le Rendez-vous
-          </>
-        )}
-      </SubmitButton>
-    </BookingForm>
-  );
 
   const renderEmptyState = () => (
     <EmptyState>
@@ -282,25 +246,21 @@ const AppointmentsSection = () => {
 
   return (
     <AppointmentsContainer>
+      <MainHeader>
+        <MainTitle>
+           Mes Rendez-vous
+        </MainTitle>
+      </MainHeader>
+      
       {notification && (
         <NotificationMessage type={notification.type}>
           {notification.message}
         </NotificationMessage>
       )}
       
-      <AppointmentsHeader>
-        <AppointmentsTitle>
-          Nouveau Rendez-vous ({appointments.length})
-        </AppointmentsTitle>
-        <ToggleButton onClick={handleToggleForm}>
-          {showBookingForm ? 'Annuler' : 'Ajouter'}
-        </ToggleButton>
-      </AppointmentsHeader>
-
-      {showBookingForm && renderBookingForm()}
-      
+      {/* Available Time Slots */}
       <AppointmentsList>
-        <AppointmentsListHeader>Mes Rendez-vous</AppointmentsListHeader>
+        <AppointmentsListHeader>Créneaux Disponibles</AppointmentsListHeader>
         
         {isLoading ? (
           <EmptyState>
@@ -310,7 +270,89 @@ const AppointmentsSection = () => {
             </LoadingSpinner>
             <EmptyStateText>Chargement...</EmptyStateText>
           </EmptyState>
-        ) : appointments.length === 0 ? (
+        ) : timeSlots.length === 0 ? (
+          <EmptyState>
+            <EmptyStateIcon>🕐</EmptyStateIcon>
+            <EmptyStateText>
+              <h3>Aucun créneau disponible</h3>
+              <p>Revenez plus tard pour voir les nouveaux créneaux horaires</p>
+            </EmptyStateText>
+          </EmptyState>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '1rem' }}>
+            {timeSlots.map((slot) => (
+              <AppointmentCard key={slot.id}>
+                <AppointmentHeader>
+                  <AppointmentContent>
+                    <AppointmentTitle>
+                      {new Date(slot.date).toLocaleDateString('fr-FR', {
+                        weekday: 'long',
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric'
+                      })}
+                    </AppointmentTitle>
+                    <AppointmentDetails>
+                      <AppointmentDetail>
+                        <DetailIcon>🕐</DetailIcon>
+                        {slot.startTime} - {slot.endTime}
+                      </AppointmentDetail>
+                      <AppointmentDetail>
+                        <DetailIcon>👥</DetailIcon>
+                        {slot.currentBookings || 0}/{slot.maxBookings} réservations
+                      </AppointmentDetail>
+                    </AppointmentDetails>
+                  </AppointmentContent>
+                  <AppointmentActions>
+                    <StatusBadge 
+                      style={{
+                        backgroundColor: slot.isAvailable ? '#10b981' : '#ef4444',
+                        color: 'white'
+                      }}
+                    >
+                      {slot.isAvailable ? '✅ Disponible' : '❌ Complet'}
+                    </StatusBadge>
+                  </AppointmentActions>
+                </AppointmentHeader>
+                <AppointmentActions style={{ marginTop: '1rem' }}>
+                  {slot.isAvailable ? (
+                    <button
+                      onClick={() => handleBookTimeSlot(slot.id)}
+                      disabled={isCreating}
+                      style={{
+                        padding: '0.5rem 1rem',
+                        backgroundColor: '#3b82f6',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '0.5rem',
+                        cursor: isCreating ? 'not-allowed' : 'pointer',
+                        opacity: isCreating ? 0.6 : 1,
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      {isCreating ? 'Réservation...' : 'Réserver ce créneau'}
+                    </button>
+                  ) : (
+                    <span style={{ 
+                      color: '#9ca3af', 
+                      fontSize: '0.875rem',
+                      fontStyle: 'italic'
+                    }}>
+                      Ce créneau est complet
+                    </span>
+                  )}
+                </AppointmentActions>
+              </AppointmentCard>
+            ))}
+          </div>
+        )}
+      </AppointmentsList>
+
+      {/* My Appointments */}
+      <AppointmentsList style={{ marginTop: '2rem' }}>
+        <AppointmentsListHeader>Mes Rendez-vous</AppointmentsListHeader>
+        
+        {appointments.length === 0 ? (
           renderEmptyState()
         ) : (
           appointments.map(renderAppointmentCard)

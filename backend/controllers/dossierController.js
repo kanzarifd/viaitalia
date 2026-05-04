@@ -168,9 +168,25 @@ const getDossierById = async (req, res) => {
   try {
     const { id } = req.params;
     
+    // Validate id parameter
+    if (!id) {
+      return res.status(400).json({
+        success: false,
+        message: "Dossier ID is required"
+      });
+    }
+    
+    const dossierId = parseInt(id);
+    if (isNaN(dossierId)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid dossier ID format"
+      });
+    }
+    
     const dossier = await prisma.dossier.findUnique({
       where: {
-        id: parseInt(id)
+        id: dossierId
       },
       include: {
         user: {

@@ -6,7 +6,14 @@ const jwt = require("jsonwebtoken");
 // Register
 const register = async (req, res) => {
   try {
-    const { firstName, lastName, email, password, role } = req.body;
+    const { firstName, lastName, email, password, passport, address, phoneNumber, image, role } = req.body;
+
+    // Validate required fields
+    if (!firstName || !lastName || !email || !password || !passport || !address || !phoneNumber) {
+      return res.status(400).json({ 
+        message: "All required fields must be provided: firstName, lastName, email, password, passport, address, phoneNumber" 
+      });
+    }
 
     // Check if user exists
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -17,7 +24,17 @@ const register = async (req, res) => {
 
     // Create user
     const user = await prisma.user.create({
-      data: { firstName, lastName, email, password: hashedPassword, role },
+      data: { 
+        firstName, 
+        lastName, 
+        email, 
+        password: hashedPassword, 
+        passport, 
+        address, 
+        phoneNumber, 
+        image: image || null,
+        role 
+      },
     });
 
     // Automatically create a dossier for the new user
@@ -47,8 +64,9 @@ const register = async (req, res) => {
       email: user.email,
       role: user.role,
       passport: user.passport,
-      studyType: user.studyType,
-      university: user.university,
+      address: user.address,
+      phoneNumber: user.phoneNumber,
+      image: user.image,
       createdAt: user.createdAt
     };
 
@@ -88,8 +106,9 @@ const login = async (req, res) => {
       email: user.email,
       role: user.role,
       passport: user.passport,
-      studyType: user.studyType,
-      university: user.university,
+      address: user.address,
+      phoneNumber: user.phoneNumber,
+      image: user.image,
       createdAt: user.createdAt
     };
 
@@ -199,7 +218,15 @@ const createUser = async (req, res) => {
       });
     }
 
-    const { firstName, lastName, email, password, role = 'USER' } = req.body;
+    const { firstName, lastName, email, password, passport, address, phoneNumber, image, role = 'USER' } = req.body;
+
+    // Validate required fields
+    if (!firstName || !lastName || !email || !password || !passport || !address || !phoneNumber) {
+      return res.status(400).json({ 
+        success: false,
+        message: "All required fields must be provided: firstName, lastName, email, password, passport, address, phoneNumber" 
+      });
+    }
 
     // Check if user exists
     const existingUser = await prisma.user.findUnique({ where: { email } });
@@ -212,7 +239,17 @@ const createUser = async (req, res) => {
 
     // Create user
     const user = await prisma.user.create({
-      data: { firstName, lastName, email, password: hashedPassword, role },
+      data: { 
+        firstName, 
+        lastName, 
+        email, 
+        password: hashedPassword, 
+        passport, 
+        address, 
+        phoneNumber, 
+        image: image || null,
+        role 
+      },
     });
 
     // Automatically create a dossier for the new user
@@ -242,8 +279,9 @@ const createUser = async (req, res) => {
       email: user.email,
       role: user.role,
       passport: user.passport,
-      studyType: user.studyType,
-      university: user.university,
+      address: user.address,
+      phoneNumber: user.phoneNumber,
+      image: user.image,
       createdAt: user.createdAt
     };
 
@@ -327,7 +365,7 @@ const searchUsers = async (req, res) => {
 const updateUser = async (req, res) => {
   try {
     const userId = req.user.userId; // Get userId from JWT token
-    const { firstName, lastName, email, passport, studyType, university } = req.body;
+    const { firstName, lastName, email, passport, address, phoneNumber, image } = req.body;
 
     // Check if user exists
     const user = await prisma.user.findUnique({ where: { id: userId } });
@@ -349,8 +387,9 @@ const updateUser = async (req, res) => {
         ...(lastName && { lastName }),
         ...(email && { email }),
         ...(passport !== undefined && { passport }),
-        ...(studyType !== undefined && { studyType }),
-        ...(university !== undefined && { university })
+        ...(address !== undefined && { address }),
+        ...(phoneNumber !== undefined && { phoneNumber }),
+        ...(image !== undefined && { image })
       },
       select: {
         id: true,
@@ -359,8 +398,9 @@ const updateUser = async (req, res) => {
         email: true,
         role: true,
         passport: true,
-        studyType: true,
-        university: true,
+        address: true,
+        phoneNumber: true,
+        image: true,
         createdAt: true
       }
     });
