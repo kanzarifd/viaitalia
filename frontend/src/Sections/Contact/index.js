@@ -5,6 +5,7 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import Facebook from "../../assets/facebook-square-brands.svg";
 import Instagram from "../../assets/instagram-square-brands.svg";
 import TikTok from "../../assets/tik-tok.svg";
+import WhatsApp from "../../assets/whatsapp-svgrepo-com.svg";
 import emailjs from '@emailjs/browser';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -136,13 +137,13 @@ const SocialLabel = styled.p`
 
 const CirclesRow = styled.div`
   display: flex;
-  gap: 2rem;
+  gap: 1rem;
   align-items: center;
 `;
 
 const SocialCircle = styled.a`
-  width: 130px;              /* ← was 110px */
-  height: 130px;             /* ← was 110px */
+  width: 80px;              /* ← was 110px */
+  height: 80px;             /* ← was 110px */
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -200,6 +201,18 @@ const SocialCircle = styled.a`
       box-shadow:
         0 20px 60px rgba(0,0,0,0.7),
         0 0 0 10px rgba(0,0,0,0.15);
+    }
+  }
+
+  &.whatsapp {
+    background: #25D366;
+    box-shadow:
+      0 12px 40px rgba(37,211,102,0.5),
+      0 0 0 6px rgba(37,211,102,0.12);
+    &:hover {
+      box-shadow:
+        0 20px 60px rgba(37,211,102,0.7),
+        0 0 0 10px rgba(37,211,102,0.15);
     }
   }
 `;
@@ -501,10 +514,17 @@ setTimeout(() => setShowToast(false), 4000);
     </SocialCircle>
     <SocialCircle
       className="tiktok"
-      href="https://www.tiktok.com/@viaitaliaagency?_r=1&_t=ZS-964CWCWZO5A"
+      href="https://www.tiktok.com/@viaitaliaagency?_r=1&__t=ZS-964CWCWZO5A"
       target="_blank" rel="noreferrer" delay="1.2s"
     >
       <img src={TikTok} alt="TikTok" />
+    </SocialCircle>
+    <SocialCircle
+      className="whatsapp"
+      href="https://wa.me/+21622552722"
+      target="_blank" rel="noreferrer" delay="1.8s"
+    >
+      <img src={WhatsApp} alt="WhatsApp" />
     </SocialCircle>
   </CirclesRow>
 

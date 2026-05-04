@@ -59,7 +59,8 @@ const Logo = styled.div`
   transition: transform 0.3s ease;
 
   img {
-    height: 55px;
+    height: 150px;
+    width: auto;
   }
 
   &:hover {
